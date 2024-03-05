@@ -1,15 +1,12 @@
 [tool.ruff]
 
 # description of all rules are available on https://docs.astral.sh/ruff/rules/
-#lint.select = ["D", "E", "F", "W", "C", "S", "I", "TCH", "SLOT", "RUF", "C90", "N"]
-#select = ["D", "E", "F", "W", "C", "S", "I", "TCH", "SLOT", "RUF", "C90", "N"]
-lint.select = ["E", "F", "W", "C", "S", "I", "TCH", "RSE", "RET", "SLF", "SLOT", "SIM", "TID", "TCH", "INT", "ARG", "PTH", "FIX", "ERA", "PD", "PGH", "PL", "TRY", "FLY", "NPY", "AIR", "PERF", "FURB", "LOG", "RUF"]
-#select = ["E", "F", "W", "C", "S", "I", "TCH", "RSE", "RET", "SLF", "SLOT", "SIM", "TID", "TCH", "INT", "ARG", "PTH", "TD", "FIX", "ERA", "PD", "PGH", "PL", "FLY", "NPY", "AIR", "PERF", "FURB", "LOG", "RUF"]
+lint.select = ["D", "E", "F", "W", "C", "S", "I", "TCH", "SLOT", "RUF", "C90", "N"]
 
 # we need to check 'mood' of all docstrings, this needs to be enabled explicitly
 lint.extend-select = ["D401"]
 
-lint.ignore = ["S101", "TRY400"]
+lint.ignore = []
 
 target-version = "py311"
 lint.pydocstyle.convention = "google"
@@ -21,7 +18,7 @@ lint.flake8-pytest-style.fixture-parentheses = false
 fail_under = 90
 
 [tool.mypy]
-disable_error_code = ["union-attr", "return-value", "arg-type", "misc", "call-arg", "import-untyped"]
+disable_error_code = ["union-attr", "return-value", "arg-type", "import-untyped"]
 ignore_missing_imports = true
 
 [tool.pdm]
@@ -29,16 +26,22 @@ distribution = false
 
 [tool.pdm.dev-dependencies]
 dev = [
-    "black>=24.1.1",
+    "black>=24.2.0",
     "httpx>=0.26.0",
     "mypy>=1.8.0",
     "pytest>=8.0.0",
     "pytest-cov>=4.1.0",
+    "pytest_asyncio>=0.23.5",
     "ruff>=0.1.14",
     # types-requests<2.31.0.7 to avoid upgrading urllib3>1.27 that breaks ibm-cos-sdk-core 2.13.
     # todo: remove when ibm-cos-sdk-core does not depend on urllib3<1.27.
     "types-requests<2.31.0.7"
 ]
+
+[[tool.pdm.source]]
+type = "find_links"
+url = "https://download.pytorch.org/whl/cpu/torch_stable.html"
+name = "torch"
 
 [project]
 name = "ols"
@@ -46,6 +49,7 @@ version = "0.1.0"
 description = "OpenShift LightSpeed is an AI powered assistant that runs on OpenShift and provides answers to product questions using backend LLM services."
 authors = []
 dependencies = [
+    "torch==2.2.0+cpu",
     "fastapi==0.109.1",
     "gradio==4.19.2",
     "langchain==0.1.4",
