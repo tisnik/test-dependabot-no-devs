@@ -53,7 +53,7 @@ dependencies = [
     "fastapi==0.110.0",
     "gradio==4.19.2",
     "langchain==0.1.12",
-    "llama-index==0.9.39",  # dev dep?
+    "llama-index==0.10.20",  # dev dep?
     "uvicorn==0.27.0.post1",
     "redis==5.0.1",
     "faiss-cpu==1.7.4",
