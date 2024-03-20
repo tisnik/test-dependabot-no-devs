@@ -60,7 +60,7 @@ dependencies = [
     "sentence-transformers==2.5.1",
     "openai==1.14.0",
     "ibm-watson-machine-learning==1.0.344",
-    "ibm-generative-ai==2.0.0",
+    "ibm-generative-ai==2.2.0",
     "langchain-openai==0.0.5",
     "pydantic==2.6.4",
     "setuptools>=69.0.3",
