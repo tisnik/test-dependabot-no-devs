@@ -59,7 +59,7 @@ dependencies = [
     "faiss-cpu==1.8.0",
     "sentence-transformers==2.5.1",
     "openai==1.14.2",
-    "ibm-watson-machine-learning==1.0.344",
+    "ibm-watson-machine-learning==1.0.352",
     "ibm-generative-ai==2.2.0",
     "langchain-openai==0.0.8",
     "pydantic==2.6.4",
