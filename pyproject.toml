@@ -57,7 +57,7 @@ dependencies = [
     "uvicorn==0.29.0",
     "redis==5.0.3",
     "faiss-cpu==1.8.0",
-    "sentence-transformers==2.5.1",
+    "sentence-transformers==2.6.0",
     "openai==1.14.2",
     "ibm-watson-machine-learning==1.0.352",
     "ibm-generative-ai==2.2.0",
