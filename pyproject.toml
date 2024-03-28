@@ -51,7 +51,7 @@ authors = []
 dependencies = [
     "torch==2.2.1+cpu",
     "fastapi==0.110.0",
-    "gradio==4.23.0",
+    "gradio==4.24.0",
     "langchain==0.1.13",
     "llama-index==0.10.24",  # dev dep?
     "uvicorn==0.29.0",
