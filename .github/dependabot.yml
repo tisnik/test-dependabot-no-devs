@@ -3,7 +3,8 @@ updates:
   - package-ecosystem: "pip"
     directory: "/"
     schedule:
-      interval: "daily"
+      interval: "weekly"
     commit-message:
       prefix: "dependency"
       include: "scope"
+    open-pull-requests-limit: 2
