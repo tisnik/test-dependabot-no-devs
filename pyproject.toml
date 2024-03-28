@@ -26,16 +26,6 @@ distribution = false
 
 [tool.pdm.dev-dependencies]
 dev = [
-    "black>=24.2.0",
-    "httpx>=0.26.0",
-    "mypy>=1.8.0",
-    "pytest>=8.0.0",
-    "pytest-cov>=5.0.0",
-    "pytest_asyncio>=0.23.5",
-    "ruff>=0.3.4",
-    # types-requests<2.31.0.7 to avoid upgrading urllib3>1.27 that breaks ibm-cos-sdk-core 2.13.
-    # todo: remove when ibm-cos-sdk-core does not depend on urllib3<1.27.
-    "types-requests<2.31.0.7"
 ]
 
 [[tool.pdm.source]]
@@ -68,6 +58,16 @@ dependencies = [
     "kubernetes>=29.0.0",
     "pytest-asyncio>=0.23.5",
     "spacy>=3.7.4",
+    "black>=24.2.0",
+    "httpx>=0.26.0",
+    "mypy>=1.8.0",
+    "pytest>=8.0.0",
+    "pytest-cov>=5.0.0",
+    "pytest_asyncio>=0.23.5",
+    "ruff>=0.3.4",
+    # types-requests<2.31.0.7 to avoid upgrading urllib3>1.27 that breaks ibm-cos-sdk-core 2.13.
+    # todo: remove when ibm-cos-sdk-core does not depend on urllib3<1.27.
+    "types-requests<2.31.0.7"
 ]
 requires-python = "==3.11.*"
 readme = "README.md"
