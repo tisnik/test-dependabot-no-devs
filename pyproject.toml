@@ -42,7 +42,7 @@ dependencies = [
     "torch==2.2.2",
     "fastapi==0.110.0",
     "gradio==4.24.0",
-    "langchain==0.1.13",
+    "langchain==0.1.14",
     "llama-index==0.10.24",  # dev dep?
     "uvicorn==0.29.0",
     "redis==5.0.3",
