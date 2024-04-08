@@ -43,6 +43,7 @@ dependencies = [
     "fastapi==0.110.1",
     "gradio==4.25.0",
     "langchain==0.1.14",
+    "langchain-ibm==0.1.3",
     "llama-index==0.10.27",
     "uvicorn==0.29.0",
     "redis==5.0.3",
