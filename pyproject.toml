@@ -53,7 +53,7 @@ dependencies = [
     "ibm-watson-machine-learning==1.0.354",
     "ibm-generative-ai==2.3.0",
     "langchain-openai==0.1.2",
-    "pydantic==2.6.4",
+    "pydantic==2.7.0",
     "setuptools>=69.0.3",
     "prometheus-client>=0.19.0",
     "kubernetes>=29.0.0",
