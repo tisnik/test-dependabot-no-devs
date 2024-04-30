@@ -44,6 +44,8 @@ dependencies = [
     "langchain==0.1.16",
     "langchain-ibm==0.1.4",
     "llama-index==0.10.33",
+    "llama-index-vector-stores-faiss==0.1.2",
+    "llama-index-embeddings-huggingface==0.2.0",
     "uvicorn==0.29.0",
     "redis==5.0.4",
     "faiss-cpu==1.8.0",
@@ -77,3 +79,4 @@ test = "pdm run make test"
 test-unit = "pdm run make test-unit"
 test-integration = "pdm run make test-integration"
 test-e2e = "pdm run make test-e2e"
+coverage-report = "pdm run make coverage-report"
