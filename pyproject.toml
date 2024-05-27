@@ -67,7 +67,7 @@ dependencies = [
     "pytest-cov==5.0.0",
     "pytest_asyncio==0.23.7",
     "ruff==0.4.4",
-    "types-requests==2.32.0.20240521"
+    "types-requests==2.32.0.20240523"
 ]
 requires-python = "==3.11.*"
 readme = "README.md"
