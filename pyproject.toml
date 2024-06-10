@@ -50,7 +50,7 @@ dependencies = [
     "redis==5.0.5",
     "faiss-cpu==1.8.0",
     "sentence-transformers==3.0.0",
-    "openai==1.31.1",
+    "openai==1.32.0",
     "ibm-watson-machine-learning==1.0.359",
     "ibm-generative-ai==3.0.0",
     "langchain-openai==0.1.8",
