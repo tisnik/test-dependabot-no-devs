@@ -19,6 +19,16 @@ fail_under = 90
 [tool.mypy]
 disable_error_code = ["union-attr", "return-value", "arg-type", "import-untyped"]
 ignore_missing_imports = true
+plugins = ["pydantic.mypy"]
+
+[tool.pydantic-mypy]
+init_forbid_extra = true
+init_typed = true
+warn_required_dynamic_aliases = true
+
+[tool.bandit]
+skips = ["B104"]
+exclude_dirs = ["tests", "scripts"]
 
 [tool.pdm]
 distribution = false
