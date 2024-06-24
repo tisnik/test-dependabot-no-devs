@@ -1,7 +1,7 @@
 [tool.ruff]
 
 # description of all rules are available on https://docs.astral.sh/ruff/rules/
-lint.select = ["D", "E", "F", "W", "C", "S", "I", "TCH", "SLOT", "RUF", "C90", "N", "YTT", "ASYNC", "TRIO"]
+lint.select = ["D", "E", "F", "W", "C", "S", "I", "TCH", "SLOT", "RUF", "C90", "N", "YTT", "ASYNC", "TRIO", "A", "C4", "T10"]
 
 # we need to check 'mood' of all docstrings, this needs to be enabled explicitly
 lint.extend-select = ["D401"]
@@ -41,6 +41,10 @@ dev = [
 type = "find_links"
 url = "https://download.pytorch.org/whl/cpu/torch_stable.html"
 name = "torch"
+
+[build-system]
+requires = ["pdm-backend"]
+build-backend = "pdm.backend"
 
 [project]
 name = "ols"
@@ -92,3 +96,9 @@ test-unit = "pdm run make test-unit"
 test-integration = "pdm run make test-integration"
 test-e2e = "pdm run make test-e2e"
 coverage-report = "pdm run make coverage-report"
+check-types = "pdm run make check-types"
+generate-schema = "pdm run make schema"
+security-check = "pdm run make security-check"
+
+[tool.setuptools]
+packages = ["ols"]
