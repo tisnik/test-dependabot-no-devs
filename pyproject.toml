@@ -75,7 +75,7 @@ dependencies = [
     "pytest-asyncio==0.23.7",
     "psycopg2-binary==2.9.9",
     "azure-identity==1.17.1",
-    "langchain-community==0.2.5",
+    "langchain-community==0.2.6",
     "SQLAlchemy==2.0.31",
     "huggingface_hub==0.23.4",
     "black==24.4.2",
