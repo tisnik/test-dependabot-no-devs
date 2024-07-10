@@ -88,7 +88,9 @@ dependencies = [
     "pytest_asyncio==0.23.7",
     "ruff==0.5.1",
     "bandit==1.7.9",
-    "types-requests==2.32.0.20240622"
+    "types-requests==2.32.0.20240622",
+    "fastparquet==2024.5.0",  # Required for model evaluation (runtime, if parquet qna file is used)
+    "rouge-score==0.1.2"  # Required for model evaluation
 ]
 requires-python = "==3.11.*"
 readme = "README.md"
