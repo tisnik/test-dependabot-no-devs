@@ -67,7 +67,7 @@ dependencies = [
     "sentence-transformers==3.0.1",
     "openai==1.35.10",
     "ibm-generative-ai==3.0.0",
-    "langchain-openai==0.1.14",
+    "langchain-openai==0.1.15",
     "pydantic==2.8.2",
     "setuptools==70.2.0",
     "prometheus-client==0.20.0",
