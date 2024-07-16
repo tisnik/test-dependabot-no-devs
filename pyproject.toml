@@ -65,7 +65,7 @@ dependencies = [
     "redis==5.0.7",
     "faiss-cpu==1.8.0.post1",
     "sentence-transformers==3.0.1",
-    "openai==1.35.13",
+    "openai==1.35.14",
     "ibm-generative-ai==3.0.0",
     "langchain-openai==0.1.15",
     "pydantic==2.8.2",
