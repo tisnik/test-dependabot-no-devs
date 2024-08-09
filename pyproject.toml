@@ -55,7 +55,7 @@ dependencies = [
     "torch==2.3.1",
     "pandas==2.2.2",
     "fastapi==0.111.1",
-    "langchain==0.2.11",
+    "langchain==0.2.12",
     "langchain-ibm==0.1.9",
     "llama-index==0.10.62",
     "llama-index-vector-stores-faiss==0.1.2",
