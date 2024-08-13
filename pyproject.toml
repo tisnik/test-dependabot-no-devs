@@ -83,6 +83,8 @@ dependencies = [
     "certifi==2024.7.4",
     "cryptography==42.0.8",
     "urllib3==2.2.2",
+    "nltk==3.8.2",
+    "aiohttp==3.10.2",
     "gradio==4.37.2",
     "black==24.8.0",
     "fastparquet==2024.5.0",  # Required for model evaluation (runtime, if parquet qna file is used)
