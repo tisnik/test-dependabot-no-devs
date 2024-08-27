@@ -88,7 +88,7 @@ dependencies = [
     "gradio==4.37.2",
     "black==24.8.0",
     "fastparquet==2024.5.0",  # Required for model evaluation (runtime, if parquet qna file is used)
-    "httpx==0.27.0",
+    "httpx==0.27.1",
     "rouge-score==0.1.2",  # Required for model evaluation
     "mypy==1.11.1",
     "pytest==8.3.2",
