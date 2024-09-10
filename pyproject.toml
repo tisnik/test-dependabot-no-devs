@@ -101,7 +101,7 @@ dependencies = [
     "rouge-score==0.1.2",  # Required for model evaluation
     "ruff==0.6.2",
     "bandit==1.7.9",
-    "types-requests==2.32.0.20240712",
+    "types-requests==2.32.0.20240907",
     "gradio==4.37.2",
     "boto3==1.34.145",
     "reportportal-client==5.5.6",
