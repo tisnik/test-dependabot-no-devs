@@ -83,12 +83,15 @@ dependencies = [
     "langchain-community==0.2.10",
     "SQLAlchemy==2.0.32",
     "huggingface_hub==0.23.4",
-    "ibm-watsonx-ai==1.1.2",
+    "ibm-watsonx-ai==1.1.8",
     "certifi==2024.7.4",
     "cryptography==43.0.1",
     "urllib3==2.2.2",
     "nltk==3.9.1",
     "aiohttp==3.10.2",
+    "zipp==3.20.1",
+    "jinja2==3.1.4",
+    "scikit-learn==1.5.1",
     "gradio==4.37.2",
     "black==24.8.0",
     "fastparquet==2024.5.0",  # Required for model evaluation (runtime, if parquet qna file is used)
@@ -128,3 +131,6 @@ benchmarks = "pdm run make benchmarks"
 
 [tool.setuptools]
 packages = ["ols"]
+
+[tool.pylint."MESSAGES CONTROL"]
+good-names = ["e"]
