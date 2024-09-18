@@ -80,7 +80,7 @@ dependencies = [
     "kubernetes==30.1.0",
     "psycopg2-binary==2.9.9",
     "azure-identity==1.17.1",
-    "langchain-community==0.2.16",
+    "langchain-community==0.3.0",
     "SQLAlchemy==2.0.32",
     "huggingface_hub==0.25.0",
     "ibm-watsonx-ai==1.1.8",
