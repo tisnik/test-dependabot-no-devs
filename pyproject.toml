@@ -67,7 +67,7 @@ dependencies = [
     "llama-index-vector-stores-faiss==0.2.1",
     "llama-index-embeddings-huggingface==0.2.2",
     "uvicorn==0.31.0",
-    "redis==5.0.8",
+    "redis==5.1.0",
     "faiss-cpu==1.8.0.post1",
     "sentence-transformers==3.0.1",
     "openai==1.46.0",
