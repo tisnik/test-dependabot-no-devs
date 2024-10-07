@@ -62,7 +62,7 @@ dependencies = [
     "pandas==2.2.3",
     "fastapi==0.115.0",
     "langchain==0.3.2",
-    "langchain-ibm==0.1.12",
+    "langchain-ibm==0.2.1",
     "llama-index==0.11.14",
     "llama-index-vector-stores-faiss==0.2.1",
     "llama-index-embeddings-huggingface==0.2.2",
