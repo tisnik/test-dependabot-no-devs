@@ -83,7 +83,7 @@ dependencies = [
     "langchain-community==0.2.16",
     "SQLAlchemy==2.0.32",
     "huggingface_hub==0.25.0",
-    "ibm-watsonx-ai==1.1.8",
+    "ibm-watsonx-ai==1.1.14",
     "certifi==2024.8.30",
     "cryptography==43.0.1",
     "urllib3==2.2.2",
