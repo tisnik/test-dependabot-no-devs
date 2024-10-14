@@ -69,7 +69,7 @@ dependencies = [
     "uvicorn==0.31.0",
     "redis==5.1.0",
     "faiss-cpu==1.8.0.post1",
-    "sentence-transformers==3.0.1",
+    "sentence-transformers==3.2.0",
     "openai==1.46.0",
     "ibm-generative-ai==3.0.0",
     "ibm-cos-sdk==2.13.6",
