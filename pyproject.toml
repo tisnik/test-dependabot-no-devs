@@ -109,7 +109,7 @@ dependencies = [
     "gradio==5.0.2",
     "boto3==1.35.42",
     "reportportal-client==5.5.8",
-    "pytest-reportportal==5.4.1",
+    "pytest-reportportal==5.4.3",
     "pytest-benchmark==4.0.0",
 ]
 requires-python = "==3.11.*"
