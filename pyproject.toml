@@ -1,7 +1,7 @@
 [tool.ruff]
 
 # description of all rules are available on https://docs.astral.sh/ruff/rules/
-lint.select = ["D", "E", "F", "W", "C", "S", "I", "TCH", "SLOT", "RUF", "C90", "N", "YTT", "ASYNC", "A", "C4", "T10", "PGH"]
+lint.select = ["D", "E", "F", "W", "C", "S", "I", "TCH", "SLOT", "RUF", "C90", "N", "YTT", "ASYNC", "A", "C4", "T10", "PGH", "FURB", "PERF", "AIR", "NPY", "FLY"]
 
 # we need to check 'mood' of all docstrings, this needs to be enabled explicitly
 lint.extend-select = ["D401"]
@@ -53,8 +53,8 @@ build-backend = "pdm.backend"
 
 [project]
 name = "ols"
-version = "0.1.4"
-description = "OpenShift LightSpeed is an AI powered assistant that runs on OpenShift and provides answers to product questions using backend LLM services."
+version = "0.2.1"
+description = "OpenShift Lightspeed is an AI powered assistant that runs on OpenShift and provides answers to product questions using backend LLM services."
 authors = []
 dependencies = [
     "pdm==2.19.3",
@@ -92,6 +92,7 @@ dependencies = [
     "zipp==3.20.1",
     "jinja2==3.1.4",
     "scikit-learn==1.5.1",
+    "starlette==0.40.0",
     "tqdm==4.66.5",
     "gradio==5.4.0",
     "black==24.10.0",
