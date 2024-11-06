@@ -58,7 +58,7 @@ description = "OpenShift Lightspeed is an AI powered assistant that runs on Open
 authors = []
 dependencies = [
     "pdm==2.19.3",
-    "torch==2.4.1",
+    "torch==2.5.1",
     "pandas==2.2.3",
     "fastapi==0.115.4",
     "langchain==0.3.7",
