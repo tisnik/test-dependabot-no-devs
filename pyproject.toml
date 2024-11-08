@@ -93,7 +93,7 @@ dependencies = [
     "jinja2==3.1.4",
     "scikit-learn==1.5.1",
     "starlette==0.41.2",
-    "tqdm==4.66.5",
+    "tqdm==4.67.0",
     "gradio==5.5.0",
     "black==24.10.0",
     "fastparquet==2024.5.0",  # Required for model evaluation (runtime, if parquet qna file is used)
