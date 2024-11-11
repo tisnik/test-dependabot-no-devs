@@ -57,7 +57,7 @@ version = "0.2.1"
 description = "OpenShift Lightspeed is an AI powered assistant that runs on OpenShift and provides answers to product questions using backend LLM services."
 authors = []
 dependencies = [
-    "pdm==2.20.0.post1",
+    "pdm==2.20.1",
     "torch==2.5.1",
     "pandas==2.2.3",
     "fastapi==0.115.4",
