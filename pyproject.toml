@@ -79,7 +79,7 @@ dependencies = [
     "prometheus-client==0.20.0",
     "kubernetes==31.0.0",
     "psycopg2-binary==2.9.10",
-    "azure-identity==1.18.0",
+    "azure-identity==1.19.0",
     "langchain-community==0.3.7",
     "SQLAlchemy==2.0.36",
     "huggingface_hub==0.26.2",
