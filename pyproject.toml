@@ -104,7 +104,7 @@ dependencies = [
     "pytest_asyncio==0.24.0",
     "pydantic==2.9.2",
     "rouge-score==0.1.2",  # Required for model evaluation
-    "ruff==0.7.3",
+    "ruff==0.7.4",
     "bandit==1.7.9",
     "types-requests==2.32.0.20241016",
     "gradio==5.6.0",
