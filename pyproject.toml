@@ -65,7 +65,7 @@ dependencies = [
     "langchain-ibm==0.3.3",
     "llama-index==0.11.23",
     "llama-index-vector-stores-faiss==0.3.0",
-    "llama-index-embeddings-huggingface==0.2.2",
+    "llama-index-embeddings-huggingface==0.4.0",
     "uvicorn==0.32.0",
     "redis==5.2.0",
     "faiss-cpu==1.9.0",
