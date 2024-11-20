@@ -73,7 +73,7 @@ dependencies = [
     "openai==1.54.4",
     "ibm-generative-ai==3.0.0",
     "ibm-cos-sdk==2.13.6",
-    "langchain-openai==0.2.8",
+    "langchain-openai==0.2.9",
     "pydantic==2.9.2",
     "setuptools==75.5.0",
     "prometheus-client==0.21.0",
