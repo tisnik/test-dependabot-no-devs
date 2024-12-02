@@ -109,7 +109,7 @@ dependencies = [
     "types-requests==2.32.0.20241016",
     "gradio==5.6.0",
     "boto3==1.35.70",
-    "reportportal-client==5.5.9",
+    "reportportal-client==5.5.10",
     "pytest-reportportal==5.4.5",
     "pytest-benchmark==5.1.0",
 ]
