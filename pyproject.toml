@@ -108,7 +108,7 @@ dependencies = [
     "bandit==1.7.10",
     "types-requests==2.32.0.20241016",
     "gradio==5.6.0",
-    "boto3==1.35.70",
+    "boto3==1.35.78",
     "reportportal-client==5.5.9",
     "pytest-reportportal==5.4.5",
     "pytest-benchmark==5.1.0",
