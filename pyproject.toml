@@ -70,7 +70,7 @@ dependencies = [
     "redis==5.2.0",
     "faiss-cpu==1.9.0.post1",
     "sentence-transformers==3.3.1",
-    "openai==1.55.1",
+    "openai==1.57.3",
     "ibm-generative-ai==3.0.0",
     "ibm-cos-sdk==2.13.6",
     "langchain-openai==0.2.9",
