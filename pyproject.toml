@@ -81,7 +81,7 @@ dependencies = [
     "pyarrow==18.0.0",
     "ibm-generative-ai==3.0.0",
     "ibm-cos-sdk==2.14.0",
-    "langchain-openai==0.2.9",
+    "langchain-openai==0.2.12",
     "pydantic==2.10.3",
     "setuptools==75.6.0",
     "prometheus-client==0.21.1",
