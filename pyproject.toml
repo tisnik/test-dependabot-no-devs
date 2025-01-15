@@ -69,7 +69,7 @@ dependencies = [
     "fastapi==0.115.6",
     "langchain==0.3.14",
     "langchain-ibm==0.3.5",
-    "llama-index==0.12.2",
+    "llama-index==0.12.10",
     "llama-index-core==0.12.2",
     "llama-index-vector-stores-faiss==0.3.0",
     "llama-index-embeddings-huggingface==0.4.0",
