@@ -104,7 +104,7 @@ dependencies = [
     "tqdm==4.67.1",
     "findpython==0.6.2",
     "filelock==3.17.0",
-    "ffmpy==0.4.0",
+    "ffmpy==0.5.0",
     "virtualenv==20.29.1",
     "msgpack==1.1.0",
     "gradio==5.12.0",
