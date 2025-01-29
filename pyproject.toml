@@ -85,7 +85,7 @@ dependencies = [
     "pydantic==2.9.2",
     "setuptools==75.8.0",
     "prometheus-client==0.21.1",
-    "kubernetes==31.0.0",
+    "kubernetes==32.0.0",
     "psycopg2-binary==2.9.10",
     "azure-identity==1.19.0",
     "langchain-community==0.3.12",
