@@ -75,7 +75,7 @@ dependencies = [
     "llama-index-embeddings-huggingface==0.5.1",
     "uvicorn==0.34.0",
     "redis==5.2.1",
-    "faiss-cpu==1.9.0.post1",
+    "faiss-cpu==1.10.0",
     "sentence-transformers==3.4.1",
     "openai==1.61.0",
     "pyarrow==19.0.0",
