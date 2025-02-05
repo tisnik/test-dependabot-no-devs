@@ -111,7 +111,7 @@ dependencies = [
     "black==25.1.0",
     "pydocstyle==6.3.0",
     "fastparquet==2024.11.0",  # Required for model evaluation (runtime, if parquet qna file is used)
-    "mypy==1.14.1",
+    "mypy==1.15.0",
     "pytest==8.3.4",
     "pytest-cov==6.0.0",
     "pytest_asyncio==0.25.3",
