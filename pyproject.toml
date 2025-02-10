@@ -89,7 +89,7 @@ dependencies = [
     "psycopg2-binary==2.9.10",
     "azure-identity==1.19.0",
     "langchain-community==0.3.16",
-    "SQLAlchemy==2.0.37",
+    "SQLAlchemy==2.0.38",
     "huggingface_hub==0.28.1",
     "ibm-watsonx-ai==1.1.25",
     "certifi==2025.1.31",
