@@ -118,7 +118,7 @@ dependencies = [
     "pydantic==2.10.6",
     "rouge-score==0.1.2",  # Required for model evaluation
     "ruff==0.9.6",
-    "bandit==1.8.2",
+    "bandit==1.8.3",
     "types-requests==2.32.0.20241016",
     "gradio==5.16.0",
     "boto3==1.36.19",
