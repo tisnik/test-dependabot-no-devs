@@ -121,7 +121,7 @@ dependencies = [
     "bandit==1.8.3",
     "types-requests==2.32.0.20241016",
     "gradio==5.17.1",
-    "boto3==1.36.26",
+    "boto3==1.37.0",
     "pyroscope-io==0.8.8",
     "memray==1.15.0",
     "reportportal-client==5.5.10",
