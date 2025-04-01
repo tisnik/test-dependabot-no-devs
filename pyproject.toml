@@ -119,7 +119,7 @@ dependencies = [
     "rouge-score==0.1.2",  # Required for model evaluation
     "ruff==0.9.7",
     "bandit==1.8.3",
-    "types-requests==2.32.0.20241016",
+    "types-requests==2.32.0.20250328",
     "gradio==5.23.2",
     "boto3==1.37.1",
     "pyroscope-io==0.8.8",
