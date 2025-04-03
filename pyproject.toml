@@ -114,7 +114,7 @@ dependencies = [
     "mypy==1.15.0",
     "pytest==8.3.5",
     "pytest-cov==6.0.0",
-    "pytest_asyncio==0.25.3",
+    "pytest_asyncio==0.26.0",
     "pydantic==2.10.6",
     "rouge-score==0.1.2",  # Required for model evaluation
     "ruff==0.9.7",
