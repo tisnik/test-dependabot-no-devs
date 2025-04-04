@@ -76,7 +76,7 @@ dependencies = [
     "uvicorn==0.34.0",
     "redis==5.2.1",
     "faiss-cpu==1.10.0",
-    "sentence-transformers==4.0.1",
+    "sentence-transformers==4.0.2",
     "openai==1.70.0",
     "pyarrow==19.0.1",
     "ibm-generative-ai==3.0.0",
