@@ -113,7 +113,7 @@ dependencies = [
     "fastparquet==2024.11.0",  # Required for model evaluation (runtime, if parquet qna file is used)
     "mypy==1.15.0",
     "pytest==8.3.5",
-    "pytest-cov==6.0.0",
+    "pytest-cov==6.1.1",
     "pytest_asyncio==0.26.0",
     "pydantic==2.11.2",
     "rouge-score==0.1.2",  # Required for model evaluation
