@@ -123,7 +123,7 @@ dependencies = [
     "gradio==5.23.3",
     "boto3==1.37.28",
     "pyroscope-io==0.8.8",
-    "memray==1.16.0",
+    "memray==1.17.0",
     "reportportal-client==5.5.10",
     "pytest-reportportal==5.4.7",
     "pytest-benchmark[histogram]>=4.0.0",
