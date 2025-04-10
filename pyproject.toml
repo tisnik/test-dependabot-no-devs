@@ -83,7 +83,7 @@ dependencies = [
     "ibm-cos-sdk==2.13.6",
     "langchain-openai==0.3.12",
     "pydantic==2.11.3",
-    "setuptools==75.8.2",
+    "setuptools==78.1.0",
     "prometheus-client==0.21.1",
     "kubernetes==32.0.1",
     "psycopg2-binary==2.9.10",
