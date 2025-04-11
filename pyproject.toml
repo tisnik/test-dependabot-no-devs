@@ -127,7 +127,7 @@ dependencies = [
     "reportportal-client==5.5.10",
     "pytest-reportportal==5.4.7",
     "pytest-benchmark[histogram]>=4.0.0",
-    "typing-extensions==4.13.1",
+    "typing-extensions==4.13.2",
     "pytest-subtests==0.14.1",
     "build==1.2.2.post1",
     "twine==6.1.0",
