@@ -122,7 +122,7 @@ dependencies = [
     "types-requests==2.32.0.20250328",
     "gradio==5.25.1",
     "boto3==1.37.32",
-    "pyroscope-io==0.8.9",
+    "pyroscope-io==0.8.10",
     "memray==1.17.1",
     "reportportal-client==5.5.10",
     "pytest-reportportal==5.4.7",
