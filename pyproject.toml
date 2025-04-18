@@ -125,7 +125,7 @@ dependencies = [
     "pyroscope-io==0.8.10",
     "memray==1.17.1",
     "reportportal-client==5.5.10",
-    "pytest-reportportal==5.4.7",
+    "pytest-reportportal==5.5.0",
     "pytest-benchmark[histogram]>=4.0.0",
     "typing-extensions==4.13.2",
     "pytest-subtests==0.14.1",
