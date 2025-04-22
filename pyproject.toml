@@ -73,7 +73,7 @@ dependencies = [
     "llama-index-core==0.12.31",
     "llama-index-vector-stores-faiss==0.3.0",
     "llama-index-embeddings-huggingface==0.5.3",
-    "uvicorn==0.34.1",
+    "uvicorn==0.34.2",
     "redis==5.2.1",
     "faiss-cpu==1.10.0",
     "sentence-transformers==4.1.0",
