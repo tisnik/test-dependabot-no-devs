@@ -65,7 +65,7 @@ dependencies = [
     "pdm==2.24.0",
     "torch==2.6.0",
     "pandas==2.2.3",
-    "httpx==0.27.2",
+    "httpx==0.28.1",
     "fastapi==0.115.12",
     "langchain==0.3.23",
     "langchain-ibm==0.3.10",
