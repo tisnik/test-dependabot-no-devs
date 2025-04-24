@@ -70,7 +70,7 @@ dependencies = [
     "langchain==0.3.24",
     "langchain-ibm==0.3.10",
     "llama-index==0.12.31",
-    "llama-index-core==0.12.32",
+    "llama-index-core==0.12.33",
     "llama-index-vector-stores-faiss==0.3.0",
     "llama-index-embeddings-huggingface==0.5.3",
     "uvicorn==0.34.2",
