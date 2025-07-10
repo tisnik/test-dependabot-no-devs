@@ -1021,7 +1021,7 @@ void render_circle_pattern(unsigned int width, unsigned int height,
     }
 }
 
-void ppm_write_ascii_to_stream(unsigned int width, unsigned int height,
+void ppm_write_binary_to_stream(unsigned int width, unsigned int height,
                                unsigned char *pixels, FILE *fout) {
     int x, y;
     unsigned char r, g, b;
@@ -1042,7 +1042,7 @@ void ppm_write_ascii_to_stream(unsigned int width, unsigned int height,
     }
 }
 
-int ppm_write_ascii(unsigned int width, unsigned int height,
+int ppm_write_binary(unsigned int width, unsigned int height,
                     unsigned char *pixels, const char *file_name) {
     FILE *fout;
 
@@ -1051,7 +1051,7 @@ int ppm_write_ascii(unsigned int width, unsigned int height,
         return -1;
     }
 
-    ppm_write_ascii_to_stream(width, height, pixels, fout);
+    ppm_write_binary_to_stream(width, height, pixels, fout);
 
     if (fclose(fout) == EOF) {
         return -1;
@@ -1119,7 +1119,7 @@ int main(void) {
 #define HEIGHT 256
     unsigned char *pixels = (unsigned char *)malloc(WIDTH * HEIGHT * 4);
     render_test_rgb_image(WIDTH, HEIGHT, pixels, 0);
-    ppm_write_ascii(WIDTH, HEIGHT, pixels, "test_rgb_1.ppm");
+    ppm_write_binary(WIDTH, HEIGHT, pixels, "test_rgb_1.ppm");
     bmp_write(WIDTH, HEIGHT, pixels, "test_rgb_1.bmp");
     return 0;
 }
