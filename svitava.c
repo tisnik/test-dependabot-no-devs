@@ -1028,7 +1028,7 @@ void ppm_write_binary_to_stream(unsigned int width, unsigned int height,
     unsigned char *p = pixels;
 
     /* header */
-    fprintf(fout, "P3 %d %d 255\n", width, height);
+    fprintf(fout, "P6 %d %d 255\n", width, height);
 
     /* pixel array */
     for (y = height - 1; y >= 0; y--) {
