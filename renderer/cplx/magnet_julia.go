@@ -21,6 +21,7 @@ import (
 func CalcMagnetJulia(
 	params params.Cplx,
 	image deepimage.Image) {
+	const MIN_VALUE = 1.0 - 100
 
 	cx := params.Cx0
 	cy := params.Cy0
@@ -47,7 +48,6 @@ func CalcMagnetJulia(
 				bzx := 2.0*zx + cx - 2
 				bzy := 2.0*zy + cy
 				div := bzx*bzx + bzy*bzy
-				const MIN_VALUE = 1.0 - 100
 				if div < MIN_VALUE {
 					break
 				}

@@ -40,6 +40,14 @@ func NewSingleGoroutineRenderer() Renderer {
 type fractalFunction = func(params params.Cplx, deepImage deepimage.Image)
 
 func render(width uint, height uint, params params.Cplx, palette palettes.Palette, function fractalFunction) image.Image {
+	if width == 0 || height == 0 {
+		// TODO: logging
+		return nil
+	}
+	if function == nil {
+		// TODO: logging
+		return nil
+	}
 	deepImage := deepimage.New(width, height)
 	function(params, deepImage)
 	deepImage.ApplyPalette(palette)
@@ -47,18 +55,24 @@ func render(width uint, height uint, params params.Cplx, palette palettes.Palett
 }
 
 func (r SingleGoroutineRenderer) RenderComplexFractal(resolution im.Resolution, params params.Cplx, palette palettes.Palette) image.Image {
-	functions := map[string]fractalFunction{}
-	// TODO: change to params.Type!!!
-	functions["Classic Mandelbrot set"] = cplx.CalcMandelbrotComplex
-	functions["Mandelbrot set z=z^3+c"] = cplx.CalcMandelbrotZ3
-	functions["Mandelbrot set z=z^4+c"] = cplx.CalcMandelbrotZ4
-	functions["Phoenix set, Mandelbrot variant"] = cplx.CalcPhoenixM
-	functions["Phoenix set, Julia variant"] = cplx.CalcPhoenixJ
-	functions["Lambda, Mandelbrot variant"] = cplx.CalcMandelLambda
-	functions["Lambda, Julia variant"] = cplx.CalcLambda
-	functions["Manowar, Mandelbrot variant"] = cplx.CalcManowarM
+	functions := map[string]fractalFunction{
+		"Classic Mandelbrot set":          cplx.CalcMandelbrotComplex,
+		"Mandelbrot set z=z^3+c":          cplx.CalcMandelbrotZ3,
+		"Mandelbrot set z=z^4+c":          cplx.CalcMandelbrotZ4,
+		"Phoenix set, Mandelbrot variant": cplx.CalcPhoenixM,
+		"Phoenix set, Julia variant":      cplx.CalcPhoenixJ,
+		"Lambda, Mandelbrot variant":      cplx.CalcMandelLambda,
+		"Lambda, Julia variant":           cplx.CalcLambda,
+		"Manowar, Mandelbrot variant":     cplx.CalcManowarM,
+	}
 
-	return render(resolution.Width, resolution.Height, params, palette, functions[params.Name])
+	function, exists := functions[params.Name]
+	if !exists {
+		// Return default function
+		function = cplx.CalcMandelbrotComplex
+	}
+
+	return render(resolution.Width, resolution.Height, params, palette, function)
 }
 
 // RenderMandelbrotFractal renders a classic Mandelbrot fractal into provided Image.
@@ -66,7 +80,7 @@ func RenderMandelbrotFractal(width uint, height uint, pcx float64, pcy float64, 
 	params := params.Cplx{
 		Cx0:     0,
 		Cy0:     0,
-		Maxiter: 1000,
+		Maxiter: maxiter,
 	}
 	return render(width, height, params, palette, cplx.CalcMandelbrotComplex)
 }
@@ -76,7 +90,7 @@ func RenderJuliaFractal(width uint, height uint, maxiter uint, palette palettes.
 	params := params.Cplx{
 		Cx0:     0.0,
 		Cy0:     1.0,
-		Maxiter: 1000,
+		Maxiter: maxiter,
 	}
 	return render(width, height, params, palette, cplx.CalcJulia)
 }
@@ -86,7 +100,7 @@ func RenderBarnsleyFractalM1(width uint, height uint, maxiter uint, palette pale
 	params := params.Cplx{
 		Cx0:     0.0,
 		Cy0:     1.0,
-		Maxiter: 1000,
+		Maxiter: maxiter,
 	}
 	return render(width, height, params, palette, cplx.CalcBarnsleyM1)
 }
@@ -96,7 +110,7 @@ func RenderBarnsleyFractalM2(width uint, height uint, maxiter uint, palette pale
 	params := params.Cplx{
 		Cx0:     0.0,
 		Cy0:     1.0,
-		Maxiter: 1000,
+		Maxiter: maxiter,
 	}
 	return render(width, height, params, palette, cplx.CalcBarnsleyM2)
 }
@@ -106,7 +120,7 @@ func RenderBarnsleyFractalM3(width uint, height uint, maxiter uint, palette pale
 	params := params.Cplx{
 		Cx0:     0.0,
 		Cy0:     1.0,
-		Maxiter: 1000,
+		Maxiter: maxiter,
 	}
 	return render(width, height, params, palette, cplx.CalcBarnsleyM3)
 }
@@ -116,7 +130,7 @@ func RenderBarnsleyFractalJ1(width uint, height uint, maxiter uint, palette pale
 	params := params.Cplx{
 		Cx0:     0.48,
 		Cy0:     -1.32,
-		Maxiter: 1000,
+		Maxiter: maxiter,
 	}
 	return render(width, height, params, palette, cplx.CalcBarnsleyJ1)
 }
@@ -126,7 +140,7 @@ func RenderBarnsleyFractalJ2(width uint, height uint, maxiter uint, palette pale
 	params := params.Cplx{
 		Cx0:     0.5,
 		Cy0:     1.2,
-		Maxiter: 1000,
+		Maxiter: maxiter,
 	}
 	return render(width, height, params, palette, cplx.CalcBarnsleyJ2)
 }
@@ -136,7 +150,7 @@ func RenderBarnsleyFractalJ3(width uint, height uint, maxiter uint, palette pale
 	params := params.Cplx{
 		Cx0:     0.0,
 		Cy0:     0.0,
-		Maxiter: 1000,
+		Maxiter: maxiter,
 	}
 	return render(width, height, params, palette, cplx.CalcBarnsleyJ3)
 }
@@ -146,12 +160,12 @@ func RenderMagnetFractal(width uint, height uint, maxiter uint, palette palettes
 	/*params := params.Cplx{
 		Cx0:     1.1,
 		Cy0:     1.1,
-		Maxiter: 1000,
+		Maxiter: maxiter,
 	}*/
 	params := params.Cplx{
 		Cx0:     0.0,
 		Cy0:     0.0,
-		Maxiter: 1000,
+		Maxiter: maxiter,
 	}
 	return render(width, height, params, palette, cplx.CalcMagnet)
 }
@@ -161,7 +175,7 @@ func RenderMagnetJuliaFractal(width uint, height uint, maxiter uint, palette pal
 	params := params.Cplx{
 		Cx0:     0.5,
 		Cy0:     -1.5,
-		Maxiter: 1000,
+		Maxiter: maxiter,
 	}
 	return render(width, height, params, palette, cplx.CalcMagnetJulia)
 }

@@ -21,6 +21,7 @@ import (
 func CalcMagnet(
 	params params.Cplx,
 	image deepimage.Image) {
+	const MIN_VALUE = 1.0 - 100
 
 	var cy float64 = -2.0
 	for y := uint(0); y < image.Resolution.Height; y++ {
@@ -45,7 +46,6 @@ func CalcMagnet(
 				bzx := 2.0*zx + cx - 2
 				bzy := 2.0*zy + cy
 				div := bzx*bzx + bzy*bzy
-				const MIN_VALUE = 1.0 - 100
 				if div < MIN_VALUE {
 					break
 				}
