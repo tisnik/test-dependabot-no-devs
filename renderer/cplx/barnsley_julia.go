@@ -17,7 +17,9 @@ import (
 	"github.com/tisnik/svitava-go/params"
 )
 
-// CalcBarnsleyJ1 calculates Barnsley J1 Mandelbrot-like set
+// CalcBarnsleyJ1 computes the Barnsley J1 Mandelbrot-like fractal set for a given complex parameter and stores the results in the provided image.
+// 
+// For each pixel, the function maps coordinates to the complex plane, iterates a conditional transformation up to a maximum number of iterations or until escape, and records the final complex value and iteration count in the image.
 func CalcBarnsleyJ1(
 	params params.Cplx,
 	image deepimage.Image) {
@@ -58,7 +60,9 @@ func CalcBarnsleyJ1(
 	}
 }
 
-// CalcBarnsleyJ2 calculates Barnsley J2 Mandelbrot-like set
+// CalcBarnsleyJ2 computes the Barnsley J2 fractal set for the given parameters and stores the results in the provided image.
+// 
+// For each pixel, it maps coordinates to the complex plane, iterates a conditional transformation based on a linear combination of the current complex values and parameters, and records the final complex value and iteration count in the image.
 func CalcBarnsleyJ2(
 	params params.Cplx,
 	image deepimage.Image) {
@@ -99,7 +103,9 @@ func CalcBarnsleyJ2(
 	}
 }
 
-// CalcBarnsleyJ3 calculates Barnsley J3 Mandelbrot-like set
+// CalcBarnsleyJ3 computes the Barnsley J3 fractal set for each pixel in the image grid.
+// 
+// For each pixel, it maps coordinates to the complex plane, iterates a conditional quadratic transformation up to a maximum iteration count or until escape, and stores the resulting complex value and iteration count in the image arrays. The transformation varies based on the sign of the real part of the complex value.
 func CalcBarnsleyJ3(
 	params params.Cplx,
 	image deepimage.Image) {

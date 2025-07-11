@@ -17,7 +17,12 @@ import (
 	"github.com/tisnik/svitava-go/params"
 )
 
-// CalcMagnet calculates Magnet Mandelbrot-like set
+// CalcMagnet computes the Magnet fractal set for the given image and parameters.
+//
+// For each pixel in the image, this function maps the pixel to a point in the complex plane,
+// iterates a custom fractal formula up to a maximum number of iterations, and stores the resulting
+// complex value and iteration count in the image's pixel data. The fractal is computed over the
+// region [-2, 2] on both real and imaginary axes.
 func CalcMagnet(
 	params params.Cplx,
 	image deepimage.Image) {

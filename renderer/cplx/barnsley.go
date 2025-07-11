@@ -17,7 +17,9 @@ import (
 	"github.com/tisnik/svitava-go/params"
 )
 
-// CalcBarnsleyM1 calculates Barnsley M1 Mandelbrot-like set
+// CalcBarnsleyM1 computes the Barnsley M1 Mandelbrot-like fractal set over a 2D grid.
+// 
+// For each pixel in the image, it maps the pixel to a complex coordinate in the range [-2, 2] and iteratively applies a conditional affine transformation based on the real part of the current value. Iteration stops when the magnitude squared exceeds 4 or the maximum iteration count is reached. The final complex value and iteration count are stored in the image at the corresponding pixel location.
 func CalcBarnsleyM1(
 	params params.Cplx,
 	image deepimage.Image) {
@@ -56,7 +58,9 @@ func CalcBarnsleyM1(
 	}
 }
 
-// CalcBarnsleyM2 calculates Barnsley M2 Mandelbrot-like set
+// CalcBarnsleyM2 computes the Barnsley M2 Mandelbrot-like fractal set over a 2D grid and stores the results in the provided image.
+// 
+// For each pixel, the function maps its coordinates to a complex number in the range [-2, 2], iteratively applies a conditional affine transformation based on the sign of zx*cy + zy*cx, and records the final complex value and iteration count in the image. Iteration stops if the squared magnitude exceeds 4 or the maximum iteration count is reached.
 func CalcBarnsleyM2(
 	params params.Cplx,
 	image deepimage.Image) {
@@ -95,7 +99,9 @@ func CalcBarnsleyM2(
 	}
 }
 
-// CalcBarnsleyM3 calculates Barnsley M3 Mandelbrot-like set
+// CalcBarnsleyM3 computes the Barnsley M3 Mandelbrot-like fractal set and stores the results in the provided image.
+// 
+// For each pixel, it maps the coordinates to the complex plane, iterates a transformation based on the sign of the real part, and records the final complex value and iteration count. The process covers the region [-2, 2] for both real and imaginary axes.
 func CalcBarnsleyM3(
 	params params.Cplx,
 	image deepimage.Image) {

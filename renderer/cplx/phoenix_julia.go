@@ -17,7 +17,9 @@ import (
 	"github.com/tisnik/svitava-go/params"
 )
 
-// CalcPhoenixJ calculates Phoenix Julia-like set
+// CalcPhoenixJ computes the Phoenix Julia-like fractal set and stores the results in the provided image.
+// 
+// For each pixel in the image, this function maps the pixel to a point in the complex plane, iterates the Phoenix Julia formula up to a maximum number of iterations, and records both the final complex value and the iteration count for that pixel. The computation covers the region from -2.0 to +2.0 on both real and imaginary axes.
 func CalcPhoenixJ(
 	params params.Cplx,
 	image deepimage.Image) {

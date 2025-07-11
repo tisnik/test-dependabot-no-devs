@@ -12,6 +12,7 @@
 
 package renderer
 
+// init prints "Init" to standard output when the renderer package is initialized.
 func init() {
 	println("Init")
 }
