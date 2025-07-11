@@ -17,7 +17,8 @@ import (
 	"github.com/tisnik/svitava-go/params"
 )
 
-// CalcJulia calculates classic Julia fractal
+// CalcJulia generates a Julia fractal image by iterating the classic Julia set formula over each pixel.
+// The resulting complex values and iteration counts are stored in the provided image structure.
 func CalcJulia(
 	params params.Cplx,
 	image deepimage.Image) {

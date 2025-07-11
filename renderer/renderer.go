@@ -22,6 +22,7 @@ import (
 	"github.com/tisnik/svitava-go/renderer/cplx"
 )
 
+// init prints "Init" when the package is initialized.
 func init() {
 	println("Init")
 }
@@ -33,12 +34,15 @@ type Renderer interface {
 type SingleGoroutineRenderer struct {
 }
 
+// NewSingleGoroutineRenderer returns a Renderer that renders fractals using a single goroutine.
 func NewSingleGoroutineRenderer() Renderer {
 	return SingleGoroutineRenderer{}
 }
 
 type fractalFunction = func(params params.Cplx, deepImage deepimage.Image)
 
+// render generates a fractal image of the specified dimensions using the provided fractal parameters, palette, and fractal calculation function.
+// It returns the resulting image, or nil if the dimensions are zero or the fractal function is nil.
 func render(width uint, height uint, params params.Cplx, palette palettes.Palette, function fractalFunction) image.Image {
 	if width == 0 || height == 0 {
 		// TODO: logging
@@ -75,7 +79,7 @@ func (r SingleGoroutineRenderer) RenderComplexFractal(resolution im.Resolution, 
 	return render(resolution.Width, resolution.Height, params, palette, function)
 }
 
-// RenderMandelbrotFractal renders a classic Mandelbrot fractal into provided Image.
+// RenderMandelbrotFractal generates an image of the classic Mandelbrot fractal using the specified dimensions, maximum iterations, and color palette.
 func RenderMandelbrotFractal(width uint, height uint, pcx float64, pcy float64, maxiter uint, palette palettes.Palette) image.Image {
 	params := params.Cplx{
 		Cx0:     0,
@@ -85,7 +89,10 @@ func RenderMandelbrotFractal(width uint, height uint, pcx float64, pcy float64, 
 	return render(width, height, params, palette, cplx.CalcMandelbrotComplex)
 }
 
-// RenderJuliaFractal renders a classic Julia fractal into provided Image.
+// RenderJuliaFractal generates an image of the classic Julia fractal with preset parameters.
+//
+// The fractal is rendered using the specified image dimensions, maximum iteration count, and color palette.
+// The Julia set is centered at (0.0, 1.0) in the complex plane.
 func RenderJuliaFractal(width uint, height uint, maxiter uint, palette palettes.Palette) image.Image {
 	params := params.Cplx{
 		Cx0:     0.0,
@@ -95,7 +102,8 @@ func RenderJuliaFractal(width uint, height uint, maxiter uint, palette palettes.
 	return render(width, height, params, palette, cplx.CalcJulia)
 }
 
-// RenderBarnsleyFractalM1 renders a classic Barnsley fractal M1 into provided Image.
+// RenderBarnsleyFractalM1 generates an image of the Barnsley fractal variant M1 using preset parameters.
+// The fractal is rendered with the specified dimensions, maximum iterations, and color palette.
 func RenderBarnsleyFractalM1(width uint, height uint, maxiter uint, palette palettes.Palette) image.Image {
 	params := params.Cplx{
 		Cx0:     0.0,
@@ -105,7 +113,7 @@ func RenderBarnsleyFractalM1(width uint, height uint, maxiter uint, palette pale
 	return render(width, height, params, palette, cplx.CalcBarnsleyM1)
 }
 
-// RenderBarnsleyFractalM2 renders a classic Barnsley fractal M2 into provided Image.
+// RenderBarnsleyFractalM2 generates an image of the Barnsley fractal variant M2 using preset parameters and the specified palette.
 func RenderBarnsleyFractalM2(width uint, height uint, maxiter uint, palette palettes.Palette) image.Image {
 	params := params.Cplx{
 		Cx0:     0.0,
@@ -115,7 +123,7 @@ func RenderBarnsleyFractalM2(width uint, height uint, maxiter uint, palette pale
 	return render(width, height, params, palette, cplx.CalcBarnsleyM2)
 }
 
-// RenderBarnsleyFractalM3 renders a classic Barnsley fractal M3 into provided Image.
+// RenderBarnsleyFractalM3 generates an image of the Barnsley fractal variant M3 using preset parameters and the specified palette.
 func RenderBarnsleyFractalM3(width uint, height uint, maxiter uint, palette palettes.Palette) image.Image {
 	params := params.Cplx{
 		Cx0:     0.0,
@@ -125,7 +133,7 @@ func RenderBarnsleyFractalM3(width uint, height uint, maxiter uint, palette pale
 	return render(width, height, params, palette, cplx.CalcBarnsleyM3)
 }
 
-// RenderBarnsleyFractalJ1 renders a classic Barnsley fractal J1 into provided Image.
+// RenderBarnsleyFractalJ1 generates an image of the Barnsley J1 fractal using preset parameters and the specified palette.
 func RenderBarnsleyFractalJ1(width uint, height uint, maxiter uint, palette palettes.Palette) image.Image {
 	params := params.Cplx{
 		Cx0:     0.48,
@@ -135,7 +143,7 @@ func RenderBarnsleyFractalJ1(width uint, height uint, maxiter uint, palette pale
 	return render(width, height, params, palette, cplx.CalcBarnsleyJ1)
 }
 
-// RenderBarnsleyFractalJ2 renders a classic Barnsley fractal J2 into provided Image.
+// RenderBarnsleyFractalJ2 generates an image of the Barnsley J2 fractal using preset parameters and the specified color palette.
 func RenderBarnsleyFractalJ2(width uint, height uint, maxiter uint, palette palettes.Palette) image.Image {
 	params := params.Cplx{
 		Cx0:     0.5,
@@ -145,7 +153,7 @@ func RenderBarnsleyFractalJ2(width uint, height uint, maxiter uint, palette pale
 	return render(width, height, params, palette, cplx.CalcBarnsleyJ2)
 }
 
-// RenderBarnsleyFractalJ3 renders a classic Barnsley fractal J3 into provided Image.
+// RenderBarnsleyFractalJ3 generates an image of the Barnsley J3 fractal using the specified dimensions, iteration limit, and color palette.
 func RenderBarnsleyFractalJ3(width uint, height uint, maxiter uint, palette palettes.Palette) image.Image {
 	params := params.Cplx{
 		Cx0:     0.0,
@@ -155,7 +163,7 @@ func RenderBarnsleyFractalJ3(width uint, height uint, maxiter uint, palette pale
 	return render(width, height, params, palette, cplx.CalcBarnsleyJ3)
 }
 
-// RenderMagnet renders a classic Magnet fractal into provided Image.
+// RenderMagnetFractal generates an image of the classic Magnet fractal using the specified dimensions, maximum iterations, and color palette.
 func RenderMagnetFractal(width uint, height uint, maxiter uint, palette palettes.Palette) image.Image {
 	/*params := params.Cplx{
 		Cx0:     1.1,
@@ -170,7 +178,7 @@ func RenderMagnetFractal(width uint, height uint, maxiter uint, palette palettes
 	return render(width, height, params, palette, cplx.CalcMagnet)
 }
 
-// RenderMagnet renders a classic Magnet Julia fractal into provided Image.
+// RenderMagnetJuliaFractal generates a Magnet Julia fractal image with the specified dimensions, maximum iterations, and color palette.
 func RenderMagnetJuliaFractal(width uint, height uint, maxiter uint, palette palettes.Palette) image.Image {
 	params := params.Cplx{
 		Cx0:     0.5,

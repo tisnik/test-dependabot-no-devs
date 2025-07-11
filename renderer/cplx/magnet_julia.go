@@ -17,7 +17,9 @@ import (
 	"github.com/tisnik/svitava-go/params"
 )
 
-// CalcMagnet calculates Magnet Julia-like set
+// CalcMagnetJulia computes the Magnet Julia-like fractal set and writes the resulting complex values and iteration counts into the provided image.
+// 
+// For each pixel in the image, this function iterates a specific complex transformation up to a maximum number of iterations or until escape conditions are met. The final complex value and the number of iterations are stored in the image's pixel arrays. The fractal is mapped over the region [-2, 2] in both real and imaginary axes.
 func CalcMagnetJulia(
 	params params.Cplx,
 	image deepimage.Image) {

@@ -17,7 +17,9 @@ import (
 	"github.com/tisnik/svitava-go/params"
 )
 
-// CalcPhoenixM calculates Phoenix Mandelbrot-like set
+// CalcPhoenixM computes the Phoenix Mandelbrot-like fractal set and stores the results in the provided image.
+// 
+// For each pixel in the image, this function maps its coordinates to the complex plane, iteratively applies the Phoenix Mandelbrot formula, and records the resulting complex value and iteration count in the image's data arrays. The calculation covers the region from -2.0 to 2.0 on both axes of the complex plane.
 func CalcPhoenixM(
 	params params.Cplx,
 	image deepimage.Image) {

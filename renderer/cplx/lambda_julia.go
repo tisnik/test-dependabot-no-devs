@@ -17,7 +17,9 @@ import (
 	"github.com/tisnik/svitava-go/params"
 )
 
-// CalcLambda calculates Julia variant of Lambda fractal
+// CalcLambda computes the Julia variant of the Lambda fractal for the specified parameters and stores the results in the provided image.
+// 
+// For each pixel in the image, the function maps its coordinates to a region of the complex plane, iteratively applies the fractal formula z = c * z * (1 - z), and records both the final complex value and the iteration count at which the escape condition is met. The region spans from -1.0 to 2.0 on the real axis and -1.5 to 1.5 on the imaginary axis.
 func CalcLambda(
 	params params.Cplx,
 	image deepimage.Image) {

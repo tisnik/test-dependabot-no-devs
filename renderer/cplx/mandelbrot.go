@@ -17,7 +17,9 @@ import (
 	"github.com/tisnik/svitava-go/params"
 )
 
-// CalcMandelbrot calculates Mandelbrot set into the provided ZPixels
+// CalcMandelbrot computes the Mandelbrot set for each pixel using explicit real and imaginary parts and stores the results in the provided image.
+// 
+// For each pixel, maps its coordinates to a point in the complex plane, iterates z = z*z + c up to a maximum iteration count or until the escape condition is met, and records the final complex value and iteration count in the image.
 func CalcMandelbrot(
 	params params.Cplx,
 	image deepimage.Image) {
@@ -48,7 +50,9 @@ func CalcMandelbrot(
 }
 
 // CalcMandelbrotComplex calculates Mandelbrot set into the provided ZPixels
-// Calculations use complex numbers
+// CalcMandelbrotComplex computes the Mandelbrot set for each pixel using Go's complex128 type and stores the results in the provided image.
+// 
+// For each pixel, the function maps its coordinates to a point in the complex plane, iterates z = z*z + c up to a maximum number of iterations or until the magnitude exceeds 2, and records the final complex value and iteration count in the image. The initial value of z is set from the provided parameters.
 func CalcMandelbrotComplex(
 	params params.Cplx,
 	image deepimage.Image) {
@@ -78,7 +82,8 @@ func CalcMandelbrotComplex(
 }
 
 // CalcMandelbrotZ3 calculates Mandelbrot set z=z^3+c into the provided ZPixels
-// Calculations use complex numbers
+// CalcMandelbrotZ3 computes a Mandelbrot set variant using the cubic iteration z = z³ + c for each pixel in the image.
+// For each pixel, it maps coordinates to the complex plane, iterates up to a maximum count or until escape, and stores the final complex value and iteration count in the image.
 func CalcMandelbrotZ3(
 	params params.Cplx,
 	image deepimage.Image) {
@@ -108,7 +113,8 @@ func CalcMandelbrotZ3(
 }
 
 // CalcMandelbrotZ4 calculates Mandelbrot set z=z^4+c into the provided ZPixels
-// Calculations use complex numbers
+// CalcMandelbrotZ4 computes the Mandelbrot set using the quartic iteration z = z⁴ + c and stores the results in the provided image.
+// For each pixel, it maps coordinates to the complex plane, iterates up to the maximum iteration count or until escape, and records the final complex value and iteration count.
 func CalcMandelbrotZ4(
 	params params.Cplx,
 	image deepimage.Image) {
