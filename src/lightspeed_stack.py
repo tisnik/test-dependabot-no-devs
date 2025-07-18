@@ -23,7 +23,14 @@ logger = logging.getLogger(__name__)
 
 
 def create_argument_parser() -> ArgumentParser:
-    """Create and configure argument parser object."""
+    """
+    Create and return an argument parser configured for Lightspeed stack service command-line options.
+    
+    The parser supports flags for verbosity, dumping configuration, specifying a configuration file, and selecting between the web service and data collector service.
+     
+    Returns:
+        ArgumentParser: Configured argument parser for the service entry point.
+    """
     parser = ArgumentParser()
     parser.add_argument(
         "-v",
@@ -59,7 +66,11 @@ def create_argument_parser() -> ArgumentParser:
 
 
 def main() -> None:
-    """Entry point to the web service."""
+    """
+    Starts the Lightspeed stack service based on command-line arguments.
+    
+    Depending on the provided options, this function loads configuration, initializes LlamaStack clients, and either dumps the configuration, starts the data collector service, or launches the web service.
+    """
     logger.info("Lightspeed stack startup")
     parser = create_argument_parser()
     args = parser.parse_args()

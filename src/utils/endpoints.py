@@ -8,7 +8,11 @@ from configuration import AppConfig
 
 
 def check_configuration_loaded(configuration: AppConfig) -> None:
-    """Check that configuration is loaded and raise exception when it is not."""
+    """
+    Raises an HTTP 500 error if the application configuration is not loaded.
+    
+    If the provided configuration is None, an HTTPException is raised with a JSON detail indicating the configuration is missing.
+    """
     if configuration is None:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -17,7 +21,14 @@ def check_configuration_loaded(configuration: AppConfig) -> None:
 
 
 def get_system_prompt(query_request: QueryRequest, configuration: AppConfig) -> str:
-    """Get the system prompt: the provided one, configured one, or default one."""
+    """
+    Determine the appropriate system prompt for a query request based on request data and application configuration.
+    
+    If custom system prompts are disabled in the configuration and the request includes one, raises an HTTP 422 error. Otherwise, returns the system prompt from the request if present, then from the configuration if available, or falls back to a default system prompt.
+    
+    Returns:
+        str: The selected system prompt string.
+    """
     system_prompt_disabled = (
         configuration.customization is not None
         and configuration.customization.disable_query_system_prompt

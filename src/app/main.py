@@ -40,7 +40,9 @@ routers.include_routers(app)
 
 @app.on_event("startup")
 async def startup_event() -> None:
-    """Perform logger setup on service startup."""
+    """
+    Handles application startup tasks, including registering MCP servers and initializing endpoint handler logging.
+    """
     logger.info("Registering MCP servers")
     await register_mcp_servers_async(logger, configuration.configuration)
     get_logger("app.endpoints.handlers")

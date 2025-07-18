@@ -32,7 +32,12 @@ authorized_responses: dict[int | str, dict[str, Any]] = {
 
 @router.post("/authorized", responses=authorized_responses)
 def authorized_endpoint_handler(_request: Request) -> AuthorizedResponse:
-    """Handle request to the /authorized endpoint."""
+    """
+    Handles POST requests to the /authorized endpoint, authenticating the user and returning their user ID and username.
+    
+    Returns:
+        AuthorizedResponse: Contains the authenticated user's ID and username.
+    """
     # Ignore the user token, we should not return it in the response
     user_id, user_name, _ = asyncio.run(auth_dependency(_request))
     return AuthorizedResponse(user_id=user_id, username=user_name)

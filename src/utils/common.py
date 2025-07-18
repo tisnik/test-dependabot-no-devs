@@ -15,14 +15,10 @@ from models.config import Configuration, ModelContextProtocolServer
 
 # TODO(lucasagomes): implement this function to retrieve user ID from auth
 def retrieve_user_id(auth: Any) -> str:  # pylint: disable=unused-argument
-    """Retrieve the user ID from the authentication handler.
-
-    Args:
-        auth: The Authentication handler (FastAPI Depends) that will
-            handle authentication Logic.
-
-    Returns:
-        str: The user ID.
+    """
+    Return a placeholder user ID string.
+    
+    This function is intended to extract a user ID from an authentication handler, but currently returns a fixed placeholder value.
     """
     return "user_id_placeholder"
 
@@ -30,7 +26,11 @@ def retrieve_user_id(auth: Any) -> str:  # pylint: disable=unused-argument
 async def register_mcp_servers_async(
     logger: Logger, configuration: Configuration
 ) -> None:
-    """Register Model Context Protocol (MCP) servers with the LlamaStack client (async)."""
+    """
+    Asynchronously registers all configured Model Context Protocol (MCP) servers with the LlamaStack client.
+    
+    If no MCP servers are specified in the configuration, the function exits early. Depending on the configuration, it uses either the asynchronous library client or the synchronous service client to perform the registration.
+    """
     # Skip MCP registration if no MCP servers are configured
     if not configuration.mcp_servers:
         logger.debug("No MCP servers configured, skipping registration")
@@ -54,7 +54,11 @@ async def _register_mcp_toolgroups_async(
     mcp_servers: List[ModelContextProtocolServer],
     logger: Logger,
 ) -> None:
-    """Async logic for registering MCP toolgroups."""
+    """
+    Asynchronously registers MCP toolgroups with the provided async client for any MCP servers not already registered.
+    
+    For each MCP server in the list, checks if its name is absent from the currently registered toolgroups and, if so, registers it using the client's async registration method.
+    """
     # Get registered tools
     registered_toolgroups = await client.toolgroups.list()
     registered_toolgroups_ids = [
@@ -82,7 +86,11 @@ def _register_mcp_toolgroups_sync(
     mcp_servers: List[ModelContextProtocolServer],
     logger: Logger,
 ) -> None:
-    """Sync logic for registering MCP toolgroups."""
+    """
+    Register MCP toolgroups with the LlamaStack client for each MCP server not already registered.
+    
+    For each MCP server in the provided list, checks if its name is absent from the currently registered toolgroups. If so, registers the toolgroup with the client using the server's details.
+    """
     # Get registered tool groups
     registered_toolgroups = client.toolgroups.list()
     registered_toolgroups_ids = [

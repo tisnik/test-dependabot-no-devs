@@ -50,7 +50,14 @@ async def get_agent(
     available_shields: list[str],
     conversation_id: str | None,
 ) -> tuple[AsyncAgent, str]:
-    """Get existing agent or create a new one with session persistence."""
+    """
+    Retrieve an existing AsyncAgent for the given conversation ID or create a new one with session persistence.
+    
+    If a conversation ID is provided and an agent exists in the cache, it is reused; otherwise, a new agent is created with the specified model, system prompt, and shields, and a new session is initialized. The agent is cached for future reuse.
+    
+    Returns:
+        A tuple containing the AsyncAgent instance and the associated conversation ID.
+    """
     if conversation_id is not None:
         agent = _agent_cache.get(conversation_id)
         if agent:
@@ -76,16 +83,28 @@ METADATA_PATTERN = re.compile(r"\nMetadata: (\{.+})\n")
 
 
 def format_stream_data(d: dict) -> str:
-    """Format outbound data in the Event Stream Format."""
+    """
+    Formats a dictionary as a Server-Sent Events (SSE) data message.
+    
+    Parameters:
+        d (dict): The data to be serialized and sent as an SSE event.
+    
+    Returns:
+        str: The SSE-formatted string containing the JSON-serialized data.
+    """
     data = json.dumps(d)
     return f"data: {data}\n\n"
 
 
 def stream_start_event(conversation_id: str) -> str:
-    """Yield the start of the data stream.
-
-    Args:
-        conversation_id: The conversation ID (UUID).
+    """
+    Return an SSE-formatted start event containing the conversation ID.
+    
+    Parameters:
+    	conversation_id (str): Unique identifier for the conversation.
+    
+    Returns:
+    	str: Server-Sent Events (SSE) formatted string signaling the start of the stream.
     """
     return format_stream_data(
         {
@@ -98,7 +117,15 @@ def stream_start_event(conversation_id: str) -> str:
 
 
 def stream_end_event(metadata_map: dict) -> str:
-    """Yield the end of the data stream."""
+    """
+    Return a Server-Sent Events (SSE) formatted end event containing referenced document metadata and placeholders for token counts and quotas.
+    
+    Parameters:
+        metadata_map (dict): A dictionary containing metadata entries, from which referenced documents are extracted.
+    
+    Returns:
+        str: An SSE-formatted string representing the end of the data stream, including referenced documents and placeholder fields.
+    """
     return format_stream_data(
         {
             "event": "end",
@@ -123,22 +150,17 @@ def stream_end_event(metadata_map: dict) -> str:
 
 
 def stream_build_event(chunk: Any, chunk_id: int, metadata_map: dict) -> str | None:
-    """Build a streaming event from a chunk response.
-
-    This function processes chunks from the LLama Stack streaming response and formats
-    them into Server-Sent Events (SSE) format for the client. It handles two main
-    event types:
-
-    1. step_progress: Contains text deltas from the model inference process
-    2. step_complete: Contains information about completed tool execution steps
-
-    Args:
-        chunk: The streaming chunk from LLama Stack containing event data
-        chunk_id: The current chunk ID counter (gets incremented for each token)
-
+    """
+    Processes a streaming chunk from the Llama Stack response and formats it as a Server-Sent Event (SSE) data string.
+    
+    If the chunk represents model token progress, returns a token event with the generated text. If the chunk indicates completion of a tool execution step, extracts and stores document metadata from tool responses and returns a token event with the tool name. Returns None if the chunk does not contain relevant event data.
+    
+    Parameters:
+        chunk_id (int): The sequential identifier for the current chunk.
+        metadata_map (dict): A dictionary to accumulate extracted document metadata.
+    
     Returns:
-        str | None: A formatted SSE data string with event information, or None if
-                   the chunk doesn't contain processable event data
+        str | None: SSE-formatted event string if processable data is present, otherwise None.
     """
     # pylint: disable=R1702
     if hasattr(chunk.event, "payload"):
@@ -192,7 +214,14 @@ async def streaming_query_endpoint_handler(
     auth: Any = Depends(auth_dependency),
     mcp_headers: dict[str, dict[str, str]] = Depends(mcp_headers_dependency),
 ) -> StreamingResponse:
-    """Handle request to the /streaming_query endpoint."""
+    """
+    Handles POST requests to the /streaming_query endpoint, streaming LLM agent responses as Server-Sent Events (SSE).
+    
+    Receives a query request, manages agent session retrieval or creation, and streams generated tokens and metadata to the client in real time. Stores the full transcript after completion if transcript collection is enabled. Returns a StreamingResponse that yields SSE-formatted events for the start, each token, and the end of the stream.
+    
+    Raises:
+        HTTPException: If unable to connect to the Llama Stack server.
+    """
     check_configuration_loaded(configuration)
 
     llama_stack_config = configuration.llama_stack_configuration
@@ -214,7 +243,14 @@ async def streaming_query_endpoint_handler(
         metadata_map: dict[str, dict[str, Any]] = {}
 
         async def response_generator(turn_response: Any) -> AsyncIterator[str]:
-            """Generate SSE formatted streaming response."""
+            """
+            Asynchronously generates a stream of Server-Sent Events (SSE) for a model turn response.
+            
+            Yields SSE-formatted start, token, and end events as the model produces output tokens. Accumulates the complete response text and, if transcript storage is enabled, saves the transcript after streaming completes.
+            
+            Yields:
+                str: SSE-formatted event strings for each stage of the streaming response.
+            """
             chunk_id = 0
             complete_response = ""
 
@@ -267,7 +303,18 @@ async def retrieve_response(
     token: str,
     mcp_headers: dict[str, dict[str, str]] | None = None,
 ) -> tuple[Any, str]:
-    """Retrieve response from LLMs and agents."""
+    """
+    Asynchronously retrieves a streaming response from an LLM agent for a given user query, preparing agent session, toolgroups, and authorization headers as needed.
+    
+    Parameters:
+        model_id (str): Identifier of the LLM model to use.
+        query_request (QueryRequest): The user's query and associated metadata.
+        token (str): User authentication token.
+        mcp_headers (dict[str, dict[str, str]], optional): Additional headers for MCP servers.
+    
+    Returns:
+        tuple: A tuple containing the streaming response iterator and the conversation ID.
+    """
     available_shields = [shield.identifier for shield in await client.shields.list()]
     if not available_shields:
         logger.info("No available shields. Disabling safety")

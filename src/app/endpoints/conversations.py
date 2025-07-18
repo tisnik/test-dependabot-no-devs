@@ -65,13 +65,11 @@ conversation_delete_responses: dict[int | str, dict[str, Any]] = {
 
 
 def simplify_session_data(session_data: Any) -> list[dict[str, Any]]:
-    """Simplify session data to include only essential conversation information.
-
-    Args:
-        session_data: The full session data from llama-stack
-
-    Returns:
-        Simplified session data with only input_messages and output_message per turn
+    """
+    Convert full session data from llama-stack into a simplified list of conversation turns.
+    
+    Each turn in the returned list contains only the essential input and output messages (with roles renamed to "type") and associated timestamps.
+    Returns a list of dictionaries, each representing a conversation turn with messages, `started_at`, and `completed_at` fields.
     """
     session_dict = session_data.model_dump()
     # Create simplified structure
@@ -112,7 +110,14 @@ def get_conversation_endpoint_handler(
     conversation_id: str,
     _auth: Any = Depends(auth_dependency),
 ) -> ConversationResponse:
-    """Handle request to retrieve a conversation by ID."""
+    """
+    Retrieves a conversation's chat history by its ID.
+    
+    Validates the conversation ID, locates the associated agent, and fetches the session data from the Llama Stack service. Returns the conversation's simplified chat history in a structured response. Raises HTTP errors for invalid IDs, missing conversations, service unavailability, or unexpected failures.
+    
+    Returns:
+        ConversationResponse: Contains the conversation ID and its chat history.
+    """
     check_configuration_loaded(configuration)
 
     # Validate conversation ID format
@@ -193,7 +198,14 @@ def delete_conversation_endpoint_handler(
     conversation_id: str,
     _auth: Any = Depends(auth_dependency),
 ) -> ConversationDeleteResponse:
-    """Handle request to delete a conversation by ID."""
+    """
+    Deletes a conversation session by its ID.
+    
+    Validates the conversation ID format and checks for its existence. If valid, deletes the corresponding session using the Llama Stack client and returns a response indicating success. Raises HTTP errors for invalid IDs, missing conversations, service unavailability, or unexpected failures.
+    
+    Returns:
+        ConversationDeleteResponse: Confirmation of successful deletion with the conversation ID.
+    """
     check_configuration_loaded(configuration)
 
     # Validate conversation ID format

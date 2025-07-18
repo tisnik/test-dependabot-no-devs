@@ -19,7 +19,12 @@ class TLSConfiguration(BaseModel):
 
     @model_validator(mode="after")
     def check_tls_configuration(self) -> Self:
-        """Check TLS configuration."""
+        """
+        Performs post-validation for TLS configuration.
+        
+        Returns:
+            Self: The validated TLSConfiguration instance.
+        """
         return self
 
 
@@ -36,7 +41,15 @@ class ServiceConfiguration(BaseModel):
 
     @model_validator(mode="after")
     def check_service_configuration(self) -> Self:
-        """Check service configuration."""
+        """
+        Validates the service configuration for port range and minimum worker count.
+        
+        Raises:
+            ValueError: If the port is not between 1 and 65535, or if the number of workers is less than 1.
+        
+        Returns:
+            Self: The validated ServiceConfiguration instance.
+        """
         if self.port <= 0:
             raise ValueError("Port value should not be negative")
         if self.port > 65535:
@@ -64,7 +77,15 @@ class LLamaStackConfiguration(BaseModel):
 
     @model_validator(mode="after")
     def check_llama_stack_model(self) -> Self:
-        """Check Llama stack configuration."""
+        """
+        Validates the LLama stack configuration, ensuring required fields are set based on the selected mode.
+        
+        Raises:
+            ValueError: If neither a URL nor library client mode is specified, if library client mode is enabled without a configuration file path, or if the configuration is otherwise incomplete.
+            
+        Returns:
+            Self: The validated LLama stack configuration instance.
+        """
         if self.url is None:
             if self.use_as_library_client is None:
                 raise ValueError(
@@ -98,7 +119,15 @@ class DataCollectorConfiguration(BaseModel):
 
     @model_validator(mode="after")
     def check_data_collector_configuration(self) -> Self:
-        """Check data collector configuration."""
+        """
+        Validates that required fields are set when the data collector is enabled.
+        
+        Raises:
+            ValueError: If `ingress_server_url` or `ingress_content_service_name` is missing when data collection is enabled.
+        
+        Returns:
+            Self: The validated DataCollectorConfiguration instance.
+        """
         if self.enabled and self.ingress_server_url is None:
             raise ValueError(
                 "ingress_server_url is required when data collector is enabled"
@@ -121,7 +150,15 @@ class UserDataCollection(BaseModel):
 
     @model_validator(mode="after")
     def check_storage_location_is_set_when_needed(self) -> Self:
-        """Check that storage_location is set when enabled."""
+        """
+        Validates that storage locations are set when feedback or transcripts collection is enabled.
+        
+        Raises:
+            ValueError: If feedback is enabled but `feedback_storage` is not set, or if transcripts collection is enabled but `transcripts_storage` is not set.
+        
+        Returns:
+            Self: The validated instance.
+        """
         if not self.feedback_disabled and self.feedback_storage is None:
             raise ValueError("feedback_storage is required when feedback is enabled")
         if not self.transcripts_disabled and self.transcripts_storage is None:
@@ -141,7 +178,15 @@ class AuthenticationConfiguration(BaseModel):
 
     @model_validator(mode="after")
     def check_authentication_model(self) -> Self:
-        """Validate YAML containing authentication configuration section."""
+        """
+        Validates that the authentication module is supported.
+        
+        Raises:
+            ValueError: If the specified authentication module is not among the supported modules.
+        
+        Returns:
+            Self: The validated AuthenticationConfiguration instance.
+        """
         if self.module not in constants.SUPPORTED_AUTHENTICATION_MODULES:
             supported_modules = ", ".join(constants.SUPPORTED_AUTHENTICATION_MODULES)
             raise ValueError(
@@ -160,7 +205,14 @@ class Customization(BaseModel):
 
     @model_validator(mode="after")
     def check_customization_model(self) -> Self:
-        """Load system prompt from file."""
+        """
+        Validates and loads the system prompt from a file if a system prompt path is specified.
+        
+        If `system_prompt_path` is set, verifies the file exists and loads its content into the `system_prompt` attribute.
+        
+        Returns:
+            Self: The updated instance with the system prompt loaded if applicable.
+        """
         if self.system_prompt_path is not None:
             checks.file_check(self.system_prompt_path, "system prompt")
             self.system_prompt = checks.get_attribute_from_file(
@@ -183,6 +235,11 @@ class Configuration(BaseModel):
     customization: Optional[Customization] = None
 
     def dump(self, filename: str = "configuration.json") -> None:
-        """Dump actual configuration into JSON file."""
+        """
+        Write the current configuration to a JSON file.
+        
+        Parameters:
+            filename (str): The path to the output file. Defaults to "configuration.json".
+        """
         with open(filename, "w", encoding="utf-8") as fout:
             fout.write(self.model_dump_json(indent=4))
