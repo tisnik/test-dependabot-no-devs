@@ -44,7 +44,14 @@ models_responses: dict[int | str, dict[str, Any]] = {
 
 @router.get("/models", responses=models_responses)
 def models_endpoint_handler(_request: Request) -> ModelsResponse:
-    """Handle requests to the /models endpoint."""
+    """
+    Handles GET requests to the /models endpoint, returning a list of available models from the Llama Stack service.
+    
+    Raises an HTTP 500 error if unable to connect to the Llama Stack service or if model retrieval fails.
+    
+    Returns:
+        ModelsResponse: An object containing the list of available models.
+    """
     check_configuration_loaded(configuration)
 
     llama_stack_configuration = configuration.llama_stack_configuration

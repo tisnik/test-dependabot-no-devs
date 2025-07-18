@@ -14,7 +14,17 @@ logger = logging.getLogger(__name__)
 def get_auth_dependency(
     virtual_path: str = constants.DEFAULT_VIRTUAL_PATH,
 ) -> AuthInterface:
-    """Select the configured authentication dependency interface."""
+    """
+    Return an authentication dependency instance based on the configured authentication module.
+    
+    Selects and instantiates the appropriate authentication dependency class according to the current configuration. Raises a ValueError if the configured module is not supported.
+    
+    Parameters:
+        virtual_path (str): The virtual path to be used by the authentication dependency. Defaults to the configured default.
+    
+    Returns:
+        AuthInterface: An instance of the selected authentication dependency.
+    """
     module = configuration.authentication_configuration.module  # pyright: ignore
 
     logger.debug(

@@ -23,7 +23,11 @@ class DataCollectorService:  # pylint: disable=too-few-public-methods
     """
 
     def run(self) -> None:
-        """Run the periodic data collection loop."""
+        """
+        Starts the data collection service loop, periodically collecting and sending user data files according to configuration.
+        
+        The loop continues until interrupted, performing data collection at configured intervals. Handles graceful shutdown on keyboard interrupt and retries after a delay on network or OS errors.
+        """
         collector_config = (
             configuration.user_data_collection_configuration.data_collector
         )
@@ -49,7 +53,11 @@ class DataCollectorService:  # pylint: disable=too-few-public-methods
                 )  # Wait 5 minutes before retrying on error
 
     def _perform_collection(self) -> None:
-        """Perform a single collection operation."""
+        """
+        Performs a single cycle of data collection, packaging, and transmission.
+        
+        Collects feedback and transcript files if available, creates tarball archives for each data type, and sends them to the configured ingress server. Logs the outcome and raises exceptions on failure to create or send archives.
+        """
         logger.info("Starting data collection process")
 
         # Collect files to archive
@@ -92,7 +100,9 @@ class DataCollectorService:  # pylint: disable=too-few-public-methods
             raise
 
     def _collect_feedback_files(self) -> List[Path]:
-        """Collect all feedback files that need to be collected."""
+        """
+        Returns a list of feedback JSON files from the configured feedback storage directory if feedback collection is enabled and the directory exists; otherwise, returns an empty list.
+        """
         udc_config = configuration.user_data_collection_configuration
 
         if udc_config.feedback_disabled or not udc_config.feedback_storage:
@@ -105,7 +115,9 @@ class DataCollectorService:  # pylint: disable=too-few-public-methods
         return list(feedback_dir.glob("*.json"))
 
     def _collect_transcript_files(self) -> List[Path]:
-        """Collect all transcript files that need to be collected."""
+        """
+        Returns a list of transcript JSON files found recursively under the configured transcripts storage directory, or an empty list if transcript collection is disabled or the directory does not exist.
+        """
         udc_config = configuration.user_data_collection_configuration
 
         if udc_config.transcripts_disabled or not udc_config.transcripts_storage:
@@ -121,7 +133,17 @@ class DataCollectorService:  # pylint: disable=too-few-public-methods
     def _create_and_send_tarball(
         self, files: List[Path], data_type: str, base_directory: Path
     ) -> int:
-        """Create a single tarball from all files and send to ingress server."""
+        """
+        Creates a tarball archive from the provided files, sends it to the ingress server, and performs cleanup if configured.
+        
+        Parameters:
+            files (List[Path]): List of file paths to include in the tarball.
+            data_type (str): Type of data being archived (e.g., 'feedback', 'transcripts').
+            base_directory (Path): Base directory for relative paths inside the tarball.
+        
+        Returns:
+            int: 1 if the tarball was created and sent, 0 if no files were provided.
+        """
         if not files:
             return 0
 
@@ -143,7 +165,17 @@ class DataCollectorService:  # pylint: disable=too-few-public-methods
     def _create_tarball(
         self, files: List[Path], data_type: str, base_directory: Path
     ) -> Path:
-        """Create a tarball containing the specified files."""
+        """
+        Create a gzip-compressed tarball archive containing the specified files, preserving their relative paths to the given base directory.
+        
+        Parameters:
+            files (List[Path]): List of file paths to include in the tarball.
+            data_type (str): Label used in the tarball filename to indicate the type of data.
+            base_directory (Path): Base directory for calculating relative paths inside the archive.
+        
+        Returns:
+            Path: The path to the created tarball file in the system temporary directory.
+        """
         timestamp = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
         tarball_name = f"{data_type}_{timestamp}.tar.gz"
 
@@ -168,7 +200,13 @@ class DataCollectorService:  # pylint: disable=too-few-public-methods
         return tarball_path
 
     def _send_tarball(self, tarball_path: Path) -> None:
-        """Send the tarball to the ingress server."""
+        """
+        Send a tarball archive to the configured ingress server via HTTP POST.
+        
+        Raises:
+            ValueError: If the ingress server URL is not configured.
+            requests.HTTPError: If the server responds with an error status code.
+        """
         collector_config = (
             configuration.user_data_collection_configuration.data_collector
         )
@@ -211,7 +249,12 @@ class DataCollectorService:  # pylint: disable=too-few-public-methods
         logger.info("Successfully sent tarball %s to ingress server", tarball_path.name)
 
     def _cleanup_files(self, files: List[Path]) -> None:
-        """Remove files after successful transmission."""
+        """
+        Deletes the specified files from the filesystem after they have been successfully transmitted.
+        
+        Parameters:
+        	files (List[Path]): List of file paths to remove.
+        """
         for file_path in files:
             try:
                 file_path.unlink()
@@ -220,7 +263,11 @@ class DataCollectorService:  # pylint: disable=too-few-public-methods
                 logger.warning("Failed to remove file %s: %s", file_path, e)
 
     def _cleanup_empty_directories(self) -> None:
-        """Remove empty directories from transcript storage."""
+        """
+        Removes empty conversation and user directories from the transcripts storage path if transcript collection is enabled.
+        
+        Skips cleanup if transcripts are disabled or the storage path does not exist. Ignores errors encountered during directory removal.
+        """
         udc_config = configuration.user_data_collection_configuration
 
         if udc_config.transcripts_disabled or not udc_config.transcripts_storage:
@@ -250,7 +297,12 @@ class DataCollectorService:  # pylint: disable=too-few-public-methods
                         pass
 
     def _cleanup_tarball(self, tarball_path: Path) -> None:
-        """Remove the temporary tarball file."""
+        """
+        Deletes the specified temporary tarball file after transmission.
+        
+        Parameters:
+        	tarball_path (Path): Path to the tarball file to be removed.
+        """
         try:
             tarball_path.unlink()
             logger.debug("Removed temporary tarball %s", tarball_path)

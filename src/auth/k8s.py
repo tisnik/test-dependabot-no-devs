@@ -42,10 +42,13 @@ class K8sClientSingleton:
     _cluster_id = None
 
     def __new__(cls: type[Self]) -> Self:
-        """Create a new instance of the singleton, or returns the existing instance.
-
-        This method initializes the Kubernetes API clients the first time it is called.
-        and ensures that subsequent calls return the same instance.
+        """
+        Creates or returns the singleton instance of the class, initializing Kubernetes API clients on first use.
+        
+        Initializes the Kubernetes API clients (`AuthenticationV1Api`, `AuthorizationV1Api`, and `CustomObjectsApi`) using in-cluster configuration or kubeconfig file, with support for configuration overrides. Ensures that only one instance of the class and its clients exists throughout the application lifecycle.
+        
+        Returns:
+            The singleton instance of the class.
         """
         if cls._instance is None:
             cls._instance = super().__new__(cls)
@@ -96,9 +99,10 @@ class K8sClientSingleton:
 
     @classmethod
     def get_authn_api(cls) -> kubernetes.client.AuthenticationV1Api:
-        """Return the Authentication API client instance.
-
-        Ensures the singleton is initialized before returning the Authentication API client.
+        """
+        Returns the singleton instance of the Kubernetes AuthenticationV1Api client.
+        
+        Ensures the client is initialized before returning it.
         """
         if cls._instance is None or cls._authn_api is None:
             cls()
@@ -106,9 +110,10 @@ class K8sClientSingleton:
 
     @classmethod
     def get_authz_api(cls) -> kubernetes.client.AuthorizationV1Api:
-        """Return the Authorization API client instance.
-
-        Ensures the singleton is initialized before returning the Authorization API client.
+        """
+        Returns the singleton instance of the Kubernetes AuthorizationV1Api client.
+        
+        Ensures the client is initialized before returning it.
         """
         if cls._instance is None or cls._authz_api is None:
             cls()
@@ -116,9 +121,12 @@ class K8sClientSingleton:
 
     @classmethod
     def get_custom_objects_api(cls) -> kubernetes.client.CustomObjectsApi:
-        """Return the custom objects API instance.
-
-        Ensures the singleton is initialized before returning the Authorization API client.
+        """
+        Returns the singleton instance of the Kubernetes CustomObjectsApi client.
+        
+        Ensures the singleton is initialized before providing access to the CustomObjectsApi.
+        Returns:
+            CustomObjectsApi: The Kubernetes CustomObjectsApi client instance.
         """
         if cls._instance is None or cls._custom_objects_api is None:
             cls()
@@ -126,6 +134,15 @@ class K8sClientSingleton:
 
     @classmethod
     def _get_cluster_id(cls) -> str:
+        """
+        Retrieve and cache the OpenShift cluster ID from the cluster version custom resource.
+        
+        Raises:
+            ClusterIDUnavailableError: If the cluster ID cannot be retrieved due to missing keys, API errors, or unexpected issues.
+        
+        Returns:
+            str: The unique cluster ID string.
+        """
         try:
             custom_objects_api = cls.get_custom_objects_api()
             version_data = custom_objects_api.get_cluster_custom_object(
@@ -153,7 +170,12 @@ class K8sClientSingleton:
 
     @classmethod
     def get_cluster_id(cls) -> str:
-        """Return the cluster ID."""
+        """
+        Retrieve and cache the cluster ID for the current Kubernetes or OpenShift environment.
+        
+        Returns:
+            str: The cluster ID if running inside a cluster, or "local" if running outside a cluster.
+        """
         if cls._instance is None:
             cls()
         if cls._cluster_id is None:
@@ -166,13 +188,17 @@ class K8sClientSingleton:
 
 
 def get_user_info(token: str) -> Optional[kubernetes.client.V1TokenReview]:
-    """Perform a Kubernetes TokenReview to validate a given token.
-
-    Args:
-        token: The bearer token to be validated.
-
+    """
+    Validates a bearer token using the Kubernetes TokenReview API and returns user information if authenticated.
+    
+    Parameters:
+        token (str): The bearer token to validate.
+    
     Returns:
-        The user information if the token is valid, None otherwise.
+        Optional[kubernetes.client.V1TokenReview]: User information if the token is valid and authenticated; otherwise, None.
+    
+    Raises:
+        HTTPException: If an unexpected error occurs during the token review process.
     """
     auth_api = K8sClientSingleton.get_authn_api()
     token_review = kubernetes.client.V1TokenReview(
@@ -195,13 +221,10 @@ def get_user_info(token: str) -> Optional[kubernetes.client.V1TokenReview]:
 
 
 def _extract_bearer_token(header: str) -> str:
-    """Extract the bearer token from an HTTP authorization header.
-
-    Args:
-        header: The authorization header containing the token.
-
-    Returns:
-        The extracted token if present, else an empty string.
+    """
+    Extracts the bearer token from an HTTP Authorization header.
+    
+    Returns the token string if the header uses the "Bearer" scheme; otherwise, returns an empty string.
     """
     try:
         scheme, token = header.split(" ", 1)
@@ -225,18 +248,22 @@ class K8SAuthDependency(AuthInterface):  # pylint: disable=too-few-public-method
     """
 
     def __init__(self, virtual_path: str = DEFAULT_VIRTUAL_PATH) -> None:
-        """Initialize the required allowed paths for authorization checks."""
+        """
+        Initialize the authentication dependency with a virtual path for authorization checks.
+        
+        Parameters:
+            virtual_path (str): The resource path to be used in authorization checks. Defaults to the configured default virtual path.
+        """
         self.virtual_path = virtual_path
 
     async def __call__(self, request: Request) -> tuple[str, str, str]:
-        """Validate FastAPI Requests for authentication and authorization.
-
-        Args:
-            request: The FastAPI request object.
-
+        """
+        Authenticates and authorizes a FastAPI request using Kubernetes APIs.
+        
+        Validates the user's bearer token and checks if the user is authorized to perform a "get" operation on the specified virtual path. Raises HTTP 403 if authentication or authorization fails.
+        
         Returns:
-            The user's UID and username if authentication and authorization succeed
-            user_id check is skipped with noop auth to allow consumers provide user_id
+            A tuple containing the user's UID, username, and token if authentication and authorization succeed.
         """
         token = extract_user_token(request.headers)
         user_info = get_user_info(token)

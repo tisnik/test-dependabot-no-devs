@@ -10,4 +10,12 @@ class AuthInterface(ABC):  # pylint: disable=too-few-public-methods
 
     @abstractmethod
     async def __call__(self, request: Request) -> tuple[str, str, str]:
-        """Validate FastAPI Requests for authentication and authorization."""
+        """
+        Validates a FastAPI request for authentication and authorization.
+        
+        Parameters:
+            request (Request): The incoming FastAPI request to be authenticated.
+        
+        Returns:
+            tuple[str, str, str]: A tuple containing authentication and authorization details, as defined by the implementation.
+        """

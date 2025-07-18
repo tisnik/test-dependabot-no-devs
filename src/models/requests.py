@@ -119,7 +119,12 @@ class QueryRequest(BaseModel):
     }
 
     def get_documents(self) -> list[Document]:
-        """Return the list of documents from the attachments."""
+        """
+        Convert attachments into a list of Document objects containing their content and MIME type.
+        
+        Returns:
+            list[Document]: A list of Document objects created from the attachments, or an empty list if there are no attachments.
+        """
         if not self.attachments:
             return []
         return [
@@ -129,7 +134,12 @@ class QueryRequest(BaseModel):
 
     @model_validator(mode="after")
     def validate_provider_and_model(self) -> Self:
-        """Perform validation on the provider and model."""
+        """
+        Validates that both provider and model are specified together, raising a ValueError if only one is provided.
+        
+        Returns:
+            Self: The validated instance.
+        """
         if self.model and not self.provider:
             raise ValueError("Provider must be specified if model is specified")
         if self.provider and not self.model:
@@ -138,7 +148,12 @@ class QueryRequest(BaseModel):
 
     @model_validator(mode="after")
     def validate_media_type(self) -> Self:
-        """Log use of media_type that is unsupported but kept for backwards compatibility."""
+        """
+        Logs a warning if the deprecated `media_type` field is set, indicating it will be ignored.
+        
+        Returns:
+            Self: The current instance, unchanged.
+        """
         if self.media_type:
             logger.warning(
                 "media_type was set in the request but is not supported. The value will be ignored."
@@ -198,7 +213,15 @@ class FeedbackRequest(BaseModel):
     @field_validator("conversation_id")
     @classmethod
     def check_uuid(cls, value: str) -> str:
-        """Check if conversation ID has the proper format."""
+        """
+        Validate that the conversation ID is in the correct SUID format.
+        
+        Raises:
+            ValueError: If the conversation ID is not a valid SUID.
+        
+        Returns:
+            The validated conversation ID string.
+        """
         if not suid.check_suid(value):
             raise ValueError(f"Improper conversation ID {value}")
         return value
@@ -206,7 +229,12 @@ class FeedbackRequest(BaseModel):
     @field_validator("sentiment")
     @classmethod
     def check_sentiment(cls, value: Optional[int]) -> Optional[int]:
-        """Check if sentiment value is as expected."""
+        """
+        Validates that the sentiment value is either -1, 1, or None.
+        
+        Raises:
+            ValueError: If the sentiment value is not -1, 1, or None.
+        """
         if value not in {-1, 1, None}:
             raise ValueError(
                 f"Improper sentiment value of {value}, needs to be -1 or 1"
@@ -215,7 +243,15 @@ class FeedbackRequest(BaseModel):
 
     @model_validator(mode="after")
     def check_sentiment_or_user_feedback_set(self) -> Self:
-        """Ensure that either 'sentiment' or 'user_feedback' is set."""
+        """
+        Validates that at least one of 'sentiment' or 'user_feedback' is provided.
+        
+        Raises:
+            ValueError: If both 'sentiment' and 'user_feedback' are missing.
+        
+        Returns:
+            Self: The validated instance.
+        """
         if self.sentiment is None and self.user_feedback is None:
             raise ValueError("Either 'sentiment' or 'user_feedback' must be set")
         return self

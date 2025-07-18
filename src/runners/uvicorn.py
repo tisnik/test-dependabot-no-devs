@@ -10,7 +10,11 @@ logger: logging.Logger = logging.getLogger(__name__)
 
 
 def start_uvicorn(configuration: ServiceConfiguration) -> None:
-    """Start Uvicorn-based REST API service."""
+    """
+    Start the Uvicorn server for the REST API service using the provided configuration.
+    
+    The server is launched with host, port, worker count, and TLS settings specified in the configuration object. Colored output and access logging are enabled.
+    """
     logger.info("Starting Uvicorn")
 
     log_level = logging.INFO

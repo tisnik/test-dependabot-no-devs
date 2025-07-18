@@ -22,7 +22,14 @@ class LlamaStackClientHolder(metaclass=Singleton):
     _lsc: Optional[LlamaStackClient] = None
 
     def load(self, llama_stack_config: LLamaStackConfiguration) -> None:
-        """Retrieve Llama stack client according to configuration."""
+        """
+        Initializes and stores a Llama stack client instance based on the provided configuration.
+        
+        Depending on the configuration, this method initializes either a library-based or service-based Llama stack client. If `use_as_library_client` is set and a valid `library_client_config_path` is provided, it creates and initializes a library client. If the required config path is missing, a `ValueError` is raised. Otherwise, it creates a client configured to connect to a running Llama stack service.
+        
+        Raises:
+            ValueError: If `use_as_library_client` is True but `library_client_config_path` is not set.
+        """
         if llama_stack_config.use_as_library_client is True:
             if llama_stack_config.library_client_config_path is not None:
                 logger.info("Using Llama stack as library client")
@@ -44,7 +51,15 @@ class LlamaStackClientHolder(metaclass=Singleton):
             )
 
     def get_client(self) -> LlamaStackClient:
-        """Return an initialised LlamaStackClient."""
+        """
+        Return the initialized LlamaStackClient instance.
+        
+        Returns:
+            LlamaStackClient: The initialized client instance.
+        
+        Raises:
+            RuntimeError: If the client has not been initialized via the `load` method.
+        """
         if not self._lsc:
             raise RuntimeError(
                 "LlamaStackClient has not been initialised. Ensure 'load(..)' has been called."
@@ -58,7 +73,11 @@ class AsyncLlamaStackClientHolder(metaclass=Singleton):
     _lsc: Optional[AsyncLlamaStackClient] = None
 
     async def load(self, llama_stack_config: LLamaStackConfiguration) -> None:
-        """Retrieve Async Llama stack client according to configuration."""
+        """
+        Initializes the asynchronous Llama stack client based on the provided configuration.
+        
+        Depending on the configuration, this method initializes either an asynchronous library client (with explicit initialization) or a service client. Raises a ValueError if the configuration requires a library client but the config path is missing.
+        """
         if llama_stack_config.use_as_library_client is True:
             if llama_stack_config.library_client_config_path is not None:
                 logger.info("Using Llama stack as library client")
@@ -79,7 +98,15 @@ class AsyncLlamaStackClientHolder(metaclass=Singleton):
             )
 
     def get_client(self) -> AsyncLlamaStackClient:
-        """Return an initialised AsyncLlamaStackClient."""
+        """
+        Return the initialized asynchronous Llama stack client instance.
+        
+        Returns:
+            AsyncLlamaStackClient: The initialized asynchronous client.
+        
+        Raises:
+            RuntimeError: If the client has not been initialized via the `load` method.
+        """
         if not self._lsc:
             raise RuntimeError(
                 "AsyncLlamaStackClient has not been initialised. Ensure 'load(..)' has been called."

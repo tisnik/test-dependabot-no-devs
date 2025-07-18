@@ -21,18 +21,23 @@ class NoopWithTokenAuthDependency(
     """No-op AuthDependency class that bypasses authentication and authorization checks."""
 
     def __init__(self, virtual_path: str = DEFAULT_VIRTUAL_PATH) -> None:
-        """Initialize the required allowed paths for authorization checks."""
+        """
+        Initialize the no-op authentication dependency with an optional virtual path for authorization checks.
+        
+        Parameters:
+            virtual_path (str): The virtual path used for authorization checks. Defaults to a predefined constant.
+        """
         self.virtual_path = virtual_path
 
     async def __call__(self, request: Request) -> tuple[str, str, str]:
-        """Validate FastAPI Requests for authentication and authorization.
-
-        Args:
-            request: The FastAPI request object.
-
+        """
+        Simulates authentication for a FastAPI request by extracting a user token and user ID without enforcing real authentication or authorization.
+        
+        Parameters:
+            request (Request): The incoming FastAPI request.
+        
         Returns:
-            The user's UID and username if authentication and authorization succeed
-            user_id check is skipped with noop auth to allow consumers provide user_id
+            tuple[str, str, str]: A tuple containing the user ID (from query parameters or a default), a default username, and the extracted user token.
         """
         logger.warning(
             "No-op with token authentication dependency is being used. "

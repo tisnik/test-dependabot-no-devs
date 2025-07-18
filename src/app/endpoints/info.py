@@ -22,5 +22,10 @@ get_into_responses: dict[int | str, dict[str, Any]] = {
 
 @router.get("/info", responses=get_into_responses)
 def info_endpoint_handler(_request: Request) -> InfoResponse:
-    """Handle request to the /info endpoint."""
+    """
+    Handles GET requests to the /info endpoint, returning the service name and version.
+    
+    Returns:
+        InfoResponse: An object containing the service name and version.
+    """
     return InfoResponse(name="foo", version=__version__)

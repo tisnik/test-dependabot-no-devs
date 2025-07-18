@@ -5,13 +5,13 @@ from starlette.datastructures import Headers
 
 
 def extract_user_token(headers: Headers) -> str:
-    """Extract the bearer token from an HTTP authorization header.
-
-    Args:
-        header: The authorization header containing the token.
-
+    """
+    Extracts the bearer token from the HTTP Authorization header in the provided headers.
+    
+    Raises an HTTPException with status 400 if the Authorization header is missing or does not contain a valid bearer token.
+    
     Returns:
-        The extracted token if present, else an empty string.
+        str: The extracted bearer token.
     """
     authorization_header = headers.get("Authorization")
     if not authorization_header:

@@ -64,10 +64,8 @@ query_response: dict[int | str, dict[str, Any]] = {
 
 
 def is_transcripts_enabled() -> bool:
-    """Check if transcripts is enabled.
-
-    Returns:
-        bool: True if transcripts is enabled, False otherwise.
+    """
+    Returns True if transcript storage is enabled in the configuration; otherwise, returns False.
     """
     return not configuration.user_data_collection_configuration.transcripts_disabled
 
@@ -79,7 +77,14 @@ def get_agent(
     available_shields: list[str],
     conversation_id: str | None,
 ) -> tuple[Agent, str]:
-    """Get existing agent or create a new one with session persistence."""
+    """
+    Retrieve an existing agent for the given conversation ID or create a new agent with session persistence.
+    
+    If a conversation ID is provided and an agent exists in the cache, returns the cached agent and conversation ID. Otherwise, creates a new agent configured with the specified model, system prompt, and shields, enables session persistence, generates a new session ID, and caches the agent for future use.
+    
+    Returns:
+        A tuple containing the agent instance and its associated conversation ID.
+    """
     if conversation_id is not None:
         agent = _agent_cache.get(conversation_id)
         if agent:
@@ -109,7 +114,11 @@ def query_endpoint_handler(
     auth: Any = Depends(auth_dependency),
     mcp_headers: dict[str, dict[str, str]] = Depends(mcp_headers_dependency),
 ) -> QueryResponse:
-    """Handle request to the /query endpoint."""
+    """
+    Processes a POST request to the /query endpoint, generating a response to a user query using a language model or agent.
+    
+    Authenticates the user, selects an appropriate model, retrieves a response from the Llama Stack, and optionally stores a transcript of the interaction. Returns the generated response and conversation ID. Raises an HTTP 500 error if unable to connect to the Llama Stack server.
+    """
     check_configuration_loaded(configuration)
 
     llama_stack_config = configuration.llama_stack_configuration
@@ -159,7 +168,11 @@ def query_endpoint_handler(
 
 
 def select_model_id(models: ModelListResponse, query_request: QueryRequest) -> str:
-    """Select the model ID based on the request or available models."""
+    """
+    Selects and returns a model ID for processing a query based on the request or available models.
+    
+    If the request does not specify a model, selects the first available LLM model. Raises an HTTP 400 error if no suitable model is found or if the specified model and provider are not available.
+    """
     model_id = query_request.model
     provider_id = query_request.provider
 
@@ -209,7 +222,18 @@ def retrieve_response(
     token: str,
     mcp_headers: dict[str, dict[str, str]] | None = None,
 ) -> tuple[str, str]:
-    """Retrieve response from LLMs and agents."""
+    """
+    Retrieves a response to a user query from a language model or agent, managing session context, toolgroups, and optional MCP headers.
+    
+    Parameters:
+        model_id (str): The identifier of the language model to use.
+        query_request (QueryRequest): The user's query and related request data.
+        token (str): Authentication token for MCP servers.
+        mcp_headers (dict[str, dict[str, str]], optional): Additional headers for MCP servers.
+    
+    Returns:
+        tuple[str, str]: The generated response content and the conversation ID associated with the session.
+    """
     available_shields = [shield.identifier for shield in client.shields.list()]
     if not available_shields:
         logger.info("No available shields. Disabling safety")
@@ -267,9 +291,11 @@ def retrieve_response(
 
 
 def validate_attachments_metadata(attachments: list[Attachment]) -> None:
-    """Validate the attachments metadata provided in the request.
-
-    Raises HTTPException if any attachment has an improper type or content type.
+    """
+    Validates that each attachment in the request has an allowed type and content type.
+    
+    Raises:
+        HTTPException: If any attachment has an invalid type or content type.
     """
     for attachment in attachments:
         if attachment.attachment_type not in constants.ATTACHMENT_TYPES:
@@ -297,7 +323,16 @@ def validate_attachments_metadata(attachments: list[Attachment]) -> None:
 
 
 def construct_transcripts_path(user_id: str, conversation_id: str) -> Path:
-    """Construct path to transcripts."""
+    """
+    Constructs a filesystem path for storing transcripts for a given user and conversation.
+    
+    Parameters:
+        user_id (str): The user identifier.
+        conversation_id (str): The conversation identifier.
+    
+    Returns:
+        Path: The constructed path combining the transcripts storage directory, user ID, and conversation ID.
+    """
     # these two normalizations are required by Snyk as it detects
     # this Path sanitization pattern
     uid = os.path.normpath("/" + user_id).lstrip("/")
@@ -319,18 +354,10 @@ def store_transcript(  # pylint: disable=too-many-arguments,too-many-positional-
     truncated: bool,
     attachments: list[Attachment],
 ) -> None:
-    """Store transcript in the local filesystem.
-
-    Args:
-        user_id: The user ID (UUID).
-        conversation_id: The conversation ID (UUID).
-        query_is_valid: The result of the query validation.
-        query: The query (without attachments).
-        query_request: The request containing a query.
-        response: The response to store.
-        rag_chunks: The list of `RagChunk` objects.
-        truncated: The flag indicating if the history was truncated.
-        attachments: The list of `Attachment` objects.
+    """
+    Store a transcript of a query and its response to the local filesystem for a given user and conversation.
+    
+    The transcript includes metadata, the redacted query, validation status, LLM response, RAG chunks, truncation flag, and attachments. The data is saved as a JSON file under a directory path constructed from the user and conversation IDs.
     """
     transcripts_path = construct_transcripts_path(user_id, conversation_id)
     transcripts_path.mkdir(parents=True, exist_ok=True)
@@ -362,7 +389,15 @@ def store_transcript(  # pylint: disable=too-many-arguments,too-many-positional-
 def get_rag_toolgroups(
     vector_db_ids: list[str],
 ) -> list[Toolgroup] | None:
-    """Return a list of RAG Tool groups if the given vector DB list is not empty."""
+    """
+    Generate a RAG knowledge search toolgroup if vector database IDs are provided.
+    
+    Parameters:
+        vector_db_ids (list[str]): List of vector database IDs to include in the toolgroup.
+    
+    Returns:
+        list[Toolgroup] | None: A list containing a RAG toolgroup if vector_db_ids is non-empty; otherwise, None.
+    """
     return (
         [
             ToolgroupAgentToolGroupWithArgs(
