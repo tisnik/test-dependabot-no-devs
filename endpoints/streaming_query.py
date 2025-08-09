@@ -45,16 +45,28 @@ METADATA_PATTERN = re.compile(r"\nMetadata: (\{.+})\n")
 
 
 def format_stream_data(d: dict) -> str:
-    """Format outbound data in the Event Stream Format."""
+    """
+    Format a dictionary as a Server-Sent Events (SSE) data string.
+    
+    Parameters:
+        d (dict): The data to be formatted as an SSE event.
+    
+    Returns:
+        str: The formatted SSE data string.
+    """
     data = json.dumps(d)
     return f"data: {data}\n\n"
 
 
 def stream_start_event(conversation_id: str) -> str:
-    """Yield the start of the data stream.
-
-    Args:
-        conversation_id: The conversation ID (UUID).
+    """
+    Format a Server-Sent Events (SSE) start event containing the conversation ID.
+    
+    Parameters:
+        conversation_id (str): Unique identifier for the conversation.
+    
+    Returns:
+        str: SSE-formatted string representing the start event.
     """
     return format_stream_data(
         {
@@ -67,7 +79,15 @@ def stream_start_event(conversation_id: str) -> str:
 
 
 def stream_end_event(metadata_map: dict) -> str:
-    """Yield the end of the data stream."""
+    """
+    Format and return the end event for a streaming response, including referenced document metadata and placeholder token counts.
+    
+    Parameters:
+        metadata_map (dict): A mapping containing metadata about referenced documents.
+    
+    Returns:
+        str: A Server-Sent Events (SSE) formatted string representing the end of the data stream.
+    """
     return format_stream_data(
         {
             "event": "end",
@@ -92,21 +112,18 @@ def stream_end_event(metadata_map: dict) -> str:
 
 
 def stream_build_event(chunk: Any, chunk_id: int, metadata_map: dict) -> Iterator[str]:
-    """Build a streaming event from a chunk response.
-
-    This function processes chunks from the LLama Stack streaming response and formats
-    them into Server-Sent Events (SSE) format for the client. It handles two main
-    event types:
-
-    1. step_progress: Contains text deltas from the model inference process
-    2. step_complete: Contains information about completed tool execution steps
-
-    Args:
-        chunk: The streaming chunk from LLama Stack containing event data
-        chunk_id: The current chunk ID counter (gets incremented for each token)
-
+    """
+    Processes a streaming chunk from Llama Stack and yields formatted Server-Sent Events (SSE) strings.
+    
+    Depending on the event and step type in the chunk, dispatches to the appropriate handler to generate SSE events for turn lifecycle, inference, tool execution, shield checks, errors, or heartbeat signals. Updates the provided metadata map with information extracted from tool execution events.
+    
+    Parameters:
+        chunk: A streaming response chunk from Llama Stack containing event data.
+        chunk_id (int): The sequential identifier for the current chunk.
+        metadata_map (dict): A dictionary for accumulating metadata from tool execution events.
+    
     Returns:
-        Iterator[str]: An iterable list of formatted SSE data strings with event information
+        Iterator[str]: Yields SSE-formatted event strings for the client.
     """
     if hasattr(chunk, "error"):
         yield from _handle_error_event(chunk, chunk_id)
@@ -133,6 +150,12 @@ def stream_build_event(chunk: Any, chunk_id: int, metadata_map: dict) -> Iterato
 # Error handling
 # -----------------------------------
 def _handle_error_event(chunk: Any, chunk_id: int) -> Iterator[str]:
+    """
+    Yield a formatted Server-Sent Events (SSE) error event containing the error message from a streaming chunk.
+    
+    Parameters:
+        chunk_id (int): The unique identifier for the current streaming chunk.
+    """
     yield format_stream_data(
         {
             "event": "error",
@@ -148,6 +171,15 @@ def _handle_error_event(chunk: Any, chunk_id: int) -> Iterator[str]:
 # Turn handling
 # -----------------------------------
 def _handle_turn_start_event(chunk_id: int) -> Iterator[str]:
+    """
+    Yield a Server-Sent Event (SSE) token event indicating the start of a new conversation turn.
+    
+    Parameters:
+        chunk_id (int): The unique identifier for the current chunk.
+    
+    Yields:
+        str: SSE-formatted token event with an empty token to signal turn start.
+    """
     yield format_stream_data(
         {
             "event": "token",
@@ -160,6 +192,15 @@ def _handle_turn_start_event(chunk_id: int) -> Iterator[str]:
 
 
 def _handle_turn_complete_event(chunk: Any, chunk_id: int) -> Iterator[str]:
+    """
+    Yields a Server-Sent Event (SSE) indicating the completion of a conversation turn, including the full output message content.
+    
+    Parameters:
+        chunk_id (int): The unique identifier for the current chunk.
+    
+    Yields:
+        str: SSE-formatted string containing the turn completion event and output message content.
+    """
     yield format_stream_data(
         {
             "event": "turn_complete",
@@ -177,6 +218,11 @@ def _handle_turn_complete_event(chunk: Any, chunk_id: int) -> Iterator[str]:
 # Shield handling
 # -----------------------------------
 def _handle_shield_event(chunk: Any, chunk_id: int) -> Iterator[str]:
+    """
+    Processes a shield event chunk and yields a formatted SSE token event indicating shield validation results.
+    
+    Yields a "No Violation" token if no violation is detected, or a violation message if a shield violation occurs. Increments validation error metrics when violations are present.
+    """
     if chunk.event.payload.event_type == "step_complete":
         violation = chunk.event.payload.step_details.violation
         if not violation:
@@ -212,6 +258,11 @@ def _handle_shield_event(chunk: Any, chunk_id: int) -> Iterator[str]:
 # Inference handling
 # -----------------------------------
 def _handle_inference_event(chunk: Any, chunk_id: int) -> Iterator[str]:
+    """
+    Yield formatted Server-Sent Events (SSE) strings for inference step events during streaming.
+    
+    Processes inference-related streaming chunks, yielding SSE events for step start, text token deltas, and tool call deltas. Supports both string and ToolCall object tool calls.
+    """
     if chunk.event.payload.event_type == "step_start":
         yield format_stream_data(
             {
@@ -269,6 +320,18 @@ def _handle_inference_event(chunk: Any, chunk_id: int) -> Iterator[str]:
 def _handle_tool_execution_event(
     chunk: Any, chunk_id: int, metadata_map: dict
 ) -> Iterator[str]:
+    """
+    Processes tool execution events from a streaming chunk and yields formatted Server-Sent Events (SSE) strings.
+    
+    Handles both tool call initiation and completion, including tool call arguments, responses, and summaries. Extracts and updates document metadata from knowledge search tool responses when present.
+    
+    Parameters:
+        chunk_id (int): Unique identifier for the current streaming chunk.
+        metadata_map (dict): Dictionary to be updated with document metadata extracted from tool responses.
+    
+    Yields:
+        str: SSE-formatted event strings representing tool call events and responses.
+    """
     if chunk.event.payload.event_type == "step_start":
         yield format_stream_data(
             {
@@ -368,6 +431,15 @@ def _handle_tool_execution_event(
 # Catch-all for everything else
 # -----------------------------------
 def _handle_heartbeat_event(chunk_id: int) -> Iterator[str]:
+    """
+    Yield a heartbeat event as a Server-Sent Event (SSE) for the given chunk ID.
+    
+    Parameters:
+        chunk_id (int): The identifier for the current streaming chunk.
+    
+    Yields:
+        str: SSE-formatted heartbeat event string.
+    """
     yield format_stream_data(
         {
             "event": "heartbeat",
@@ -386,7 +458,17 @@ async def streaming_query_endpoint_handler(
     auth: Annotated[AuthTuple, Depends(auth_dependency)],
     mcp_headers: dict[str, dict[str, str]] = Depends(mcp_headers_dependency),
 ) -> StreamingResponse:
-    """Handle request to the /streaming_query endpoint."""
+    """
+    Handles POST requests to the /streaming_query endpoint, streaming language model responses as Server-Sent Events (SSE).
+    
+    This endpoint receives a query request, authenticates the user, selects the appropriate model and provider, and streams incremental response events from the Llama Stack backend to the client. Events include start, token updates, tool calls, turn completions, errors, and end-of-stream metadata. Optionally stores the conversation transcript if enabled in configuration.
+    
+    Returns:
+        StreamingResponse: An HTTP streaming response yielding SSE-formatted events for the query lifecycle.
+    
+    Raises:
+        HTTPException: Returns HTTP 500 if unable to connect to the Llama Stack server.
+    """
     check_configuration_loaded(configuration)
 
     llama_stack_config = configuration.llama_stack_configuration
@@ -410,7 +492,11 @@ async def streaming_query_endpoint_handler(
         metadata_map: dict[str, dict[str, Any]] = {}
 
         async def response_generator(turn_response: Any) -> AsyncIterator[str]:
-            """Generate SSE formatted streaming response."""
+            """
+            Asynchronously generates a stream of Server-Sent Events (SSE) representing incremental responses from a language model turn.
+            
+            Yields start, token, tool call, turn completion, and end events as SSE-formatted strings. Collects the complete response for transcript storage if enabled.
+            """
             chunk_id = 0
             complete_response = "No response from the model"
 
@@ -472,7 +558,20 @@ async def retrieve_response(
     token: str,
     mcp_headers: dict[str, dict[str, str]] | None = None,
 ) -> tuple[Any, str]:
-    """Retrieve response from LLMs and agents."""
+    """
+    Asynchronously retrieves a streaming response and conversation ID from the Llama Stack agent for a given user query.
+    
+    This function configures input/output shields, system prompt, and tool usage based on the request and environment. It prepares the agent with appropriate headers and toolgroups, validates attachments if present, and initiates a streaming turn with the user's query and any provided documents.
+    
+    Parameters:
+        model_id (str): Identifier of the model to use for the query.
+        query_request (QueryRequest): The user's query and associated metadata.
+        token (str): Authentication token for downstream services.
+        mcp_headers (dict[str, dict[str, str]], optional): Multi-cluster proxy headers for tool integrations.
+    
+    Returns:
+        tuple: A tuple containing the streaming response object and the conversation ID.
+    """
     available_input_shields = [
         shield.identifier
         for shield in filter(is_input_shield, await client.shields.list())

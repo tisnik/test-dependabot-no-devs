@@ -772,6 +772,11 @@ Rz1JGaaTn29/SlPX2oA//9k=">
 
 @router.get("/", response_class=HTMLResponse)
 def root_endpoint_handler(_request: Request) -> HTMLResponse:
-    """Handle request to the / endpoint."""
+    """
+    Handles GET requests to the root ("/") endpoint and returns the static HTML index page.
+    
+    Returns:
+        HTMLResponse: The HTML content of the index page, including a heading, embedded image, and links to API documentation.
+    """
     logger.info("Serving index page")
     return HTMLResponse(INDEX_PAGE)
