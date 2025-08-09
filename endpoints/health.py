@@ -23,10 +23,11 @@ router = APIRouter(tags=["health"])
 
 
 async def get_providers_health_statuses() -> list[ProviderHealthStatus]:
-    """Check health of all providers.
-
+    """
+    Asynchronously retrieves the health status of all configured providers.
+    
     Returns:
-        List of provider health statuses.
+        list[ProviderHealthStatus]: A list containing the health status of each provider. If provider health cannot be determined, returns a single entry indicating an error.
     """
     try:
         client = AsyncLlamaStackClientHolder().get_client()
@@ -70,7 +71,11 @@ get_readiness_responses: dict[int | str, dict[str, Any]] = {
 
 @router.get("/readiness", responses=get_readiness_responses)
 async def readiness_probe_get_method(response: Response) -> ReadinessResponse:
-    """Ready status of service with provider health details."""
+    """
+    Handle the readiness probe endpoint, returning service readiness based on provider health.
+    
+    If any provider reports an error status, responds with HTTP 503 and details of unhealthy providers; otherwise, indicates the service is ready.
+    """
     provider_statuses = await get_providers_health_statuses()
 
     # Check if any provider is unhealthy (not counting not_implemented as unhealthy)
@@ -104,5 +109,10 @@ get_liveness_responses: dict[int | str, dict[str, Any]] = {
 
 @router.get("/liveness", responses=get_liveness_responses)
 def liveness_probe_get_method() -> LivenessResponse:
-    """Live status of service."""
+    """
+    Return the liveness status of the service.
+    
+    Returns:
+        LivenessResponse: Indicates that the service is alive.
+    """
     return LivenessResponse(alive=True)

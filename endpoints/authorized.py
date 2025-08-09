@@ -33,7 +33,12 @@ authorized_responses: dict[int | str, dict[str, Any]] = {
 async def authorized_endpoint_handler(
     auth: Any = Depends(auth_dependency),
 ) -> AuthorizedResponse:
-    """Handle request to the /authorized endpoint."""
+    """
+    Handles POST requests to the /authorized endpoint, returning the authenticated user's ID and username.
+    
+    Returns:
+        AuthorizedResponse: Contains the user ID and username of the authenticated user.
+    """
     # Ignore the user token, we should not return it in the response
     user_id, user_name, _ = auth
     return AuthorizedResponse(user_id=user_id, username=user_name)
