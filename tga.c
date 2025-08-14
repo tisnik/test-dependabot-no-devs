@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 void render_test_rgb_image(unsigned int width, unsigned int height,
                            unsigned char *pixels, unsigned char green) {
@@ -15,6 +16,7 @@ void render_test_rgb_image(unsigned int width, unsigned int height,
         }
     }
 }
+
 unsigned char true_color_tga_header[] =
 {
     0x00,       /* without image ID */
@@ -31,12 +33,20 @@ unsigned char true_color_tga_header[] =
     0x20        /* picture orientation */
 };
 
-int tga_write(unsigned int width, unsigned int height, unsigned char *pixels,
+int tga_write(unsigned int width, unsigned int height, const unsigned char *pixels,
               const char *file_name)
 {
     FILE *fout;
-    unsigned char *p=pixels;
+    const unsigned char *p=pixels;
     int i;
+
+    if (pixels==NULL) {
+        return 1;
+    }
+
+    /* prepare a local header copy to avoid mutating the global template */
+    unsigned char header[sizeof true_color_tga_header];
+    memcpy(header, true_color_tga_header, sizeof header);
 
     fout = fopen(file_name, "wb");
     if (!fout)
@@ -44,17 +54,26 @@ int tga_write(unsigned int width, unsigned int height, unsigned char *pixels,
         return -1;
     }
     /* image size is specified in TGA header */
-    true_color_tga_header[12]=(width) & 0xff;
-    true_color_tga_header[13]=(width) >>8;
-    true_color_tga_header[14]=(height) & 0xff;
-    true_color_tga_header[15]=(height) >>8;
+    header[12]=(width) & 0xff;
+    header[13]=(width) >>8;
+    header[14]=(height) & 0xff;
+    header[15]=(height) >>8;
 
     /* write TGA header */
-    fwrite(true_color_tga_header, sizeof(true_color_tga_header), 1, fout);
+    if (fwrite(header, sizeof header, 1, fout) != 1) {
+        fclose(fout);
+        return -1;
+    }
 
     /* write the whole pixel array into TGA file */
     for (i=0; i<width*height; i++) {
-        fwrite(p, 3, 1, fout); /* write RGB, but not alpha */
+        /* swap RGB to BGR */
+        unsigned char bgr[3] = { p[2], p[1], p[0] };
+        /* write RGB, but not alpha */
+        if (fwrite(bgr, 1, 3, fout) != 3) {
+            fclose(fout);
+            return -1;
+        }
         p+=4; /* skip alpha */
     }
 
