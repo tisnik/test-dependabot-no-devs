@@ -33,7 +33,11 @@ authorized_responses: dict[int | str, dict[str, Any]] = {
 async def authorized_endpoint_handler(
     auth: Any = Depends(auth_dependency),
 ) -> AuthorizedResponse:
-    """Handle request to the /authorized endpoint."""
+    """
+    Return an AuthorizedResponse for the authenticated user.
+    
+    The function expects the dependency `auth` to provide a 3-tuple (user_id, username, token). The token is intentionally ignored and not included in the response. Returns an AuthorizedResponse containing the user's id and username.
+    """
     # Ignore the user token, we should not return it in the response
     user_id, user_name, _ = auth
     return AuthorizedResponse(user_id=user_id, username=user_name)

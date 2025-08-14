@@ -57,7 +57,14 @@ get_config_responses: dict[int | str, dict[str, Any]] = {
 
 @router.get("/config", responses=get_config_responses)
 def config_endpoint_handler(_request: Request) -> Configuration:
-    """Handle requests to the /config endpoint."""
+    """
+    Return the currently loaded service Configuration.
+    
+    Verifies that the application's configuration is loaded (will produce a 503 response if not) and returns the active Configuration object.
+    
+    Returns:
+        Configuration: The loaded service configuration.
+    """
     # ensure that configuration is loaded
     check_configuration_loaded(configuration)
 

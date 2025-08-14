@@ -14,7 +14,19 @@ router = APIRouter(tags=["metrics"])
 
 @router.get("/metrics", response_class=PlainTextResponse)
 async def metrics_endpoint_handler(_request: Request) -> PlainTextResponse:
-    """Handle request to the /metrics endpoint."""
+    """
+    Return the current Prometheus metrics in plaintext for the /metrics endpoint.
+    
+    Awaits the one-time asynchronous setup of model metrics, then returns the latest
+    Prometheus metrics output formatted with the Prometheus text content type.
+    Exceptions from setup or metrics generation propagate to the framework.
+    
+    Parameters:
+        _request (Request): Incoming FastAPI request (unused; present to match the route handler signature).
+    
+    Returns:
+        PlainTextResponse: HTTP response containing Prometheus plaintext metrics with the correct content type.
+    """
     # Setup the model metrics if not already done. This is a one-time setup
     # and will not be run again on subsequent calls to this endpoint
     await setup_model_metrics()

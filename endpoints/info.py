@@ -23,5 +23,14 @@ get_info_responses: dict[int | str, dict[str, Any]] = {
 
 @router.get("/info", responses=get_info_responses)
 def info_endpoint_handler(_request: Request) -> InfoResponse:
-    """Handle request to the /info endpoint."""
+    """
+    Return service information for the /info endpoint.
+    
+    Builds and returns an InfoResponse containing the service name (sourced from
+    configuration.configuration.name) and the package version (from __version__).
+    The `_request` parameter is accepted for compatibility with FastAPI handlers but
+    is not used.
+    Returns:
+        InfoResponse: Response model with `name` and `version` fields.
+    """
     return InfoResponse(name=configuration.configuration.name, version=__version__)

@@ -47,13 +47,16 @@ def is_feedback_enabled() -> bool:
 
 
 async def assert_feedback_enabled(_request: Request) -> None:
-    """Check if feedback is enabled.
-
-    Args:
-        request (Request): The FastAPI request object.
-
+    """
+    Dependency that ensures the feedback feature is enabled.
+    
+    This function is intended for use as a FastAPI dependency. It checks the current feature flag and raises an HTTP 403 Forbidden if feedback collection is disabled.
+    
+    Parameters:
+        _request (Request): The incoming FastAPI request (unused, accepted for dependency injection).
+    
     Raises:
-        HTTPException: If feedback is disabled.
+        HTTPException: Always raised with status 403 if feedback is disabled.
     """
     feedback_enabled = is_feedback_enabled()
     if not feedback_enabled:
@@ -69,17 +72,20 @@ def feedback_endpoint_handler(
     auth: Annotated[AuthTuple, Depends(auth_dependency)],
     _ensure_feedback_enabled: Any = Depends(assert_feedback_enabled),
 ) -> FeedbackResponse:
-    """Handle feedback requests.
-
-    Args:
-        feedback_request: The request containing feedback information.
-        ensure_feedback_enabled: The feedback handler (FastAPI Depends) that
-            will handle feedback status checks.
-        auth: The Authentication handler (FastAPI Depends) that will
-            handle authentication Logic.
-
+    """
+    Handle incoming feedback submissions from an authenticated user.
+    
+    Stores the provided feedback payload on disk associated with the authenticated user's ID.
+    If storage fails, raises an HTTPException with status 500 and a detail object containing the error cause.
+    
+    Parameters:
+        feedback_request: Payload containing the user's feedback (validated FeedbackRequest).
+    
     Returns:
-        Response indicating the status of the feedback storage request.
+        FeedbackResponse indicating that the feedback was received.
+    
+    Raises:
+        HTTPException: Raised with status 500 if storing the feedback fails.
     """
     logger.debug("Feedback received %s", str(feedback_request))
 
@@ -100,11 +106,14 @@ def feedback_endpoint_handler(
 
 
 def store_feedback(user_id: str, feedback: dict) -> None:
-    """Store feedback in the local filesystem.
-
-    Args:
-        user_id: The user ID (UUID).
-        feedback: The feedback to store.
+    """
+    Store a user's feedback as a JSON file on the local filesystem.
+    
+    Writes a JSON object that includes the provided `user_id`, a UTC timestamp, and the fields from `feedback` into a uniquely named file within the configured feedback storage directory. The directory is created if missing; the filename is generated to be unique.
+    
+    Parameters:
+        user_id (str): The user's identifier (expected to be a UUID string).
+        feedback (dict): A JSON-serializable mapping containing the feedback payload.
     """
     logger.debug("Storing feedback for user %s", user_id)
     # Creates storage path only if it doesn't exist. The `exist_ok=True` prevents
@@ -128,10 +137,15 @@ def store_feedback(user_id: str, feedback: dict) -> None:
 
 @router.get("/status")
 def feedback_status() -> StatusResponse:
-    """Handle feedback status requests.
-
+    """
+    Return the current enabled/disabled status of the feedback feature.
+    
+    Queries configuration to determine whether user feedback collection is enabled and returns a StatusResponse with functionality set to "feedback" and a status object containing {"enabled": <bool>} indicating the feature state.
+    
     Returns:
-        Response indicating the status of the feedback.
+        StatusResponse: Status payload with keys:
+            - functionality: "feedback"
+            - status: {"enabled": bool}
     """
     logger.debug("Feedback status requested")
     feedback_status_enabled = is_feedback_enabled()
