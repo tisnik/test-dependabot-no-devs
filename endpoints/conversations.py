@@ -68,13 +68,22 @@ conversation_delete_responses: dict[int | str, dict[str, Any]] = {
 
 
 def simplify_session_data(session_data: dict) -> list[dict[str, Any]]:
-    """Simplify session data to include only essential conversation information.
-
-    Args:
-        session_data: The full session data dict from llama-stack
-
+    """
+    Simplify a full llama-stack session payload into a compact chat-history structure.
+    
+    Transforms each turn in session_data["turns"] into a dict containing:
+    - "messages": list of message objects with "content" and "type" (originally message "role"),
+      preserving the original order of input_messages followed by the turn's output_message.
+    - "started_at" and "completed_at": copied from the turn if present.
+    
+    Parameters:
+        session_data (dict): Raw session dictionary expected to contain a "turns" list. Each turn
+            should optionally include "input_messages" (iterable of { "content", "role" }),
+            "output_message" ({ "content", "role" }), and timestamp fields "started_at" and
+            "completed_at".
+    
     Returns:
-        Simplified session data with only input_messages and output_message per turn
+        list[dict[str, Any]]: A list of simplified turn dictionaries as described above.
     """
     # Create simplified structure
     chat_history = []
@@ -114,7 +123,23 @@ async def get_conversation_endpoint_handler(
     conversation_id: str,
     _auth: Any = Depends(auth_dependency),
 ) -> ConversationResponse:
-    """Handle request to retrieve a conversation by ID."""
+    """
+    Retrieve a conversation by its ID and return a simplified chat history.
+    
+    Loads configuration, validates that `conversation_id` is a UUID-like string, fetches the session from the Llama Stack client, simplifies the session into a list of turns, and returns a ConversationResponse containing the conversation_id and chat_history.
+    
+    Parameters:
+        conversation_id (str): The conversation (agent) identifier; must be a valid UUID-like string.
+    
+    Returns:
+        ConversationResponse: Response model containing `conversation_id` and `chat_history`.
+    
+    Raises:
+        HTTPException: with status 400 if `conversation_id` is invalid;
+                       503 if the service cannot connect to Llama Stack;
+                       404 if the conversation is not found;
+                       500 for other unexpected errors.
+    """
     check_configuration_loaded(configuration)
 
     # Validate conversation ID format
@@ -189,7 +214,20 @@ async def delete_conversation_endpoint_handler(
     conversation_id: str,
     _auth: Any = Depends(auth_dependency),
 ) -> ConversationDeleteResponse:
-    """Handle request to delete a conversation by ID."""
+    """
+    Delete a conversation (session) identified by conversation_id.
+    
+    Attempts to delete the session in the Llama Stack backend using the provided conversation_id (treated as both agent_id and session_id). Validates that conversation_id is a valid SUID/UUID-like string before calling the client.
+    
+    Parameters:
+        conversation_id (str): The conversation identifier; must be a valid UUID-like SUID. This value is used as the agent_id and session_id when calling the Llama Stack client.
+    
+    Returns:
+        ConversationDeleteResponse: Response object with `conversation_id`, `success` set to True on successful deletion, and a human-readable `response` message.
+    
+    Raises:
+        HTTPException: Raised for invalid ID format (400), connection errors to Llama Stack (503), missing conversation (404), or other internal errors (500).
+    """
     check_configuration_loaded(configuration)
 
     # Validate conversation ID format

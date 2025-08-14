@@ -71,7 +71,21 @@ async def query_endpoint_handler(
     auth: Annotated[AuthTuple, Depends(auth_dependency)],
     mcp_headers: dict[str, dict[str, str]] = Depends(mcp_headers_dependency),
 ) -> QueryResponse:
-    """Handle request to the /query endpoint."""
+    """
+    Handle POST /query: route the user's query through the configured Llama Stack client and return the model response.
+    
+    Processes the incoming QueryRequest, selects an appropriate model/provider, obtains a response (and conversation id) from Llama Stack, increments call metrics, and optionally persists a transcript when transcript collection is enabled.
+    
+    Parameters:
+        query_request (QueryRequest): The user's query payload and related options (documents, attachments, tool usage flags, etc.).
+        mcp_headers (dict[str, dict[str, str]]): Optional MCP header mappings used to configure tool/network calls for the provider.
+    
+    Returns:
+        QueryResponse: Contains the Llama Stack conversation_id and the model/agent textual response.
+    
+    Raises:
+        HTTPException: Raised with status 500 when the service cannot connect to the Llama Stack backend (APIConnectionError).
+    """
     check_configuration_loaded(configuration)
 
     llama_stack_config = configuration.llama_stack_configuration
@@ -129,7 +143,21 @@ async def query_endpoint_handler(
 def select_model_and_provider_id(
     models: ModelListResponse, query_request: QueryRequest
 ) -> tuple[str, str | None]:
-    """Select the model ID and provider ID based on the request or available models."""
+    """
+    Selects the Llama Stack model identifier and provider to use for a query.
+    
+    If the request contains both model and provider, those are used. Otherwise the function falls back to configured defaults; if those are not set it picks the first available model of type "llm" from the provided models list. The returned model identifier is formatted as "provider_id/model_id".
+    
+    Parameters:
+        models: The available models listing returned by the models discovery API.
+        query_request: The incoming query request which may contain optional `model` and `provider` overrides.
+    
+    Returns:
+        A tuple (llama_stack_model_id, provider_id) where `llama_stack_model_id` is "provider_id/model_id".
+    
+    Raises:
+        HTTPException (400) if no suitable LLM model is available or if the selected model/provider pair is not present in `models`.
+    """
     # If model_id and provider_id are provided in the request, use them
     model_id = query_request.model
     provider_id = query_request.provider
@@ -192,16 +220,30 @@ def select_model_and_provider_id(
 
 
 def _is_inout_shield(shield: Shield) -> bool:
+    """
+    Return True if the shield's identifier denotes an inout shield.
+    
+    Checks whether the shield's `identifier` string starts with the prefix `"inout_"`, which designates shields treated as both input and output.
+    """
     return shield.identifier.startswith("inout_")
 
 
 def is_output_shield(shield: Shield) -> bool:
-    """Determine if the shield is for monitoring output."""
+    """
+    Return True if the given Shield should be treated as an output-monitoring shield.
+    
+    A shield is considered an output shield when its identifier starts with "output_" or when it is an inout shield (identifier starts with "inout_").
+    """
     return _is_inout_shield(shield) or shield.identifier.startswith("output_")
 
 
 def is_input_shield(shield: Shield) -> bool:
-    """Determine if the shield is for monitoring input."""
+    """
+    Return True if the given shield should be treated as an input shield.
+    
+    A shield is considered an input shield when it is an "inout" shield (identifier starts with "inout_")
+    or when it is not classified as an output shield.
+    """
     return _is_inout_shield(shield) or not is_output_shield(shield)
 
 
@@ -212,7 +254,27 @@ async def retrieve_response(  # pylint: disable=too-many-locals
     token: str,
     mcp_headers: dict[str, dict[str, str]] | None = None,
 ) -> tuple[str, str]:
-    """Retrieve response from LLMs and agents."""
+    """
+    Retrieve a response from a Llama Stack LLM or agent for the given query.
+    
+    Builds/shares shields and MCP headers with the agent, optionally includes RAG toolgroups,
+    executes a single agent turn with the user's query and documents, and returns the agent's
+    final output and the conversation identifier.
+    
+    Parameters:
+        model_id: Llama Stack model identifier string (format expected by the client).
+        query_request: Request object containing the user query, optional attachments,
+            conversation_id, documents, and no_tools flag.
+        token: User bearer token used to populate MCP Authorization headers when needed.
+        mcp_headers: Optional mapping of MCP server URL -> headers dict to forward to toolgroups.
+            If not provided or empty and `token` is present, Authorization headers will be
+            injected for configured MCP servers.
+    
+    Returns:
+        A tuple (response_text, conversation_id) where `response_text` is the agent/LLM output
+        converted to a string and `conversation_id` is the conversation identifier used/returned
+        by the agent.
+    """
     available_input_shields = [
         shield.identifier
         for shield in filter(is_input_shield, await client.shields.list())
@@ -303,9 +365,19 @@ async def retrieve_response(  # pylint: disable=too-many-locals
 
 
 def validate_attachments_metadata(attachments: list[Attachment]) -> None:
-    """Validate the attachments metadata provided in the request.
-
-    Raises HTTPException if any attachment has an improper type or content type.
+    """
+    Validate attachment metadata in a request.
+    
+    Checks each Attachment's `attachment_type` and `content_type` against allowed values in
+    constants. If any attachment has an invalid type or content type this function raises
+    an HTTPException with status 422 and a detail containing `UNABLE_TO_PROCESS_RESPONSE`
+    and a cause message.
+    
+    Parameters:
+        attachments (list[Attachment]): List of attachments to validate.
+    
+    Raises:
+        HTTPException: 422 Unprocessable Entity when an attachment's type or content type is invalid.
     """
     for attachment in attachments:
         if attachment.attachment_type not in constants.ATTACHMENT_TYPES:
@@ -333,7 +405,18 @@ def validate_attachments_metadata(attachments: list[Attachment]) -> None:
 
 
 def construct_transcripts_path(user_id: str, conversation_id: str) -> Path:
-    """Construct path to transcripts."""
+    """
+    Builds a filesystem path for storing transcripts for a given user and conversation.
+    
+    Both user_id and conversation_id are normalized (path-normalized and leading separators removed) to avoid producing absolute or traversal paths. The returned Path is rooted at the configured transcripts storage directory (configuration.user_data_collection_configuration.transcripts_storage) and appends the sanitized user_id and conversation_id.
+     
+    Parameters:
+        user_id (str): User identifier used as a directory name (will be sanitized).
+        conversation_id (str): Conversation identifier used as a directory name (will be sanitized).
+    
+    Returns:
+        pathlib.Path: Path to the transcripts directory for the given user and conversation.
+    """
     # these two normalizations are required by Snyk as it detects
     # this Path sanitization pattern
     uid = os.path.normpath("/" + user_id).lstrip("/")
@@ -355,18 +438,28 @@ def store_transcript(  # pylint: disable=too-many-arguments,too-many-positional-
     truncated: bool,
     attachments: list[Attachment],
 ) -> None:
-    """Store transcript in the local filesystem.
-
-    Args:
-        user_id: The user ID (UUID).
-        conversation_id: The conversation ID (UUID).
-        query_is_valid: The result of the query validation.
-        query: The query (without attachments).
-        query_request: The request containing a query.
-        response: The response to store.
-        rag_chunks: The list of `RagChunk` objects.
-        truncated: The flag indicating if the history was truncated.
-        attachments: The list of `Attachment` objects.
+    """
+    Store a transcript of a conversation to the configured local transcripts storage.
+    
+    Creates the transcripts directory for the given user and conversation if needed and writes a JSON file named with a unique id containing:
+    - metadata (provider, model, user_id, conversation_id, UTC ISO8601 timestamp),
+    - the redacted query, validation result, LLM response, RAG chunks, truncated flag,
+    - serialized attachments.
+    
+    Parameters:
+        user_id: User identifier (UUID) used to partition storage.
+        conversation_id: Conversation identifier (UUID) used to partition storage.
+        query_is_valid: Whether the query passed validation checks.
+        query: Redacted user query text (attachments excluded).
+        query_request: Original QueryRequest (used for provider/model metadata).
+        response: LLM/agent response text to store.
+        rag_chunks: List of RAG chunk strings included in the transcript.
+        truncated: True if conversation history was truncated before the request.
+        attachments: Attachments included in the request; each will be serialized via its model_dump method.
+    
+    Side effects:
+        - Creates directories and writes a JSON file to disk under the configured transcripts path.
+        - Logs the storage location on success.
     """
     transcripts_path = construct_transcripts_path(user_id, conversation_id)
     transcripts_path.mkdir(parents=True, exist_ok=True)
@@ -398,7 +491,18 @@ def store_transcript(  # pylint: disable=too-many-arguments,too-many-positional-
 def get_rag_toolgroups(
     vector_db_ids: list[str],
 ) -> list[Toolgroup] | None:
-    """Return a list of RAG Tool groups if the given vector DB list is not empty."""
+    """
+    Return a RAG toolgroups list for the provided vector databases, or None if no databases are supplied.
+    
+    When `vector_db_ids` is non-empty the function returns a single Toolgroup configured for the built-in RAG knowledge search,
+    with the list passed as the `vector_db_ids` argument. If `vector_db_ids` is empty, returns None.
+    
+    Parameters:
+        vector_db_ids (list[str]): List of vector database identifiers to include in the RAG toolgroup.
+    
+    Returns:
+        list[Toolgroup] | None: A one-element list containing the configured RAG Toolgroup, or None when `vector_db_ids` is empty.
+    """
     return (
         [
             ToolgroupAgentToolGroupWithArgs(

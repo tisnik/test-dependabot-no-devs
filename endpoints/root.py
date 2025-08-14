@@ -772,6 +772,14 @@ Rz1JGaaTn29/SlPX2oA//9k=">
 
 @router.get("/", response_class=HTMLResponse)
 def root_endpoint_handler(_request: Request) -> HTMLResponse:
-    """Handle request to the / endpoint."""
+    """
+    Serve the application's HTML index page at the root ("/") endpoint.
+    
+    This handler responds to GET requests to "/" by returning a pre-rendered HTML page (INDEX_PAGE).
+    The function accepts a FastAPI Request object to match framework routing signatures; the request is unused.
+    
+    Returns:
+        HTMLResponse: The HTMLResponse containing the static index page content.
+    """
     logger.info("Serving index page")
     return HTMLResponse(INDEX_PAGE)

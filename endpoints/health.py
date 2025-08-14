@@ -23,10 +23,13 @@ router = APIRouter(tags=["health"])
 
 
 async def get_providers_health_statuses() -> list[ProviderHealthStatus]:
-    """Check health of all providers.
-
+    """
+    Retrieve health statuses for all configured providers.
+    
+    Queries the asynchronous client for the list of providers and maps each provider's reported health into a list of ProviderHealthStatus objects (provider_id, status, message). If querying providers fails (for example no providers are defined or the client call raises), returns a single ProviderHealthStatus with provider_id "unknown", status set to HealthStatus.ERROR.value, and a message describing the failure.
+    
     Returns:
-        List of provider health statuses.
+        list[ProviderHealthStatus]: A list of provider health statuses; on error a single-item list containing an "unknown" provider with an error status.
     """
     try:
         client = AsyncLlamaStackClientHolder().get_client()
@@ -70,7 +73,14 @@ get_readiness_responses: dict[int | str, dict[str, Any]] = {
 
 @router.get("/readiness", responses=get_readiness_responses)
 async def readiness_probe_get_method(response: Response) -> ReadinessResponse:
-    """Ready status of service with provider health details."""
+    """
+    Return the service readiness status including any unhealthy providers.
+    
+    Queries provider health statuses and returns a ReadinessResponse where `ready` is True
+    only if no provider reports HealthStatus.ERROR. If any providers are unhealthy, the
+    response's HTTP status code is set to 503 (Service Unavailable) and the `reason`
+    field lists the unhealthy provider IDs; `providers` contains those provider entries.
+    """
     provider_statuses = await get_providers_health_statuses()
 
     # Check if any provider is unhealthy (not counting not_implemented as unhealthy)
@@ -104,5 +114,13 @@ get_liveness_responses: dict[int | str, dict[str, Any]] = {
 
 @router.get("/liveness", responses=get_liveness_responses)
 def liveness_probe_get_method() -> LivenessResponse:
-    """Live status of service."""
+    """
+    Return the service liveness status.
+    
+    This probe always reports the service as alive (LivenessResponse.alive == True)
+    and does not perform external or dynamic health checks.
+    
+    Returns:
+        LivenessResponse: Response object with `alive` set to True.
+    """
     return LivenessResponse(alive=True)
