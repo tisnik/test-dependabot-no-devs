@@ -21,7 +21,12 @@ logger = logging.getLogger("utils.endpoints")
 def validate_conversation_ownership(
     user_id: str, conversation_id: str
 ) -> UserConversation | None:
-    """Validate that the conversation belongs to the user."""
+    """
+    Return the UserConversation matching the given conversation_id and user_id, or None if not found.
+    
+    Opens a database session and queries the UserConversation table for a record with the provided
+    conversation_id and user_id. Does not raise on missing records; returns None when no match exists.
+    """
     with get_session() as session:
         conversation = (
             session.query(UserConversation)
@@ -32,7 +37,12 @@ def validate_conversation_ownership(
 
 
 def check_configuration_loaded(config: AppConfig) -> None:
-    """Check that configuration is loaded and raise exception when it is not."""
+    """
+    Ensure the application configuration object is present.
+    
+    Raises:
+        HTTPException: HTTP 500 Internal Server Error with detail `{"response": "Configuration is not loaded"}` when `config` is None.
+    """
     if config is None:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -41,7 +51,23 @@ def check_configuration_loaded(config: AppConfig) -> None:
 
 
 def get_system_prompt(query_request: QueryRequest, config: AppConfig) -> str:
-    """Get the system prompt: the provided one, configured one, or default one."""
+    """
+    Resolve which system prompt to use for a query.
+    
+    Precedence:
+    1. If the request includes `system_prompt`, that value is returned (highest precedence).
+    2. Else if the application configuration provides a customization `system_prompt`, that value is returned.
+    3. Otherwise the module default `constants.DEFAULT_SYSTEM_PROMPT` is returned (lowest precedence).
+    
+    If configuration disables per-request system prompts (config.customization.disable_query_system_prompt) and the incoming `query_request` contains a `system_prompt`, an HTTP 422 Unprocessable Entity is raised instructing the client to remove the field.
+    
+    Parameters:
+        query_request (QueryRequest): The incoming query payload; may contain a per-request `system_prompt`.
+        config (AppConfig): Application configuration which may include customization flags and a default `system_prompt`.
+    
+    Returns:
+        str: The resolved system prompt to apply to the request.
+    """
     system_prompt_disabled = (
         config.customization is not None
         and config.customization.disable_query_system_prompt
@@ -84,7 +110,29 @@ async def get_agent(
     conversation_id: str | None,
     no_tools: bool = False,
 ) -> tuple[AsyncAgent, str, str]:
-    """Get existing agent or create a new one with session persistence."""
+    """
+    Create or reuse an AsyncAgent with session persistence and return the agent plus conversation and session IDs.
+    
+    If a conversation_id is provided, the function attempts to retrieve the existing agent and, on success, rebinds a newly created agent instance to that conversation (deleting the temporary/orphan agent) and returns the first existing session_id for the conversation. If no conversation_id is provided or the existing agent cannot be retrieved, a new agent and session are created.
+    
+    Parameters:
+        model_id (str): Identifier of the model to instantiate the agent with.
+        system_prompt (str): Instructions/system prompt to initialize the agent with.
+        available_input_shields (list[str]): Input shields to apply to the agent; empty list used if None/empty.
+        available_output_shields (list[str]): Output shields to apply to the agent; empty list used if None/empty.
+        conversation_id (str | None): If provided, attempt to reuse the agent for this conversation; otherwise a new conversation_id is created.
+        no_tools (bool): When True, disables tool parsing for the agent (uses no tool parser).
+    
+    Returns:
+        tuple[AsyncAgent, str, str]: A tuple of (agent, conversation_id, session_id).
+    
+    Raises:
+        HTTPException: Raises HTTP 404 Not Found if an attempt to reuse a conversation succeeds in retrieving the agent but no sessions are found for that conversation.
+    
+    Side effects:
+        - May delete an orphan agent when rebinding a newly created agent to an existing conversation_id.
+        - Initializes the agent and may create a new session.
+    """
     existing_agent_id = None
     if conversation_id:
         with suppress(ValueError):
