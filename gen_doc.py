@@ -2,26 +2,32 @@
 
 import os
 
+import ast
+
 directories = "src/auth/",
 
 for directory in directories:
     cwd = os.getcwd()
     os.chdir(directory)
 
-    with open("README.md", "w") as indexfile:
-        print(f"# List of source files stored in `{directory}` directory", file=indexfile)
-        print("", file=indexfile)
-        files = sorted(os.listdir())
+    try:
+        with open("README.md", "w", encoding="utf-8", newline="\n") as indexfile:
+            print(f"# List of source files stored in `{directory}` directory", file=indexfile)
+            print("", file=indexfile)
+            files = sorted(os.listdir())
 
-        for file in files:
-            if file.endswith(".py"):
-                print(f"## [{file}]({file})", file=indexfile)
-                with open(file, "r") as fin:
-                    for line in fin:
-                        line = line.strip()
-                        if line.startswith('"""') and line.endswith('"""'):
-                            line=line[3:][:-3]
-                            print(line, file=indexfile)
-                            break
-                print("", file=indexfile)
-    os.chdir(cwd)
+            for file in files:
+                if file.endswith(".py"):
+                    print(f"## [{file}]({file})", file=indexfile)
+                    with open(file, "r", encoding="utf-8") as fin:
+                        source = fin.read()
+                    try:
+                        mod = ast.parse(source)
+                        doc = ast.get_docstring(mod)
+                    except SyntaxError:
+                        doc = None
+                    if doc:
+                        print(doc.splitlines()[0], file=indexfile)
+                    print(file=indexfile)
+    finally:
+        os.chdir(cwd)
