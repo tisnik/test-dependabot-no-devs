@@ -10,7 +10,7 @@ typedef struct {
 
 #define NULL_CHECK(value)                                                      \
     if (value == NULL) {                                                       \
-        puts("NULL parameter");                                                \
+        fprintf(stderr, "NULL parameter: %s\n", #value);                       \
         return;                                                                \
     }
 
@@ -19,9 +19,19 @@ typedef struct {
  * buffer and advances the pixel pointer by 4 bytes.
  */
 void putpixel(unsigned char **pixel, const unsigned char *palette,
-              int color_index) {
-    int color_offset = color_index * 3;
-    unsigned char *pal = (unsigned char *)(palette + color_offset);
+        int color_index) {
+    int color_offset;
+    unsigned char *pal;
+
+    if (color_index < 0) {
+        color_index = 0;
+    }
+    if (color_index > 255) {
+        color_index = 255;
+    }
+
+    color_offset = color_index * 3;
+    pal = (unsigned char *)(palette + color_offset);
 
     *(*pixel)++ = *pal++;
     *(*pixel)++ = *pal++;
@@ -38,14 +48,17 @@ void putpixel(unsigned char **pixel, const unsigned char *palette,
  * determines the color index used from the palette.
  */
 void render_julia(const image_t *image, const unsigned char *palette,
-                  const double cx, const double cy, int maxiter) {
+                  const double cx, const double cy, unsigned int maxiter) {
     int x, y;
     double zx0, zy0;
     double xmin = -1.5, ymin = -1.5, xmax = 1.5, ymax = 1.5;
-    unsigned char *p = image->pixels;
+    unsigned char *p;
 
+    NULL_CHECK(image)
     NULL_CHECK(palette)
     NULL_CHECK(image->pixels)
+
+    p = image->pixels;
 
     zy0 = ymin;
     for (y = 0; y < image->height; y++) {
@@ -125,7 +138,10 @@ int bmp_write(unsigned int width, unsigned int height, unsigned char *pixels,
     }
 
     /* write BMP header */
-    fwrite(bmp_header, sizeof(bmp_header), 1, fout);
+    if (fwrite(bmp_header, sizeof(bmp_header), 1, fout) != 1) {
+        fclose(fout);
+        return 1;
+    }
 
     /* write the whole pixel array into BMP file */
     for (y = height - 1; y >= 0; y--) {
@@ -133,14 +149,19 @@ int bmp_write(unsigned int width, unsigned int height, unsigned char *pixels,
         unsigned char *p = pixels + y * width * 4;
         for (x = 0; x < width; x++) {
             /* swap RGB color components as required by file format */
-            fwrite(p + 2, 1, 1, fout);
-            fwrite(p + 1, 1, 1, fout);
-            fwrite(p, 1, 1, fout);
+            if (fwrite(p + 2, 1, 1, fout) != 1 ||
+                fwrite(p + 1, 1, 1, fout) != 1 ||
+                fwrite(p, 1, 1, fout) != 1) {
+                fclose(fout);
+                return 1;
+            }
             /* move to next pixel on scan line */
             p += 4;
         }
     }
-    fclose(fout);
+    if (fclose(fout) == EOF) {
+        return 1;
+    }
     return 0;
 }
 
@@ -166,13 +187,13 @@ unsigned char *generate_palette(void) {
     /* gradient from green to yellow */
     for (i = 0; i < 32; i++) {
         *p++ = 4 + i * 6;
-        *p++ = i * 2 < 52 ? 200 + i * 2: 252;
+        *p++ = i * 2 < 52 ? 200 + i * 2 : 252;
         *p++ = 0;
     }
 
     /* gradient from yellow to white */
     for (i = 0; i < 32; i++) {
-        *p++ = i * 2 < 52 ? 200 + i * 2: 252;
+        *p++ = i * 2 < 52 ? 200 + i * 2 : 252;
         *p++ = 252;
         *p++ = i * 6;
     }
@@ -210,12 +231,14 @@ int render_test_image(void) {
     unsigned char *pixels = (unsigned char *)malloc(WIDTH * HEIGHT * 4);
     unsigned char *palette = generate_palette();
     image_t image;
+    int result;
 
     if (!pixels) {
         return -1;
     }
 
     if (!palette) {
+        free(pixels);
         return -1;
     }
 
@@ -224,10 +247,12 @@ int render_test_image(void) {
     image.pixels = pixels;
 
 
-    render_julia(&image, palette, -0.207190825000000012496, 0.676656624999999999983, 255);
-    bmp_write(WIDTH, HEIGHT, pixels, "julia.bmp");
+    render_julia(&image, palette, -0.207190825, 0.676656625, 255);
+    result = bmp_write(WIDTH, HEIGHT, pixels, "julia.bmp");
 
-    return 0;
+    free(pixels);
+    free(palette);
+    return result;
 }
 
 /**
