@@ -54,6 +54,9 @@ void render_julia(const image_t *image, const unsigned char *palette,
     double xmin = -1.5, ymin = -1.5, xmax = 1.5, ymax = 1.5;
     unsigned char *p;
 
+    const double dx = (xmax - xmin) / (double)image->width;
+    const double dy = (ymax - ymin) / (double)image->height;
+
     NULL_CHECK(image)
     NULL_CHECK(palette)
     NULL_CHECK(image->pixels)
@@ -78,9 +81,9 @@ void render_julia(const image_t *image, const unsigned char *palette,
                 i++;
             }
             putpixel(&p, palette, i);
-            zx0 += (xmax - xmin) / image->width;
+            zx0 += dx;
         }
-        zy0 += (ymax - ymin) / image->height;
+        zy0 += dy;
     }
 }
 
@@ -103,13 +106,13 @@ int bmp_write(unsigned int width, unsigned int height, unsigned char *pixels,
     unsigned char bmp_header[] = {
         /* BMP header structure: */
         0x42, 0x4d,             /* magic number */
-        0x46, 0x00, 0x00, 0x00, /* size of header=70 bytes */
+        0x46, 0x00, 0x00, 0x00, /* file size (to be filled later) */
         0x00, 0x00,             /* unused */
         0x00, 0x00,             /* unused */
         0x36, 0x00, 0x00, 0x00, /* 54 bytes - offset to data */
         0x28, 0x00, 0x00, 0x00, /* 40 bytes - bytes in DIB header */
-        0x00, 0x00, 0x00, 0x00, /* width of bitmap */
-        0x00, 0x00, 0x00, 0x00, /* height of bitmap */
+        0x00, 0x00, 0x00, 0x00, /* width of bitmap (to be filled later) */
+        0x00, 0x00, 0x00, 0x00, /* height of bitmap (to be filled later) */
         0x01, 0x0,              /* 1 pixel plane */
         0x18, 0x00,             /* 24 bpp */
         0x00, 0x00, 0x00, 0x00, /* no compression */
@@ -123,6 +126,16 @@ int bmp_write(unsigned int width, unsigned int height, unsigned char *pixels,
     int x, y;
 
     /* initialize BMP header */
+    unsigned int pixels_size = width * height * 3;
+    unsigned int file_size = sizeof(bmp_header) + pixels_size;
+
+    /* file size */
+    bmp_header[2] = file_size & 0xff;
+    bmp_header[3] = (file_size >> 8) & 0xff;
+    bmp_header[4] = (file_size >> 16) & 0xff;
+    bmp_header[5] = (file_size >> 24) & 0xff;
+
+    /* resolution */
     bmp_header[18] = width & 0xff;
     bmp_header[19] = (width >> 8) & 0xff;
     bmp_header[20] = (width >> 16) & 0xff;
