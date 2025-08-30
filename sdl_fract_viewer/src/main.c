@@ -18,6 +18,11 @@ double ypos = 0.0;
 double scale = 240.0;
 double  uhel = 45.0;
 
+/**
+ * Initialize the graphics subsystem with a 640x480 window and 32-bit color.
+ *
+ * If initialization fails, the process is terminated with exit code 1.
+ */
 static void init_sdl(void)
 {
     int result = gfx_initialize(0, 640, 480, 32);
@@ -27,18 +32,48 @@ static void init_sdl(void)
     }
 }
 
+/**
+ * Finalize graphics subsystems and clean up SDL before program exit.
+ *
+ * Calls gfx_finalize() to shut down the gfx helper and SDL_Quit() to
+ * terminate the SDL library, releasing related resources.
+ */
 void finalize(void)
 {
     gfx_finalize();
     SDL_Quit();
 }
 
+/**
+ * Blit an off-screen surface to the display and present it.
+ *
+ * Copies the provided surface to the screen at (0,0) and updates the visible framebuffer.
+ *
+ * @param surface Off-screen SDL_Surface to blit and present. Must be the same size as the screen surface.
+ */
 static void show_fractal(SDL_Surface *surface)
 {
     gfx_bitblt(surface, 0, 0);
     gfx_flip();
 }
 
+/**
+ * Compute the fractal view bounds for the current center and zoom.
+ *
+ * Given a view center (xpos, ypos) and a zoom factor (scale), sets the
+ * axis-aligned bounding coordinates (xmin, ymin, xmax, ymax) of the
+ * rendering window. The function uses the module's WIDTH and HEIGHT
+ * as the base resolution and computes half-extents as WIDTH/scale and
+ * HEIGHT/scale.
+ *
+ * @param xpos  X coordinate of the view center in fractal space.
+ * @param ypos  Y coordinate of the view center in fractal space.
+ * @param scale Zoom factor (larger values zoom in; used as divisor).
+ * @param xmin  Output pointer for minimum X (left) bound; overwritten.
+ * @param ymin  Output pointer for minimum Y (top) bound; overwritten.
+ * @param xmax  Output pointer for maximum X (right) bound; overwritten.
+ * @param ymax  Output pointer for maximum Y (bottom) bound; overwritten.
+ */
 void calcCorner(double xpos, double ypos, double scale,
                 double *xmin,  double *ymin,  double *xmax, double *ymax)
 {
@@ -48,6 +83,14 @@ void calcCorner(double xpos, double ypos, double scale,
     *ymax=ypos+HEIGHT/scale;
 }
 
+/**
+ * Draw a background grid onto the provided surface.
+ *
+ * Fills the entire surface with white and overlays a blue grid with lines every 20 pixels
+ * (vertical and horizontal). The operation modifies the pixels of the given SDL_Surface in place.
+ *
+ * @param surface Target SDL_Surface to draw the grid onto; must be a valid, writable surface.
+ */
 void draw_grid(SDL_Surface *surface)
 {
     int width = surface->w;
@@ -65,6 +108,18 @@ void draw_grid(SDL_Surface *surface)
     }
 }
 
+/**
+ * Render a Mandelbrot-like fractal into the provided SDL surface.
+ *
+ * Renders a 320x240 region of a Mandelbrot-style fractal using the global
+ * viewport state (xpos, ypos, scale, etc.). The function maps screen pixels
+ * to the complex plane via calcCorner, iterates the escape function (up to
+ * 150 iterations, escape radius 2.0), and writes RGB pixels directly into
+ * surface->pixels (writes a 320x240 block centered in the surface).
+ *
+ * @param surface SDL_Surface pointer whose pixel buffer will be updated with
+ *                the rendered fractal (written in-place).
+ */
 void draw_fractal_(SDL_Surface *surface)
 {
     int x, y;
@@ -110,6 +165,18 @@ void draw_fractal_(SDL_Surface *surface)
     }
 }
 
+/**
+ * Render a Julia-set fractal into the given SDL surface.
+ *
+ * Draws a 320x240 Julia fractal tile into the provided 32-bit SDL_Surface using the global
+ * view parameters (xpos, ypos, scale) to map screen coordinates to the complex plane.
+ * A fixed complex parameter (ccx = 0.285, ccy = 0.01) is used for the Julia iteration.
+ * Iteration stops when |z|^2 > 4 or after 255 iterations; pixel color is derived from the
+ * iteration count using the mapping r = i*2, g = i*3, b = i*5. The function writes
+ * directly into surface->pixels (32-bit RGBA) and therefore modifies the provided surface.
+ *
+ * @param surface SDL_Surface* into which the fractal tile is drawn (expected 32-bit/4-byte pixels).
+ */
 void draw_fractal_julia(SDL_Surface *surface)
 {
     int x, y;
@@ -162,6 +229,19 @@ void draw_fractal_julia(SDL_Surface *surface)
     }
 }
 
+/**
+ * Render a hybrid Julia–Mandelbrot fractal into an SDL surface.
+ *
+ * Renders a 320×240 fractal view by mapping the global view parameters
+ * (xpos, ypos, scale) into the complex plane and iterating a two-stage
+ * update that alternates between a fixed complex parameter and the per-pixel
+ * coordinate. Pixel color is computed from the escape iteration count
+ * (r = i*2, g = i*3, b = i*5).
+ *
+ * @param surface SDL surface to draw into. The function writes raw pixels
+ *                directly into surface->pixels and assumes a 32-bit packed
+ *                pixel layout and sufficient pitch for a 320×240 view.
+ */
 void draw_fractal_julia_mandelbrot(SDL_Surface *surface)
 {
     int x, y;
@@ -224,6 +304,21 @@ void draw_fractal_julia_mandelbrot(SDL_Surface *surface)
     }
 }
 
+/**
+ * Render a multifractal (Mandelbrot/Julia hybrid) into the given SDL surface.
+ *
+ * Draws a 320x240 fractal viewport into the provided 32-bit SDL_Surface by
+ * mapping screen coordinates to the complex plane via calcCorner and iterating
+ * a hybrid update that switches between two parameter sets (one fixed "Julia"
+ * constant and the per-pixel "Mandelbrot" coordinate) depending on the
+ * iteration count. Pixel color is derived from the escape iteration count.
+ *
+ * The function writes raw RGBA bytes directly into surface->pixels and assumes
+ * a 4-byte-per-pixel layout (32-bit surface) with writable pitch. It uses the
+ * global view state (xpos, ypos, scale) to compute the complex-plane bounds.
+ *
+ * @param surface Target SDL_Surface to draw into (must be 32-bit, writable).
+ */
 void draw_multifractal_mandel_julia(SDL_Surface *surface)
 {
     int x, y;
@@ -283,6 +378,19 @@ void draw_multifractal_mandel_julia(SDL_Surface *surface)
     }
 }
 
+/**
+ * Render a rotated Mandelbrot/Julia hybrid into the provided SDL surface.
+ *
+ * Renders a 320×240 fractal tile mapped from the complex plane determined by
+ * the global view state (xpos, ypos, scale) and rotated by the global angle
+ * uhel. Per-pixel iteration uses a Mandelbrot/Julia-style update for up to 64
+ * iterations and writes RGB color values derived from the iteration count.
+ *
+ * @param surface Destination SDL_Surface to draw into. The function writes
+ *                directly into surface->pixels and expects a 32-bit pixel
+ *                layout (4 bytes per pixel) with sufficient pitch to contain
+ *                the 320×240 tile at the offsets used by the renderer.
+ */
 void draw_mandeljulia(SDL_Surface *surface)
 {
     double  zx,zy,zx2,zy2,cx,cy;
@@ -336,6 +444,22 @@ void draw_mandeljulia(SDL_Surface *surface)
     }
 }
 
+/**
+ * Render a multifractal into the provided surface.
+ *
+ * Maps a 320×240 region of the fractal plane (computed from globals xpos, ypos, scale via
+ * calcCorner) into the given SDL surface and writes 32-bit RGB pixel values.
+ * For each pixel the function iterates a Mandelbrot-like recurrence using two distinct
+ * parameter pairs (ccx1/ccy1 and ccx2/ccy2) and switches from the second pair to the
+ * first after 20 iterations. Iteration uses the escape radius 2.0 (zx*zx + zy*zy > 4.0)
+ * and is capped at 255 iterations. The final color is derived directly from the
+ * iteration count (r = i*2, g = i*3, b = i*5).
+ *
+ * Side effects:
+ * - Writes pixel bytes into surface->pixels (assumes a 32-bit surface layout with 4
+ *   bytes per pixel).
+ * - Reads global view state (xpos, ypos, scale) to determine the mapped fractal window.
+ */
 void draw_multifractal(SDL_Surface *surface)
 {
     int x, y;
@@ -391,6 +515,19 @@ void draw_multifractal(SDL_Surface *surface)
     }
 }
 
+/**
+ * Render a Mandelbrot-like fractal into the given surface.
+ *
+ * Renders a 320x240 fractal block into surface->pixels, writing 32-bit RGB pixels
+ * at an offset of (x=160, y=128) within the provided surface. The view window is
+ * computed from the global xpos, ypos and scale via calcCorner. Each pixel is
+ * iterated up to 255 steps with an escape radius of 2.0 and uses two alternating
+ * parameter pairs (ccx1/ccy1 and ccx2/ccy2) on successive iteration steps to
+ * produce a multifractal effect. The final color is mapped from the iteration
+ * count as r = i*2, g = i*3, b = i*5.
+ *
+ * @param surface Target SDL_Surface whose pixel buffer will be modified.
+ */
 void draw_fractal(SDL_Surface *surface)
 {
     int x, y;
@@ -458,6 +595,14 @@ void draw_fractal(SDL_Surface *surface)
     }
 }
 
+/**
+ * Redraw the off-screen pixmap with the current view (grid + fractal) and update the display.
+ *
+ * Renders the background grid and the active fractal into the provided off-screen SDL surface,
+ * then presents the result to the screen.
+ *
+ * @param pixmap Off-screen SDL_Surface used as the drawing buffer (will be overwritten). 
+ */
 void redraw(SDL_Surface *pixmap)
 {
     draw_grid(pixmap);
@@ -466,6 +611,23 @@ void redraw(SDL_Surface *pixmap)
     show_fractal(pixmap);
 }
 
+/**
+ * Run the interactive SDL event loop for the fractal viewer.
+ *
+ * Processes SDL events until quit and updates global view state (xpos, ypos,
+ * scale, uhel) in response to keyboard input. When the view changes this
+ * routine triggers a redraw of the off-screen pixmap via redraw(pixmap).
+ *
+ * Controls:
+ *  - Arrow keys: pan view (left/right/up/down)
+ *  - PageUp/PageDown: zoom out/zoom in
+ *  - Z / X: decrement / increment rotation angle (uhel)
+ *  - Escape or Q: quit
+ *
+ * Side effects:
+ *  - Mutates globals xpos, ypos, scale, and uhel.
+ *  - Calls redraw(pixmap) to update the displayed fractal.
+ */
 static void main_event_loop(void)
 {
     SDL_Event event;
@@ -595,6 +757,17 @@ static void main_event_loop(void)
     } while (!done);
 }
 
+/**
+ * Program entry point for the SDL fractal viewer.
+ *
+ * Initializes subsystems, creates an off-screen drawing surface, renders an initial
+ * grid and fractal image to the pixmap, presents it on the screen, then enters the
+ * main event loop. On exit finalizes subsystems and returns status.
+ *
+ * @param argc Number of command-line arguments.
+ * @param argv Command-line arguments.
+ * @return Exit status (0 on normal termination).
+ */
 int main(int argc, char **argv)
 {
     /*SDL_Surface *font;*/
