@@ -1,0 +1,123 @@
+"""Abstract class that is the parent for all quota limiter implementations.
+
+It is possible to limit quota usage per user or per service or services (that
+typically run in one cluster). Each limit is configured as a separate _quota
+limiter_. It can be of type `user_limiter` or `cluster_limiter` (which is name
+that makes sense in OpenShift deployment). There are three configuration
+options for each limiter:
+
+1. `period` specified in a human-readable form, see
+https://www.postgresql.org/docs/current/datatype-datetime.html#DATATYPE-INTERVAL-INPUT
+for all possible options. When the end of the period is reached, quota is reset
+or increased
+1. `initial_quota` is set at beginning of the period
+1. `quota_increase` this value (if specified) is used to increase quota when period is reached
+
+There are two basic use cases:
+
+1. When quota needs to be reset specific value periodically (for example on
+weekly on monthly basis), specify `initial_quota` to the required value
+1. When quota needs to be increased by specific value periodically (for example
+on daily basis), specify `quota_increase`
+
+Technically it is possible to specify both `initial_quota` and
+`quota_increase`. It means that at the end of time period the quota will be
+*reset* to `initial_quota + quota_increase`.
+
+Please note that any number of quota limiters can be configured. For example,
+two user quota limiters can be set to:
+- increase quota by 100,000 tokens each day
+- reset quota to 10,000,000 tokens each month
+"""
+
+from abc import ABC, abstractmethod
+
+from typing import Optional
+
+import sqlite3
+import psycopg2
+
+from log import get_logger
+from models.config import SQLiteDatabaseConfiguration, PostgreSQLDatabaseConfiguration
+from quota.connect_pg import connect_pg
+from quota.connect_sqlite import connect_sqlite
+
+
+logger = get_logger(__name__)
+
+
+class QuotaLimiter(ABC):
+    """Abstract class that is parent for all quota limiter implementations."""
+
+    @abstractmethod
+    def available_quota(self, subject_id: str) -> int:
+        """Retrieve available quota for given user."""
+
+    @abstractmethod
+    def revoke_quota(self) -> None:
+        """Revoke quota for given user."""
+
+    @abstractmethod
+    def increase_quota(self) -> None:
+        """Increase quota for given user."""
+
+    @abstractmethod
+    def ensure_available_quota(self, subject_id: str = "") -> None:
+        """Ensure that there's available quota left."""
+
+    @abstractmethod
+    def consume_tokens(
+        self, input_tokens: int, output_tokens: int, subject_id: str = ""
+    ) -> None:
+        """Consume tokens by given user."""
+
+    @abstractmethod
+    def __init__(self) -> None:
+        """Initialize connection configuration(s)."""
+        self.sqlite_connection_config: Optional[SQLiteDatabaseConfiguration] = None
+        self.postgres_connection_config: Optional[PostgreSQLDatabaseConfiguration] = (
+            None
+        )
+
+    @abstractmethod
+    def _initialize_tables(self) -> None:
+        """Initialize tables and indexes."""
+
+    # pylint: disable=W0201
+    def connect(self) -> None:
+        """Initialize connection to database."""
+        logger.info("Initializing connection to quota limiter database")
+        if self.postgres_connection_config is not None:
+            self.connection = connect_pg(self.postgres_connection_config)
+        if self.sqlite_connection_config is not None:
+            self.connection = connect_sqlite(self.sqlite_connection_config)
+
+        try:
+            self._initialize_tables()
+        except Exception as e:
+            self.connection.close()
+            logger.exception("Error initializing Postgres database:\n%s", e)
+            raise
+
+        self.connection.autocommit = True
+
+    def connected(self) -> bool:
+        """Check if connection to cache is alive."""
+        if self.connection is None:
+            logger.warning("Not connected, need to reconnect later")
+            return False
+        cursor = None
+        try:
+            cursor = self.connection.cursor()
+            cursor.execute("SELECT 1")
+            logger.info("Connection to storage is ok")
+            return True
+        except (psycopg2.OperationalError, sqlite3.Error) as e:
+            logger.error("Disconnected from storage: %s", e)
+            return False
+        finally:
+            if cursor is not None:
+                try:
+                    cursor.close()
+                except Exception:  # pylint: disable=broad-exception-caught
+                    logger.warning("Unable to close cursor")
