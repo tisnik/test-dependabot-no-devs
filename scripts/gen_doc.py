@@ -11,7 +11,11 @@ DIRECTORIES = ["src", "tests/unit", "tests/integration", "tests/e2e"]
 
 
 def generate_docfile(directory):
-    """Generate README.md in the CWD."""
+    """
+    Write or overwrite a README.md in the current working directory listing Python source files and their module docstring summaries.
+    
+    The file will begin with a header indicating the provided `directory` path. For each `.py` file in the current working directory the function writes a second-level Markdown header linking to the file, then writes the first line of the module docstring if present, and finally writes the filename as a separate entry. If a file cannot be parsed due to a SyntaxError, its docstring is omitted.
+    """
     with open("README.md", "w", encoding="utf-8", newline="\n") as indexfile:
         print(
             f"# List of source files stored in `{directory}` directory",
@@ -36,7 +40,14 @@ def generate_docfile(directory):
 
 
 def generate_documentation_on_path(path):
-    """Generate documentation for all the sources found in path."""
+    """
+    Generate README.md for Python sources in the given directory.
+    
+    This function changes the process working directory to `path`, invokes documentation generation for that directory, and restores the original working directory after completion.
+    
+    Parameters:
+        path (str or os.PathLike): Directory in which to generate the README.md file.
+    """
     directory = path
     cwd = os.getcwd()
     os.chdir(directory)

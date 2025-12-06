@@ -15,6 +15,7 @@ BOLD='\033[1m'
 # Interactive mode (default: true, set to false with --no-wait flag)
 INTERACTIVE=true
 
+# print_section prints a formatted section header using the provided title, surrounded by divider lines.
 print_section() {
     echo ""
     echo "================================================================================"
@@ -23,6 +24,7 @@ print_section() {
     echo ""
 }
 
+# print_header prints a stylized welcome banner for the Llama Stack interactive tutorial.
 print_header() {
     echo ""
     echo "🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀"
@@ -31,6 +33,7 @@ print_header() {
     echo ""
 }
 
+# wait_for_user prompts the user to press Enter to continue when INTERACTIVE is true.
 wait_for_user() {
     if [ "$INTERACTIVE" = true ]; then
         echo ""
@@ -39,6 +42,7 @@ wait_for_user() {
     fi
 }
 
+# run_command prints a formatted "Running:" header showing the given command and then executes it.
 run_command() {
     local cmd="$1"
     echo ""
