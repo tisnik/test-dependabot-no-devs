@@ -197,7 +197,7 @@ inference:
         url: ${env.SERVICE_URL}
 ```
 
-The section `models` is a list of models offered by the inference provider. Attention that the field `model_id` is a user chosen name for referring to the model locally, the field `provider_model_id` refers to the model name on the provider side. The field `provider_id` must refer to one of the inference providers we defined in the provider list above.
+The section `models` is a list of models offered by the inference provider. Attention that the field `model_id` is a user-chosen name for referring to the model locally, the field `provider_model_id` refers to the model name on the provider side. The field `provider_id` must refer to one of the inference providers we defined in the provider list above.
 
 ```yaml
 models:
