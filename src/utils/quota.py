@@ -18,16 +18,14 @@ def consume_tokens(
     input_tokens: int,
     output_tokens: int,
 ) -> None:
-    """Consume tokens from cluster and/or user quotas.
-
-    Args:
-        quota_limiters: List of quota limiter instances to consume tokens from.
-        user_id: Identifier of the user consuming tokens.
-        input_tokens: Number of input tokens to consume.
-        output_tokens: Number of output tokens to consume.
-
-    Returns:
-        None
+    """
+    Consume input and output tokens from each provided quota limiter for the given user.
+    
+    Parameters:
+        quota_limiters (list[QuotaLimiter]): Quota limiter instances to debit tokens from.
+        user_id (str): Identifier of the user whose quota will be consumed.
+        input_tokens (int): Number of input tokens to consume.
+        output_tokens (int): Number of output tokens to consume.
     """
     # consume tokens all configured quota limiters
     for quota_limiter in quota_limiters:
@@ -39,18 +37,15 @@ def consume_tokens(
 
 
 def check_tokens_available(quota_limiters: list[QuotaLimiter], user_id: str) -> None:
-    """Check if tokens are available for user.
-
-    Args:
-        quota_limiters: List of quota limiter instances to check.
-        user_id: Identifier of the user to check quota for.
-
-    Returns:
-        None
-
+    """
+    Verify that each quota limiter has sufficient tokens for the given user.
+    
+    Parameters:
+        quota_limiters (list[QuotaLimiter]): Quota limiter instances to check.
+        user_id (str): Identifier of the user whose quota is being checked.
+    
     Raises:
-        HTTPException: With status 500 if database communication fails,
-            or status 429 if quota is exceeded.
+        HTTPException: With status 500 if database communication with the quota backend fails, or status 429 if any limiter reports the quota is exceeded.
     """
     try:
         # check available tokens using all configured quota limiters

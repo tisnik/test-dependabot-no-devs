@@ -20,12 +20,30 @@ logger = logging.getLogger("utils.transcripts")
 
 
 def _hash_user_id(user_id: str) -> str:
-    """Hash the user ID using SHA-256."""
+    """
+    Compute a SHA-256 hexadecimal digest of the given user identifier.
+    
+    Returns:
+        Hexadecimal SHA-256 digest of the provided `user_id`.
+    """
     return hashlib.sha256(user_id.encode("utf-8")).hexdigest()
 
 
 def construct_transcripts_path(user_id: str, conversation_id: str) -> Path:
-    """Construct path to transcripts."""
+    """
+    Return filesystem path for storing transcripts for a user conversation.
+    
+    Constructs a path under the configured transcripts_storage using a SHA-256 hash
+    of `user_id` as a directory component and a sanitized `conversation_id` as a
+    subdirectory.
+    
+    Parameters:
+        user_id (str): User identifier; its SHA-256 hash is used as the directory name.
+        conversation_id (str): Conversation identifier; normalized to a safe path segment.
+    
+    Returns:
+        Path: Filesystem path where transcripts for the specified user and conversation should be stored.
+    """
     # these two normalizations are required by Snyk as it detects
     # this Path sanitization pattern
     hashed_user_id = _hash_user_id(user_id)
@@ -50,18 +68,24 @@ def store_transcript(  # pylint: disable=too-many-arguments,too-many-positional-
     truncated: bool,
     attachments: list[Attachment],
 ) -> None:
-    """Store transcript in the local filesystem.
-
-    Args:
-        user_id: The user ID (UUID).
-        conversation_id: The conversation ID (UUID).
-        query_is_valid: The result of the query validation.
-        query: The query (without attachments).
-        query_request: The request containing a query.
-        summary: Summary of the query/response turn.
-        rag_chunks: The list of serialized `RAGChunk` dictionaries.
-        truncated: The flag indicating if the history was truncated.
-        attachments: The list of `Attachment` objects.
+    """
+    Persist a transcript for a user conversation to the configured local transcripts storage.
+    
+    Parameters:
+        user_id (str): User identifier (UUID); stored hashed for privacy.
+        conversation_id (str): Conversation identifier (UUID) used to partition storage.
+        model_id (str): Identifier of the model that produced the response.
+        provider_id (str | None): Optional provider identifier for the model.
+        query_is_valid (bool): Result of upstream query validation for this turn.
+        query (str): The (possibly redacted) user query text.
+        query_request (QueryRequest): Request metadata containing provider and model for the original query.
+        summary (TurnSummary): Turn summary containing the LLM response and any tool call records.
+        rag_chunks (list[dict]): Serialized RAG chunk dictionaries associated with the turn.
+        truncated (bool): Whether conversation history was truncated when producing the response.
+        attachments (list[Attachment]): Attachments referenced by the query; each will be serialized.
+    
+    Raises:
+        OSError: If the transcript file cannot be written to disk.
     """
     transcripts_path = construct_transcripts_path(user_id, conversation_id)
     transcripts_path.mkdir(parents=True, exist_ok=True)

@@ -15,7 +15,11 @@ from models.config import Configuration, ModelContextProtocolServer
 async def register_mcp_servers_async(
     logger: Logger, configuration: Configuration
 ) -> None:
-    """Register Model Context Protocol (MCP) servers with the LlamaStack client (async)."""
+    """
+    Register configured Model Context Protocol (MCP) servers with LlamaStack.
+    
+    Skips registration when no MCP servers are configured. Selects a library or service async client based on configuration.llama_stack.use_as_library_client and registers any MCP toolgroups that are not already present.
+    """
     # Skip MCP registration if no MCP servers are configured
     if not configuration.mcp_servers:
         logger.debug("No MCP servers configured, skipping registration")
@@ -39,7 +43,16 @@ async def _register_mcp_toolgroups_async(
     mcp_servers: List[ModelContextProtocolServer],
     logger: Logger,
 ) -> None:
-    """Async logic for registering MCP toolgroups."""
+    """
+    Register configured Model Context Protocol (MCP) toolgroups that are not already present in the given LlamaStack client.
+    
+    This function queries the client's existing toolgroups and registers each MCP server from `mcp_servers` whose `name` is not already registered. Each registration supplies the toolgroup id, provider id, and MCP endpoint URI.
+    
+    Parameters:
+        client (AsyncLlamaStackClient): LlamaStack async client used to list and register toolgroups.
+        mcp_servers (List[ModelContextProtocolServer]): MCP server descriptors to ensure are registered.
+        logger (Logger): Logger used for debug messages.
+    """
     # Get registered tools
     registered_toolgroups = await client.toolgroups.list()
     registered_toolgroups_ids = [
@@ -63,11 +76,25 @@ async def _register_mcp_toolgroups_async(
 
 
 def run_once_async(func: Callable) -> Callable:
-    """Decorate an async function to run only once."""
+    """
+    Ensure an asynchronous callable executes at most once and reuse its in-progress or completed result for subsequent calls.
+    
+    Parameters:
+        func (Callable): The async function to decorate.
+    
+    Returns:
+        Callable: A wrapper coroutine function that, when called, starts the underlying function on first invocation and returns the same awaited result for all subsequent invocations. If the first invocation raises, subsequent awaits will raise the same exception.
+    """
     task = None
 
     @wraps(func)
     async def wrapper(*args: Any, **kwargs: Any) -> Any:
+        """
+        Ensure the wrapped coroutine is executed at most once and return its result to callers.
+        
+        Returns:
+            The result of the first invocation of the wrapped coroutine; subsequent calls receive the same result.
+        """
         nonlocal task
         if task is None:
             loop = asyncio.get_running_loop()

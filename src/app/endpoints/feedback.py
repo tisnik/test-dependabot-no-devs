@@ -87,15 +87,10 @@ def is_feedback_enabled() -> bool:
 
 async def assert_feedback_enabled(_request: Request) -> None:
     """
-    Ensure that feedback collection is enabled.
-
-    Raises an HTTP 403 error if it is not.
-
-    Args:
-        request (Request): The FastAPI request object.
-
+    Ensure feedback collection is enabled for the current request.
+    
     Raises:
-        HTTPException: If feedback collection is disabled.
+        HTTPException: with status code 403 and detail "Forbidden: Feedback is disabled" when feedback is disabled.
     """
     feedback_enabled = is_feedback_enabled()
     if not feedback_enabled:
@@ -112,23 +107,18 @@ async def feedback_endpoint_handler(
     auth: Annotated[AuthTuple, Depends(get_auth_dependency())],
     _ensure_feedback_enabled: Any = Depends(assert_feedback_enabled),
 ) -> FeedbackResponse:
-    """Handle feedback requests.
-
-    Processes a user feedback submission, storing the feedback and
-    returning a confirmation response.
-
-    Args:
-        feedback_request: The request containing feedback information.
-        ensure_feedback_enabled: The feedback handler (FastAPI Depends) that
-            will handle feedback status checks.
-        auth: The Authentication handler (FastAPI Depends) that will
-            handle authentication Logic.
-
+    """
+    Store submitted user feedback and return a confirmation.
+    
+    Parameters:
+        feedback_request: The feedback payload received from the client.
+        auth: Authentication tuple from the dependency; the first element is the submitting user's ID.
+    
     Returns:
-        Response indicating the status of the feedback storage request.
-
+        FeedbackResponse: Confirmation response with `response` set to "feedback received".
+    
     Raises:
-        HTTPException: Returns HTTP 500 if feedback storage fails.
+        HTTPException: If persisting feedback fails (results in a 500 response).
     """
     logger.debug("Feedback received %s", str(feedback_request))
 
@@ -150,14 +140,17 @@ async def feedback_endpoint_handler(
 
 def store_feedback(user_id: str, feedback: dict) -> None:
     """
-    Store feedback in the local filesystem.
-
-    Persist user feedback to a uniquely named JSON file in the
-    configured local storage directory.
-
+    Persist the provided feedback as a JSON file in the configured local storage.
+    
+    The stored object will include the provided `user_id` and a UTC timestamp in addition to the `feedback` contents. The storage location is taken from configuration.user_data_collection_configuration.feedback_storage; the function will create the directory if it does not exist.
+    
     Parameters:
-        user_id (str): Unique identifier of the user submitting feedback.
-        feedback (dict): Feedback data to be stored, merged with user ID and timestamp.
+        user_id (str): Identifier of the user who submitted the feedback.
+        feedback (dict): Feedback payload to persist; merged with `user_id` and a UTC timestamp.
+    
+    Raises:
+        OSError: If writing the feedback file fails.
+        IOError: If writing the feedback file fails.
     """
     logger.debug("Storing feedback for user %s", user_id)
     # Creates storage path only if it doesn't exist. The `exist_ok=True` prevents
@@ -186,13 +179,10 @@ def store_feedback(user_id: str, feedback: dict) -> None:
 @router.get("/status", responses=feedback_get_response)
 def feedback_status() -> StatusResponse:
     """
-    Handle feedback status requests.
-
-    Return the current enabled status of the feedback
-    functionality.
-
+    Report whether feedback collection is enabled.
+    
     Returns:
-        StatusResponse: Indicates whether feedback collection is enabled.
+        StatusResponse: Response with `functionality="feedback"` and `status` set to `{"enabled": <bool>}` indicating the current enabled state.
     """
     logger.debug("Feedback status requested")
     feedback_status_enabled = is_feedback_enabled()
@@ -208,14 +198,13 @@ async def update_feedback_status(
     auth: Annotated[AuthTuple, Depends(get_auth_dependency())],
 ) -> FeedbackStatusUpdateResponse:
     """
-    Handle feedback status update requests.
-
-    Takes a request with the desired state of the feedback status.
-    Returns the updated state of the feedback status based on the request's value.
-    These changes are for the life of the service and are on a per-worker basis.
-
+    Update the runtime feedback-enabled flag to the requested value and return metadata about the change.
+    
+    Parameters:
+        feedback_update_request (FeedbackStatusUpdateRequest): Request containing the desired feedback-enabled value.
+    
     Returns:
-        FeedbackStatusUpdateResponse: Indicates whether feedback is enabled.
+        FeedbackStatusUpdateResponse: Object with `previous_status`, `updated_status`, `updated_by` (user id), and `timestamp` (UTC).
     """
     user_id, _, _, _ = auth
     requested_status = feedback_update_request.get_value()

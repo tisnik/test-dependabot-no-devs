@@ -120,7 +120,12 @@ class SQLiteCache(Cache):
         """
 
     def __init__(self, config: SQLiteDatabaseConfiguration) -> None:
-        """Create a new instance of SQLite cache."""
+        """
+        Initialize the SQLiteCache with the provided database configuration and establish the database connection.
+        
+        Parameters:
+            config (SQLiteDatabaseConfiguration): Configuration containing the SQLite database path and related settings used to create and open the connection.
+        """
         self.sqlite_config = config
 
         # initialize connection to DB
@@ -129,7 +134,12 @@ class SQLiteCache(Cache):
 
     # pylint: disable=W0201
     def connect(self) -> None:
-        """Initialize connection to database."""
+        """
+        Establish a SQLite connection using the configured db_path, initialize the cache schema, and enable autocommit.
+        
+        Raises:
+            sqlite3.Error: If the database cannot be opened or the cache schema cannot be initialized.
+        """
         logger.info("Connecting to storage")
         # make sure the connection will have known state
         # even if SQLite is not alive
@@ -146,7 +156,12 @@ class SQLiteCache(Cache):
         self.connection.autocommit = True
 
     def connected(self) -> bool:
-        """Check if connection to cache is alive."""
+        """
+        Return whether the SQLite connection used by the cache is alive.
+        
+        Returns:
+            bool: `True` if a working connection to storage exists, `False` otherwise.
+        """
         if self.connection is None:
             logger.warning("Not connected, need to reconnect later")
             return False
@@ -167,7 +182,14 @@ class SQLiteCache(Cache):
                     logger.warning("Unable to close cursor")
 
     def initialize_cache(self) -> None:
-        """Initialize cache - clean it up etc."""
+        """
+        Initialize required SQLite schema for the cache.
+        
+        Creates the cache table, conversations table, and index if they do not already exist, and commits the changes.
+        
+        Raises:
+            CacheError: if the database connection is not established.
+        """
         if self.connection is None:
             logger.error("Cache is disconnected")
             raise CacheError("Initialize_cache: cache is disconnected")
@@ -190,15 +212,19 @@ class SQLiteCache(Cache):
     def get(
         self, user_id: str, conversation_id: str, skip_user_id_check: bool = False
     ) -> list[CacheEntry]:
-        """Get the value associated with the given key.
-
-        Args:
-            user_id: User identification.
-            conversation_id: Conversation ID unique for given user.
-            skip_user_id_check: Skip user_id suid check.
-
+        """
+        Return the conversation history as a list of CacheEntry objects for the given user and conversation.
+        
+        Parameters:
+            user_id (str): User identification.
+            conversation_id (str): Conversation ID unique for the given user.
+            skip_user_id_check (bool): If True, skip any user-id validation checks.
+        
         Returns:
-            The value associated with the key, or None if not found.
+            list[CacheEntry]: Conversation history entries ordered by creation time; each entry's `referenced_documents` will be a list of ReferencedDocument objects or None if not present or deserialization failed.
+        
+        Raises:
+            CacheError: If the cache connection is disconnected.
         """
         if self.connection is None:
             logger.error("Cache is disconnected")
@@ -249,14 +275,17 @@ class SQLiteCache(Cache):
         cache_entry: CacheEntry,
         skip_user_id_check: bool = False,
     ) -> None:
-        """Set the value associated with the given key.
-
-        Args:
-            user_id: User identification.
-            conversation_id: Conversation ID unique for given user.
-            cache_entry: The `CacheEntry` object to store.
-            skip_user_id_check: Skip user_id suid check.
-
+        """
+        Insert a cache entry for the specified conversation and update the conversation's last message timestamp.
+        
+        Parameters:
+            user_id (str): Identifier of the user owning the conversation.
+            conversation_id (str): Identifier of the conversation for this user.
+            cache_entry (CacheEntry): The cache entry to store.
+            skip_user_id_check (bool): If True, skip any user-id validation checks before storing.
+        
+        Raises:
+            CacheError: If the cache connection is not available.
         """
         if self.connection is None:
             logger.error("Cache is disconnected")
@@ -310,16 +339,19 @@ class SQLiteCache(Cache):
     def delete(
         self, user_id: str, conversation_id: str, skip_user_id_check: bool = False
     ) -> bool:
-        """Delete conversation history for a given user_id and conversation_id.
-
-        Args:
-            user_id: User identification.
-            conversation_id: Conversation ID unique for given user.
-            skip_user_id_check: Skip user_id suid check.
-
+        """
+        Delete all cached entries and the conversation record for the given user and conversation.
+        
+        Parameters:
+            user_id: Identifier of the user owning the conversation.
+            conversation_id: Identifier of the conversation to delete.
+            skip_user_id_check: If True, skip any user-id validation checks.
+        
         Returns:
-            bool: True if the conversation was deleted, False if not found.
-
+            True if any cache rows for the conversation were removed, False otherwise.
+        
+        Raises:
+            CacheError: If the cache connection is not available.
         """
         if self.connection is None:
             logger.error("Cache is disconnected")
@@ -346,16 +378,16 @@ class SQLiteCache(Cache):
     def list(
         self, user_id: str, skip_user_id_check: bool = False
     ) -> list[ConversationData]:
-        """List all conversations for a given user_id.
-
-        Args:
-            user_id: User identification.
-            skip_user_id_check: Skip user_id suid check.
-
+        """
+        Retrieves all conversations for the specified user.
+        
+        Parameters:
+            user_id (str): The user's identifier.
+            skip_user_id_check (bool): If True, skip validation of the user_id.
+        
         Returns:
-            A list of ConversationData objects containing conversation_id,
-            topic_summary, and last_message_timestamp
-
+            list[ConversationData]: A list of ConversationData objects, each containing
+            conversation_id, topic_summary, and last_message_timestamp.
         """
         if self.connection is None:
             logger.error("Cache is disconnected")
@@ -385,13 +417,14 @@ class SQLiteCache(Cache):
         topic_summary: str,
         skip_user_id_check: bool = False,
     ) -> None:
-        """Set the topic summary for the given conversation.
-
-        Args:
-            user_id: User identification.
-            conversation_id: Conversation ID unique for given user.
-            topic_summary: The topic summary to store.
-            skip_user_id_check: Skip user_id suid check.
+        """
+        Set or update the topic summary for a specific user's conversation.
+        
+        Parameters:
+            user_id (str): Identifier of the user who owns the conversation.
+            conversation_id (str): Identifier of the conversation to update.
+            topic_summary (str): New topic summary text to store for the conversation.
+            skip_user_id_check (bool): If True, bypass any user-id validation checks.
         """
         if self.connection is None:
             logger.error("Cache is disconnected")

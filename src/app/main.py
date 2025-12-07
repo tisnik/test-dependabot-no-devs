@@ -30,10 +30,9 @@ service_name = configuration.configuration.name
 @asynccontextmanager
 async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
     """
-    Initialize app resources.
-
-    FastAPI lifespan context: initializes configuration, Llama client, MCP servers,
-    logger, and database before serving requests.
+    Initialize and prepare application resources before serving requests.
+    
+    Performs startup tasks: loads configuration, initializes and verifies the Llama Stack client, registers MCP servers, prepares application logging, and initializes the database, then yields control to FastAPI to start serving requests.
     """
     configuration.load_configuration(os.environ["LIGHTSPEED_STACK_CONFIG_PATH"])
     await AsyncLlamaStackClientHolder().load(configuration.configuration.llama_stack)
@@ -87,7 +86,18 @@ app.add_middleware(
 async def rest_api_metrics(
     request: Request, call_next: Callable[[Request], Awaitable[Response]]
 ) -> Response:
-    """Middleware with REST API counter update logic."""
+    """
+    Record REST API request metrics for application routes and forward the request to the next handler.
+    
+    Only requests whose path is listed in the application's `app_routes_paths` are measured. For measured requests, this middleware records request duration and increments a per-path/per-status counter; it does not increment counters for the `/metrics` endpoint.
+    
+    Parameters:
+        request (Request): The incoming HTTP request.
+        call_next (Callable[[Request], Awaitable[Response]]): Callable that forwards the request to the next ASGI/route handler and returns a Response.
+    
+    Returns:
+        Response: The HTTP response produced by the next handler.
+    """
     path = request.url.path
     logger.debug("Received request for path: %s", path)
 

@@ -42,19 +42,36 @@ class AppConfig:
     _instance = None
 
     def __new__(cls, *args: Any, **kwargs: Any) -> "AppConfig":
-        """Create a new instance of the class."""
+        """
+        Ensure a single AppConfig instance exists and return it.
+        
+        Returns:
+            The singleton AppConfig instance.
+        """
         if not isinstance(cls._instance, cls):
             cls._instance = super().__new__(cls, *args, **kwargs)
         return cls._instance
 
     def __init__(self) -> None:
-        """Initialize the class instance."""
+        """
+        Set up the instance with no loaded configuration and cleared cached resources.
+        
+        Initializes:
+        - _configuration: None until load_configuration or init_from_dict is called.
+        - _conversation_cache: None until first access via the conversation_cache property.
+        - _quota_limiters: empty list, populated lazily by the quota_limiters property.
+        """
         self._configuration: Optional[Configuration] = None
         self._conversation_cache: Optional[Cache] = None
         self._quota_limiters: list[QuotaLimiter] = []
 
     def load_configuration(self, filename: str) -> None:
-        """Load configuration from YAML file."""
+        """
+        Load YAML configuration from the given file, substitute environment variables, and initialize the application configuration.
+        
+        Parameters:
+            filename (str): Path to the YAML configuration file to load.
+        """
         with open(filename, encoding="utf-8") as fin:
             config_dict = yaml.safe_load(fin)
             config_dict = replace_env_vars(config_dict)
@@ -62,7 +79,16 @@ class AppConfig:
             self.init_from_dict(config_dict)
 
     def init_from_dict(self, config_dict: dict[Any, Any]) -> None:
-        """Initialize configuration from a dictionary."""
+        """
+        Initialize the application's configuration from a dictionary.
+        
+        This replaces the current configuration with a new Configuration built from `config_dict`
+        and clears any cached resources that depend on configuration (conversation cache and quota limiters).
+        
+        Parameters:
+            config_dict (dict[Any, Any]): Dictionary containing configuration data compatible with the
+                Configuration model's constructor.
+        """
         # clear cached values when configuration changes
         self._conversation_cache = None
         self._quota_limiters = []
@@ -71,42 +97,90 @@ class AppConfig:
 
     @property
     def configuration(self) -> Configuration:
-        """Return the whole configuration."""
+        """
+        Access the loaded application configuration.
+        
+        Returns:
+            configuration (Configuration): The parsed application configuration.
+        
+        Raises:
+            LogicError: If the configuration has not been loaded.
+        """
         if self._configuration is None:
             raise LogicError("logic error: configuration is not loaded")
         return self._configuration
 
     @property
     def service_configuration(self) -> ServiceConfiguration:
-        """Return service configuration."""
+        """
+        Access the service-specific configuration section.
+        
+        Returns:
+            ServiceConfiguration: the loaded service configuration.
+        
+        Raises:
+            LogicError: if the configuration has not been loaded.
+        """
         if self._configuration is None:
             raise LogicError("logic error: configuration is not loaded")
         return self._configuration.service
 
     @property
     def llama_stack_configuration(self) -> LlamaStackConfiguration:
-        """Return Llama stack configuration."""
+        """
+        Get the Llama stack configuration from the loaded application configuration.
+        
+        Returns:
+            LlamaStackConfiguration: The configured Llama stack settings.
+        
+        Raises:
+            LogicError: If the configuration has not been loaded.
+        """
         if self._configuration is None:
             raise LogicError("logic error: configuration is not loaded")
         return self._configuration.llama_stack
 
     @property
     def user_data_collection_configuration(self) -> UserDataCollection:
-        """Return user data collection configuration."""
+        """
+        Get the user data collection configuration.
+        
+        Returns:
+            UserDataCollection: The configured user data collection settings.
+        
+        Raises:
+            LogicError: If the configuration has not been loaded.
+        """
         if self._configuration is None:
             raise LogicError("logic error: configuration is not loaded")
         return self._configuration.user_data_collection
 
     @property
     def mcp_servers(self) -> list[ModelContextProtocolServer]:
-        """Return model context protocol servers configuration."""
+        """
+        Model Context Protocol (MCP) servers configuration.
+        
+        Returns:
+            list[ModelContextProtocolServer]: The configured MCP servers.
+        
+        Raises:
+            LogicError: If the configuration has not been loaded.
+        """
         if self._configuration is None:
             raise LogicError("logic error: configuration is not loaded")
         return self._configuration.mcp_servers
 
     @property
     def authentication_configuration(self) -> AuthenticationConfiguration:
-        """Return authentication configuration."""
+        """
+        Access the authentication configuration section.
+        
+        Returns:
+            AuthenticationConfiguration: The authentication configuration.
+        
+        Raises:
+            LogicError: If the configuration has not been loaded.
+        """
         if self._configuration is None:
             raise LogicError("logic error: configuration is not loaded")
 
@@ -114,7 +188,12 @@ class AppConfig:
 
     @property
     def authorization_configuration(self) -> AuthorizationConfiguration:
-        """Return authorization configuration or default no-op configuration."""
+        """
+        Return the authorization configuration, falling back to a default no-op configuration if none is present.
+        
+        Returns:
+            AuthorizationConfiguration: The configured authorization settings, or a default no-op `AuthorizationConfiguration` when the configuration does not include an authorization section.
+        """
         if self._configuration is None:
             raise LogicError("logic error: configuration is not loaded")
 
@@ -125,42 +204,87 @@ class AppConfig:
 
     @property
     def customization(self) -> Optional[Customization]:
-        """Return customization configuration."""
+        """
+        Access the optional customization configuration for the application.
+        
+        Returns:
+            Optional[Customization]: The customization configuration if present, otherwise `None`.
+        """
         if self._configuration is None:
             raise LogicError("logic error: configuration is not loaded")
         return self._configuration.customization
 
     @property
     def inference(self) -> InferenceConfiguration:
-        """Return inference configuration."""
+        """
+        Retrieve the inference configuration section from the loaded configuration.
+        
+        Returns:
+            InferenceConfiguration: The inference configuration.
+        
+        Raises:
+            LogicError: If the configuration has not been loaded.
+        """
         if self._configuration is None:
             raise LogicError("logic error: configuration is not loaded")
         return self._configuration.inference
 
     @property
     def conversation_cache_configuration(self) -> ConversationCacheConfiguration:
-        """Return conversation cache configuration."""
+        """
+        Retrieve the conversation cache configuration section from the loaded application configuration.
+        
+        Returns:
+            ConversationCacheConfiguration: The conversation cache configuration.
+        
+        Raises:
+            LogicError: If the configuration has not been loaded.
+        """
         if self._configuration is None:
             raise LogicError("logic error: configuration is not loaded")
         return self._configuration.conversation_cache
 
     @property
     def database_configuration(self) -> DatabaseConfiguration:
-        """Return database configuration."""
+        """
+        Get the application's database configuration.
+        
+        Returns:
+            DatabaseConfiguration: The loaded database configuration section.
+        
+        Raises:
+            LogicError: If the configuration has not been loaded.
+        """
         if self._configuration is None:
             raise LogicError("logic error: configuration is not loaded")
         return self._configuration.database
 
     @property
     def quota_handlers_configuration(self) -> QuotaHandlersConfiguration:
-        """Return quota handlers configuration."""
+        """
+        Return the quota handlers configuration section.
+        
+        Returns:
+            quota_handlers (QuotaHandlersConfiguration): The quota handlers configuration from the loaded configuration.
+        
+        Raises:
+            LogicError: If the configuration has not been loaded.
+        """
         if self._configuration is None:
             raise LogicError("logic error: configuration is not loaded")
         return self._configuration.quota_handlers
 
     @property
     def conversation_cache(self) -> Cache:
-        """Return the conversation cache."""
+        """
+        Get the conversation cache, creating it from the loaded configuration if it has not been created yet.
+        
+        Returns:
+            cache (Cache): The conversation cache instance.
+        
+        Raises:
+            LogicError: If the configuration has not been loaded.
+        """
         if self._configuration is None:
             raise LogicError("logic error: configuration is not loaded")
         if self._conversation_cache is None:
@@ -171,7 +295,17 @@ class AppConfig:
 
     @property
     def quota_limiters(self) -> list[QuotaLimiter]:
-        """Return list of all setup quota limiters."""
+        """
+        Provide the application's configured quota limiters.
+        
+        Builds and caches quota limiters from the loaded configuration if they have not been created yet.
+        
+        Returns:
+            list[QuotaLimiter]: The list of configured quota limiters.
+        
+        Raises:
+            LogicError: If the configuration has not been loaded.
+        """
         if self._configuration is None:
             raise LogicError("logic error: configuration is not loaded")
         if not self._quota_limiters:

@@ -117,7 +117,18 @@ def persist_user_conversation_details(
     provider_id: str,
     topic_summary: Optional[str],
 ) -> None:
-    """Associate conversation to user in the database."""
+    """
+    Associate a conversation with a user in the database, creating it if missing or updating metadata if it exists.
+    
+    If no UserConversation with the given conversation_id exists, creates one with the provided model/provider, topic summary, and a message count of 1. If it exists, updates last used model and provider, sets last_message_at to the current UTC time, and increments message_count. Commits the change to the database.
+    
+    Parameters:
+        user_id (str): The identifier of the user to associate with the conversation.
+        conversation_id (str): The conversation identifier to create or update.
+        model (str): The model identifier last used for this conversation.
+        provider_id (str): The provider identifier last used for this conversation.
+        topic_summary (Optional[str]): Optional topic summary to store for new conversations.
+    """
     with get_session() as session:
         existing_conversation = (
             session.query(UserConversation).filter_by(id=conversation_id).first()
@@ -149,7 +160,16 @@ def evaluate_model_hints(
     user_conversation: UserConversation | None,
     query_request: QueryRequest,
 ) -> tuple[str | None, str | None]:
-    """Evaluate model hints from user conversation."""
+    """
+    Determine which model and provider IDs to use for a query by preferring explicit request values and falling back to the user's last-used values when the request omits them.
+    
+    Parameters:
+        user_conversation (UserConversation | None): The user's conversation metadata that may contain last_used_model and last_used_provider.
+        query_request (QueryRequest): The incoming query request which may include explicit `model` and `provider` hints.
+    
+    Returns:
+        tuple[str | None, str | None]: A tuple (model_id, provider_id) where each element is the chosen identifier or `None` if neither the request nor the user conversation specifies it.
+    """
     model_id: str | None = query_request.model
     provider_id: str | None = query_request.provider
 
@@ -190,14 +210,16 @@ def evaluate_model_hints(
 async def get_topic_summary(
     question: str, client: AsyncLlamaStackClient, model_id: str
 ) -> str:
-    """Get a topic summary for a question.
-
-    Args:
-        question: The question to be validated.
-        client: The AsyncLlamaStackClient to use for the request.
-        model_id: The ID of the model to use.
+    """
+    Produce a concise topic summary for the given question using a temporary agent session.
+    
+    Parameters:
+        question (str): The user question to summarize.
+        client (AsyncLlamaStackClient): Llama Stack client used to create a temporary agent and run the turn.
+        model_id (str): Identifier of the model to use for generating the summary.
+    
     Returns:
-        str: The topic summary for the question.
+        str: The summary text produced by the agent, or an empty string if no output content is present.
     """
     topic_summary_system_prompt = get_topic_summary_system_prompt(configuration)
     agent, session_id, _ = await get_temp_agent(
@@ -229,26 +251,22 @@ async def query_endpoint_handler_base(  # pylint: disable=R0914
     get_topic_summary_func: Any,
 ) -> QueryResponse:
     """
-    Handle query endpoints (shared by Agent API and Responses API).
-
-    Processes a POST request to a query endpoint, forwarding the
-    user's query to a selected Llama Stack LLM and returning the generated response.
-
-    Validates configuration and authentication, selects the appropriate model
-    and provider, retrieves the LLM response, updates metrics, and optionally
-    stores a transcript of the interaction. Handles connection errors to the
-    Llama Stack service by returning an HTTP 500 error.
-
-    Args:
-        request: The FastAPI request object
-        query_request: The query request containing the user's question
-        auth: Authentication tuple from dependency
-        mcp_headers: MCP headers from dependency
-        retrieve_response_func: The retrieve_response function to use (Agent or Responses API)
-        get_topic_summary_func: The get_topic_summary function to use (Agent or Responses API)
-
+    Handle a query request by selecting a model, invoking the LLM/agent to produce a response, persisting conversation and transcript data as configured, and returning an assembled QueryResponse.
+    
+    Parameters:
+        request: FastAPI request object (used for authorization context and request state).
+        query_request: The incoming QueryRequest with the user's query and optional overrides.
+        auth: Authentication tuple provided by dependency injection.
+        mcp_headers: MCP header mappings provided by dependency.
+        retrieve_response_func: Callable used to produce the LLM/agent response. Expected to accept (client, model_id, query_request, token, mcp_headers=..., provider_id=...) and return (TurnSummary, conversation_id, list[ReferencedDocument], TokenCounter).
+        get_topic_summary_func: Async callable used to obtain an initial topic summary for new conversations. Expected to accept (question: str, client, model_id) and return a string summary.
+    
     Returns:
-        QueryResponse: Contains the conversation ID and the LLM-generated response.
+        QueryResponse: The final response object including conversation_id, LLM-generated response, RAG chunks, tool calls, referenced documents, token usage, and available quotas.
+    
+    Raises:
+        HTTPException: With status 500 if the Llama Stack service cannot be reached.
+        HTTPException: With status 429 if a model's token quota is exceeded.
     """
     check_configuration_loaded(configuration)
 
@@ -447,13 +465,15 @@ async def query_endpoint_handler(
     mcp_headers: dict[str, dict[str, str]] = Depends(mcp_headers_dependency),
 ) -> QueryResponse:
     """
-    Handle request to the /query endpoint using Agent API.
-
-    This is a wrapper around query_endpoint_handler_base that provides
-    the Agent API specific retrieve_response and get_topic_summary functions.
-
+    Handle POST /query requests using the Agent API.
+    
+    Wrapper around query_endpoint_handler_base that supplies the Agent-specific
+    retrieve_response and get_topic_summary callbacks.
+    
     Returns:
-        QueryResponse: Contains the conversation ID and the LLM-generated response.
+        QueryResponse: The assembled response including conversation_id, LLM-generated
+        response text, rag chunks, tool calls, referenced documents, token usage,
+        and available quotas.
     """
     return await query_endpoint_handler_base(
         request=request,
@@ -469,22 +489,21 @@ def select_model_and_provider_id(
     models: ModelListResponse, model_id: str | None, provider_id: str | None
 ) -> tuple[str, str, str]:
     """
-    Select the model ID and provider ID based on the request or available models.
-
-    Determine and return the appropriate model and provider IDs for
-    a query request.
-
-    If the request specifies both model and provider IDs, those are used.
-    Otherwise, defaults from configuration are applied. If neither is
-    available, selects the first available LLM model from the provided model
-    list. Validates that the selected model exists among the available models.
-
+    Choose the Llama Stack model identifier, model label, and provider identifier to use for a query.
+    
+    Parameters:
+        models (ModelListResponse): Iterable of available models from the Llama Stack client.
+        model_id (str | None): Optional model label supplied by the request or configuration (e.g., "gpt-4").
+        provider_id (str | None): Optional provider identifier supplied by the request or configuration (e.g., "openai").
+    
     Returns:
-        A tuple containing the combined model ID (in the format
-        "provider/model"), and its separated parts: the model label and the provider ID.
-
+        tuple[str, str, str]: A tuple with
+            - the combined Llama Stack model identifier in the form "provider/model",
+            - the model label (the model part without the provider),
+            - the provider identifier.
+    
     Raises:
-        HTTPException: If no suitable LLM model is found or the selected model is not available.
+        HTTPException: If no LLM model is available among `models`, or if the resolved model/provider pair is not present in `models`.
     """
     # If model_id and provider_id are provided in the request, use them
 
@@ -561,29 +580,23 @@ def _is_inout_shield(shield: Shield) -> bool:
 
 def is_output_shield(shield: Shield) -> bool:
     """
-    Determine if the shield is for monitoring output.
-
-    Return True if the given shield is classified as an output or
-    inout shield.
-
-    A shield is considered an output shield if its identifier
-    starts with "output_" or "inout_".
+    Return whether a Shield applies to output.
+    
+    Parameters:
+        shield (Shield): The shield to classify.
+    
+    Returns:
+        `true` if the shield's identifier starts with "output_" or "inout_", `false` otherwise.
     """
     return _is_inout_shield(shield) or shield.identifier.startswith("output_")
 
 
 def is_input_shield(shield: Shield) -> bool:
     """
-    Determine if the shield is for monitoring input.
-
-    Return True if the shield is classified as an input or inout
-    shield.
-
-    Parameters:
-        shield (Shield): The shield identifier to classify.
-
+    Determine whether a shield applies to input monitoring.
+    
     Returns:
-        bool: True if the shield is for input or both input/output monitoring; False otherwise.
+        `True` if the shield monitors input or both input and output, `False` otherwise.
     """
     return _is_inout_shield(shield) or not is_output_shield(shield)
 
@@ -592,14 +605,15 @@ def parse_metadata_from_text_item(
     text_item: TextContentItem,
 ) -> Optional[ReferencedDocument]:
     """
-    Parse a single TextContentItem to extract referenced documents.
-
-    Args:
-        text_item (TextContentItem): The TextContentItem containing metadata.
-
+    Extracts a referenced document from a TextContentItem's metadata block.
+    
+    Searches for a "Metadata: { ... }" block inside the item's text and returns the first metadata object that contains both the "docs_url" and "title" fields.
+    
+    Parameters:
+        text_item (TextContentItem): The text content item to parse for metadata.
+    
     Returns:
-        ReferencedDocument: A ReferencedDocument object containing 'doc_url' and 'doc_title'
-        representing the referenced documents found in the metadata.
+        ReferencedDocument: A ReferencedDocument with `doc_url` and `doc_title` if a valid metadata block is found; `None` otherwise.
     """
     docs: list[ReferencedDocument] = []
     if not isinstance(text_item, TextContentItem):
@@ -623,17 +637,10 @@ def parse_metadata_from_text_item(
 
 def parse_referenced_documents(response: Turn) -> list[ReferencedDocument]:
     """
-    Parse referenced documents from Turn.
-
-    Iterate through the steps of a response and collect all referenced
-    documents from rag tool responses.
-
-    Args:
-        response(Turn): The response object from the agent turn.
-
+    Extract referenced document metadata from a Turn's RAG tool outputs.
+    
     Returns:
-        list[ReferencedDocument]: A list of ReferencedDocument, each with 'doc_url' and 'doc_title'
-        representing all referenced documents found in the response.
+        list[ReferencedDocument]: A list of ReferencedDocument objects discovered in the turn's RAG tool responses; empty list if none found.
     """
     docs = []
     for step in response.steps:
@@ -661,31 +668,23 @@ async def retrieve_response(  # pylint: disable=too-many-locals,too-many-branche
     provider_id: str = "",
 ) -> tuple[TurnSummary, str, list[ReferencedDocument], TokenCounter]:
     """
-    Retrieve response from LLMs and agents.
-
-    Retrieves a response from the Llama Stack LLM or agent for a
-    given query, handling shield configuration, tool usage, and
-    attachment validation.
-
-    This function configures input/output shields, system prompts,
-    and toolgroups (including RAG and MCP integration) as needed
-    based on the query request and system configuration. It
-    validates attachments, manages conversation and session
-    context, and processes MCP headers for multi-component
-    processing. Shield violations in the response are detected and
-    corresponding metrics are updated.
-
+    Generate an agent/LLM response for the given query and return the response summary, conversation ID, any referenced documents discovered in tool outputs, and token usage.
+    
     Parameters:
-        model_id (str): The identifier of the LLM model to use.
-        provider_id (str): The identifier of the LLM provider to use.
-        query_request (QueryRequest): The user's query and associated metadata.
-        token (str): The authentication token for authorization.
-        mcp_headers (dict[str, dict[str, str]], optional): Headers for multi-component processing.
-
+        client (AsyncLlamaStackClient): Llama Stack client used to create agents and list resources.
+        model_id (str): Identifier of the model to use (may include provider prefix).
+        query_request (QueryRequest): User query and related metadata (attachments, documents, conversation hints).
+        token (str): Authentication token used when contacting configured MCP servers.
+        mcp_headers (dict[str, dict[str, str]] | None): Optional per-MCP-server headers to forward to tool integrations.
+        provider_id (str): Optional provider identifier associated with the chosen model.
+    
     Returns:
-        tuple[TurnSummary, str, list[ReferencedDocument], TokenCounter]: A tuple containing
-        a summary of the LLM or agent's response
-        content, the conversation ID, the list of parsed referenced documents, and token usage information.
+        tuple[TurnSummary, str, list[ReferencedDocument], TokenCounter]: 
+            A 4-tuple containing:
+            - TurnSummary: summarized LLM/agent response and collected tool calls,
+            - conversation_id (str): the conversation identifier used/returned by the agent,
+            - referenced_documents (list[ReferencedDocument]): documents parsed from tool outputs,
+            - TokenCounter: token usage information for the response.
     """
     available_input_shields = [
         shield.identifier
@@ -814,11 +813,11 @@ async def retrieve_response(  # pylint: disable=too-many-locals,too-many-branche
 
 
 def validate_attachments_metadata(attachments: list[Attachment]) -> None:
-    """Validate the attachments metadata provided in the request.
-
+    """
+    Validate that each attachment's `attachment_type` and `content_type` are allowed.
+    
     Raises:
-        HTTPException: If any attachment has an invalid type or content type,
-        an HTTP 422 error is raised.
+        HTTPException: With status 422 and a detail payload when any attachment has an unsupported `attachment_type` or `content_type`.
     """
     for attachment in attachments:
         if attachment.attachment_type not in constants.ATTACHMENT_TYPES:

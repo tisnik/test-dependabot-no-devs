@@ -8,13 +8,15 @@ logger = logging.getLogger(__name__)
 
 def format_tool_response(tool_dict: dict[str, Any]) -> dict[str, Any]:
     """
-    Format a tool dictionary to include only required fields.
-
-    Args:
-        tool_dict: Raw tool dictionary from Llama Stack
-
+    Produce a sanitized tool dictionary containing only the required fields.
+    
+    If the input description contains structured metadata (e.g., lines starting with `TOOL_NAME=` or `DISPLAY_NAME=`), the description will be replaced with a cleaned, human-readable version extracted by `extract_clean_description`.
+    
+    Parameters:
+        tool_dict (dict[str, Any]): Raw tool dictionary (typically from Llama Stack).
+    
     Returns:
-        Formatted tool dictionary with only required fields
+        dict[str, Any]: Formatted tool dictionary with keys `identifier`, `description`, `parameters`, `provider_id`, `toolgroup_id`, `server_source`, and `type`.
     """
     # Clean up description if it contains structured metadata
     description = tool_dict.get("description", "")
@@ -39,13 +41,21 @@ def format_tool_response(tool_dict: dict[str, Any]) -> dict[str, Any]:
 
 def extract_clean_description(description: str) -> str:
     """
-    Extract a clean description from structured metadata format.
-
-    Args:
-        description: Raw description with structured metadata
-
+    Extract a human-readable description from a metadata-rich tool description.
+    
+    Parses a raw description that may contain structured metadata (e.g., lines or sections starting with
+    TOOL_NAME=, DISPLAY_NAME=, USECASE=, INSTRUCTIONS=, INPUT_DESCRIPTION=, OUTPUT_DESCRIPTION=,
+    EXAMPLES=, PREREQUISITES=, AGENT_DECISION_CRITERIA=) and returns a cleaned, user-facing description.
+    The function prefers the first paragraph that does not start with a known metadata prefix and is
+    longer than 20 characters. If no such paragraph exists, it returns the value of a `USECASE=` line if
+    present. If neither is found, it returns the first 200 characters of the input, appending "..." when
+    truncation occurs.
+    
+    Parameters:
+        description (str): Raw description text that may include structured metadata.
+    
     Returns:
-        Clean description without metadata
+        str: A cleaned, human-readable description derived from the input.
     """
     min_description_length = 20
     fallback_truncation_length = 200
@@ -97,12 +107,12 @@ def extract_clean_description(description: str) -> str:
 
 def format_tools_list(tools: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """
-    Format a list of tools with structured description parsing.
-
-    Args:
-        tools: List of raw tool dictionaries
-
+    Format a list of raw tool dictionaries into uniformly structured tool dictionaries.
+    
+    Parameters:
+        tools (list[dict[str, Any]]): Raw tool dictionaries to format.
+    
     Returns:
-        List of formatted tool dictionaries
+        list[dict[str, Any]]: Tool dictionaries with standardized keys and cleaned, human-readable descriptions.
     """
     return [format_tool_response(tool) for tool in tools]

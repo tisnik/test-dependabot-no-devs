@@ -54,17 +54,13 @@ async def models_endpoint_handler(
     auth: Annotated[AuthTuple, Depends(get_auth_dependency())],
 ) -> ModelsResponse:
     """
-    Handle requests to the /models endpoint.
-
-    Process GET requests to the /models endpoint, returning a list of available
-    models from the Llama Stack service.
-
-    Raises:
-        HTTPException: If unable to connect to the Llama Stack server or if
-        model retrieval fails for any reason.
-
+    Retrieve the list of available models from the Llama Stack service.
+    
     Returns:
-        ModelsResponse: An object containing the list of available models.
+        ModelsResponse: An object containing a list of model dictionaries under the `models` attribute.
+    
+    Raises:
+        HTTPException: If unable to connect to the Llama Stack server or if model retrieval fails.
     """
     # Used only by the middleware
     _ = auth

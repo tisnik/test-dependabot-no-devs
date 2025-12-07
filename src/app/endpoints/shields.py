@@ -43,17 +43,15 @@ async def shields_endpoint_handler(
     auth: Annotated[AuthTuple, Depends(get_auth_dependency())],
 ) -> ShieldsResponse:
     """
-    Handle requests to the /shields endpoint.
-
-    Process GET requests to the /shields endpoint, returning a list of available
-    shields from the Llama Stack service.
-
-    Raises:
-        HTTPException: If unable to connect to the Llama Stack server or if
-        shield retrieval fails for any reason.
-
+    Return the list of available shields from the configured Llama Stack service.
+    
+    Checks configuration and retrieves shields from the Llama Stack client, returning them wrapped in a ShieldsResponse.
+    
     Returns:
-        ShieldsResponse: An object containing the list of available shields.
+        ShieldsResponse: An object whose `shields` field is a list of shield dictionaries.
+    
+    Raises:
+        HTTPException: With status 500 if unable to connect to the Llama Stack service or if shield retrieval fails.
     """
     # Used only by the middleware
     _ = auth

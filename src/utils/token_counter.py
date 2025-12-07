@@ -42,17 +42,17 @@ class TokenCounter:
 
 
 def extract_token_usage_from_turn(turn: Turn, system_prompt: str = "") -> TokenCounter:
-    """Extract token usage information from a turn.
-
-    This function uses the same tokenizer and logic as the metrics system
-    to ensure consistency between API responses and Prometheus metrics.
-
-    Args:
-        turn: The turn object containing token usage information
-        system_prompt: The system prompt used for the turn
-
+    """
+    Extract token counts for a Turn's input and output messages.
+    
+    Uses the same tokenizer and chat formatting as the metrics system to ensure counts match Prometheus metrics. If a non-empty system_prompt is provided it is prepended to input messages before counting. On failure to inspect or encode the turn, the function falls back to default estimates.
+    
+    Parameters:
+        turn (Turn): Turn object containing input_messages and/or output_message.
+        system_prompt (str): Optional system prompt to prepend to input messages before tokenization.
+    
     Returns:
-        TokenCounter: Token usage information
+        TokenCounter: Counts for `input_tokens`, `output_tokens`, `input_tokens_counted`, and `llm_calls`. If counting fails, returns estimates with `input_tokens=100`, `output_tokens=50`, and `llm_calls=1`.
     """
     token_counter = TokenCounter()
 

@@ -14,19 +14,14 @@ class InvalidConfigurationError(Exception):
 
 def get_attribute_from_file(data: dict, file_name_key: str) -> Optional[str]:
     """
-    Return the contents of a file whose path is stored in the given mapping.
-
-    Looks up file_name_key in data; if a non-None value is found it is treated
-    as a filesystem path, the content of the file is read. In case the key is
-    missing or maps to None, returns None.
-
+    Retrieve text from a file whose path is stored under a key in a mapping.
+    
     Parameters:
         data (dict): Mapping containing the file path under file_name_key.
         file_name_key (str): Key in `data` whose value is the path to the file.
-
+    
     Returns:
-        Optional[str]: File contents with trailing whitespace stripped, or None
-        if the key is not present or is None.
+        Optional[str]: File contents with trailing whitespace removed, or None if the key is missing or maps to None.
     """
     file_path = data.get(file_name_key)
     if file_path is not None:
@@ -37,19 +32,14 @@ def get_attribute_from_file(data: dict, file_name_key: str) -> Optional[str]:
 
 def file_check(path: FilePath, desc: str) -> None:
     """
-    Ensure the given path is an existing regular file and is readable.
-
-    If the path is not a regular file or is not readable, raises
-    InvalidConfigurationError.
-
+    Validate that `path` exists and is a readable regular file.
+    
     Parameters:
         path (FilePath): Filesystem path to validate.
-        desc (str): Short description of the value being checked; used in error
-        messages.
-
+        desc (str): Short description included in error messages.
+    
     Raises:
-        InvalidConfigurationError: If `path` does not point to a file or is not
-        readable.
+        InvalidConfigurationError: If `path` does not point to a regular file or is not readable.
     """
     if not os.path.isfile(path):
         raise InvalidConfigurationError(f"{desc} '{path}' is not a file")
@@ -61,20 +51,18 @@ def directory_check(
     path: FilePath, must_exists: bool, must_be_writable: bool, desc: str
 ) -> None:
     """
-    Ensure the given path is an existing directory.
-
-    If the path is not a directory, raises InvalidConfigurationError.
-
+    Validate that a filesystem path refers to a directory with optional existence and writability requirements.
+    
+    If must_exists is True the path must exist; if it does not exist and must_exists is False the function returns without error. When the path exists it must be a directory. If must_be_writable is True the directory must be writable.
+    
     Parameters:
-        path (FilePath): Filesystem path to validate.
-        must_exists (bool): Should the directory exists?
-        must_be_writable (bool): Should the check test if directory is writable?
-        desc (str): Short description of the value being checked; used in error
-        messages.
-
+        path (FilePath): Path to validate.
+        must_exists (bool): Require the path to exist.
+        must_be_writable (bool): Require the directory to be writable when it exists.
+        desc (str): Short description used in error messages to identify the value being checked.
+    
     Raises:
-        InvalidConfigurationError: If `path` does not point to a directory or
-        is not writable when required.
+        InvalidConfigurationError: If the path exists but is not a directory, if must_exists is True and the path does not exist, or if must_be_writable is True and the directory is not writable.
     """
     if not os.path.exists(path):
         if must_exists:
@@ -88,7 +76,17 @@ def directory_check(
 
 
 def import_python_module(profile_name: str, profile_path: str) -> ModuleType | None:
-    """Import a Python module from a file path."""
+    """
+    Import a Python module from a filesystem path and return the loaded module.
+    
+    Parameters:
+        profile_name (str): Name to assign to the imported module.
+        profile_path (str): Filesystem path to the Python source file; must end with `.py`.
+    
+    Returns:
+        ModuleType | None: The loaded module on success; `None` if `profile_path` does not end with `.py`,
+        if a module spec or loader cannot be created, or if importing/executing the module fails.
+    """
     if not profile_path.endswith(".py"):
         return None
     spec = importlib.util.spec_from_file_location(profile_name, profile_path)
@@ -111,7 +109,16 @@ def import_python_module(profile_name: str, profile_path: str) -> ModuleType | N
 
 
 def is_valid_profile(profile_module: ModuleType) -> bool:
-    """Validate that a profile module has the required PROFILE_CONFIG structure."""
+    """
+    Check whether a module exposes a valid PROFILE_CONFIG with required structure.
+    
+    The module must define a `PROFILE_CONFIG` attribute that is a dict and contains a non-empty
+    `system_prompts` entry. This function returns `True` only when `system_prompts` exists
+    and is itself a dict.
+    
+    Returns:
+        True if the module provides a dict `PROFILE_CONFIG` containing a `system_prompts` dict, False otherwise.
+    """
     if not hasattr(profile_module, "PROFILE_CONFIG"):
         return False
 

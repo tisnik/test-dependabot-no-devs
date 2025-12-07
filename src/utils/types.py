@@ -19,10 +19,10 @@ class Singleton(type):
 
     def __call__(cls, *args, **kwargs):  # type: ignore
         """
-        Return the single cached instance of the class, creating and caching it on first call.
-
+        Get the cached singleton instance for this class, creating and caching it on first invocation.
+        
         Returns:
-            object: The singleton instance for this class.
+            The singleton instance of the class.
         """
         if cls not in cls._instances:
             cls._instances[cls] = super(Singleton, cls).__call__(*args, **kwargs)
@@ -35,15 +35,13 @@ class GraniteToolParser(ToolParser):
 
     def get_tool_calls(self, output_message: CompletionMessage) -> list[ToolCall]:
         """
-        Return the `tool_calls` list from a CompletionMessage, or an empty list if none are present.
-
+        Retrieve tool call entries from a CompletionMessage.
+        
         Parameters:
-            output_message (CompletionMessage | None): Completion
-            message potentially containing `tool_calls`.
-
+            output_message (CompletionMessage | None): CompletionMessage that may contain `tool_calls`.
+        
         Returns:
-            list[ToolCall]: The list of tool call entries
-            extracted from `output_message`, or an empty list.
+            list[ToolCall]: The list of `ToolCall` objects extracted from `output_message`, or an empty list if none are present.
         """
         if output_message and output_message.tool_calls:
             return output_message.tool_calls
@@ -52,18 +50,13 @@ class GraniteToolParser(ToolParser):
     @staticmethod
     def get_parser(model_id: str) -> Optional[ToolParser]:
         """
-        Return a GraniteToolParser when the model identifier denotes a Granite model.
-
-        Returns None otherwise.
-
+        Get a GraniteToolParser for Granite model identifiers, or None.
+        
         Parameters:
-            model_id (str): Model identifier string checked case-insensitively.
-            If it starts with "granite", a GraniteToolParser instance is
-            returned.
-
+            model_id (str): Model identifier checked case-insensitively.
+        
         Returns:
-            Optional[ToolParser]: GraniteToolParser for Granite models, or None
-            if `model_id` is falsy or does not start with "granite".
+            Optional[ToolParser]: A GraniteToolParser when `model_id` is truthy and starts with "granite" (case-insensitive); otherwise `None`.
         """
         if model_id and model_id.lower().startswith("granite"):
             return GraniteToolParser()
@@ -94,7 +87,15 @@ class TurnSummary(BaseModel):
     rag_chunks: list[RAGChunk] = []
 
     def append_tool_calls_from_llama(self, tec: ToolExecutionStep) -> None:
-        """Append the tool calls from a llama tool execution step."""
+        """
+        Collects tool call summaries from a Llama ToolExecutionStep and appends them to this turn's tool_calls.
+        
+        Parameters:
+            tec (ToolExecutionStep): Execution record containing `tool_calls` and `tool_responses`; calls and responses are matched by `call_id`. For each call, a ToolCallSummary is appended with the call id, tool name, arguments, and the response content (if any).
+        
+        Notes:
+            If a call's tool name equals DEFAULT_RAG_TOOL and a textual response is present, RAG chunks are extracted from that response and appended to `rag_chunks`.
+        """
         calls_by_id = {tc.call_id: tc for tc in tec.tool_calls}
         responses_by_id = {tc.call_id: tc for tc in tec.tool_responses}
         for call_id, tc in calls_by_id.items():
@@ -117,7 +118,15 @@ class TurnSummary(BaseModel):
                 self._extract_rag_chunks_from_response(response_content)
 
     def _extract_rag_chunks_from_response(self, response_content: str) -> None:
-        """Extract RAG chunks from tool response content."""
+        """
+        Parse a tool response string and append extracted RAG chunks to this TurnSummary's rag_chunks list.
+        
+        Attempts to parse `response_content` as JSON and extract chunks in either of two formats:
+        - A dict containing a "chunks" list: each item's "content", "source", and "score" are used.
+        - A top-level list of chunk objects: for dict items, "content", "source", and "score" are used; non-dict items are stringified into the chunk content.
+        
+        If JSON parsing fails or an unexpected structure/error occurs and `response_content` contains non-whitespace characters, the entire `response_content` is appended as a single RAGChunk with `source=DEFAULT_RAG_TOOL` and `score=None`. Empty or whitespace-only `response_content` is ignored.
+        """
         try:
             # Parse the response to get chunks
             # Try JSON first
