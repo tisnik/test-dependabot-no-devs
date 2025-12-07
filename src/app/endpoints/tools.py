@@ -60,18 +60,15 @@ async def tools_endpoint_handler(
     auth: Annotated[AuthTuple, Depends(get_auth_dependency())],
 ) -> ToolsResponse:
     """
-    Handle requests to the /tools endpoint.
-
-    Process GET requests to the /tools endpoint, returning a consolidated list of
-    available tools from all configured MCP servers.
-
-    Raises:
-        HTTPException: If unable to connect to the Llama Stack server or if
-        tool retrieval fails for any reason.
-
+    Aggregate available tools from configured MCP servers and built-in toolgroups and return them as a ToolsResponse.
+    
+    Attempts to retrieve all toolgroups from the Llama Stack client, collects tools from each toolgroup (continuing on per-toolgroup failures), annotates each tool with a `server_source` (MCP server URL or "builtin"), and formats the consolidated list for the response.
+    
     Returns:
-        ToolsResponse: An object containing the consolidated list of available tools
-        with metadata including tool name, description, parameters, and server source.
+        ToolsResponse: Formatted list of tools with metadata (name, description, parameters, and `server_source`).
+    
+    Raises:
+        HTTPException: If unable to connect to the Llama Stack server or if tool retrieval fails for the entire operation.
     """
     # Used only by the middleware
     _ = auth

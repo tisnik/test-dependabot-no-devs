@@ -106,13 +106,19 @@ conversations_list_responses: dict[int | str, dict[str, Any]] = {
 
 
 def simplify_session_data(session_data: dict) -> list[dict[str, Any]]:
-    """Simplify session data to include only essential conversation information.
-
-    Args:
-        session_data: The full session data dict from llama-stack
-
+    """
+    Convert a Llama Stack session dict into a simplified chat-history list.
+    
+    Each returned turn contains:
+    - "messages": a list of message objects with "content" and "type" (the original role).
+    - "started_at" and "completed_at" timestamps copied from the session turn.
+    
+    Parameters:
+        session_data (dict): The full session dictionary returned by Llama Stack.
+    
     Returns:
-        Simplified session data with only input_messages and output_message per turn
+        list[dict[str, Any]]: A list of simplified turns. Each turn is a dict with keys
+        "messages" (list of {"content": Any, "type": Any}), "started_at", and "completed_at".
     """
     # Create simplified structure
     chat_history = []
@@ -153,7 +159,14 @@ async def get_conversations_list_endpoint_handler(
     request: Request,
     auth: Any = Depends(get_auth_dependency()),
 ) -> ConversationsListResponse:
-    """Handle request to retrieve all conversations for the authenticated user."""
+    """
+    Retrieve a list of conversation summaries visible to the authenticated user.
+    
+    If the caller has the Action.LIST_OTHERS_CONVERSATIONS permission, include conversations from all users; otherwise include only conversations owned by the authenticated user.
+    
+    Returns:
+        ConversationsListResponse: Contains a list of ConversationDetails with metadata (conversation_id, created_at, last_message_at, message_count, last_used_model, last_used_provider, topic_summary).
+    """
     check_configuration_loaded(configuration)
 
     user_id = auth[0]
@@ -217,21 +230,18 @@ async def get_conversation_endpoint_handler(
     auth: Any = Depends(get_auth_dependency()),
 ) -> ConversationResponse:
     """
-    Handle request to retrieve a conversation by ID.
-
-    Retrieve a conversation's chat history by its ID. Then fetches
-    the conversation session from the Llama Stack backend,
-    simplifies the session data to essential chat history, and
-    returns it in a structured response. Raises HTTP 400 for
-    invalid IDs, 404 if not found, 503 if the backend is
-    unavailable, and 500 for unexpected errors.
-
-    Parameters:
-        conversation_id (str): Unique identifier of the conversation to retrieve.
-
+    Retrieve a conversation's simplified chat history by conversation ID.
+    
+    Validates the ID and caller access, fetches the session from the Llama Stack backend,
+    simplifies the session into chat turns, and returns a ConversationResponse containing
+    the conversation ID and the simplified chat history.
+    
     Returns:
-        ConversationResponse: Structured response containing the conversation
-        ID and simplified chat history.
+        ConversationResponse: Response containing `conversation_id` and `chat_history` (list of simplified turns).
+    
+    Raises:
+        HTTPException: on invalid conversation ID (400), access denied (403), conversation not found (404),
+                       Llama Stack unavailable (503), or other internal errors (500).
     """
     check_configuration_loaded(configuration)
 
@@ -353,15 +363,20 @@ async def delete_conversation_endpoint_handler(
     auth: Any = Depends(get_auth_dependency()),
 ) -> ConversationDeleteResponse:
     """
-    Handle request to delete a conversation by ID.
-
-    Validates the conversation ID format and attempts to delete the
-    corresponding session from the Llama Stack backend. Raises HTTP
-    errors for invalid IDs, not found conversations, connection
-    issues, or unexpected failures.
-
+    Delete a conversation and its corresponding Llama Stack session.
+    
+    Validates the conversation ID format and enforces access control; if authorized, attempts to delete the remote session (if any) and removes the local conversation record. Missing remote sessions are treated as a successful deletion.
+    
+    Parameters:
+        request (Request): Incoming FastAPI request (used for auth state).
+        conversation_id (str): Unique identifier of the conversation to delete.
+        auth: Authentication dependency (omitted from detailed doc).
+    
     Returns:
-        ConversationDeleteResponse: Response indicating the result of the deletion operation.
+        ConversationDeleteResponse: Result containing `conversation_id`, `success` (True on successful deletion), and a human-readable `response` message.
+    
+    Raises:
+        HTTPException: For invalid ID (400), forbidden access (403), not found (404), backend connection issues (503), or other internal errors (500).
     """
     check_configuration_loaded(configuration)
 

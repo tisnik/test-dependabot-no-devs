@@ -71,18 +71,18 @@ async def providers_endpoint_handler(
     auth: Annotated[AuthTuple, Depends(get_auth_dependency())],
 ) -> ProvidersListResponse:
     """
-    Handle GET requests to list all available providers.
-
-    Retrieves providers from the Llama Stack service, groups them by API type.
-
+    Return available providers grouped by their API type.
+    
+    Retrieves provider records and organizes them into a ProvidersListResponse where each key is an API type and its value is a list of providers (each entry contains `provider_id` and `provider_type`).
+    
     Raises:
-        HTTPException:
-            - 500 if configuration is not loaded,
-            - 500 if unable to connect to Llama Stack,
-            - 500 for any unexpected retrieval errors.
-
+        HTTPException: 
+            - 500 if configuration is not loaded.
+            - 500 if unable to connect to the upstream provider service.
+            - 500 for any other error encountered while retrieving providers.
+    
     Returns:
-        ProvidersListResponse: Object mapping API types to lists of providers.
+        ProvidersListResponse: Providers grouped by API type.
     """
     # Used only by the middleware
     _ = auth
@@ -126,15 +126,16 @@ async def providers_endpoint_handler(
 
 
 def group_providers(providers: list[dict[str, Any]]) -> dict[str, list[dict[str, Any]]]:
-    """Group a list of providers by their API type.
-
-    Args:
-        providers: List of provider dictionaries. Each must contain
-            'api', 'provider_id', and 'provider_type' keys.
-
+    """
+    Group providers by their API type.
+    
+    Parameters:
+        providers (list[dict[str, Any]]): List of provider dictionaries. Each dictionary must contain the keys
+            'api', 'provider_id', and 'provider_type'.
+    
     Returns:
-        Mapping from API type to list of providers containing
-        only 'provider_id' and 'provider_type'.
+        dict[str, list[dict[str, Any]]]: Mapping from API type to a list of simplified provider dictionaries,
+            each containing only 'provider_id' and 'provider_type'.
     """
     result: dict[str, list[dict[str, Any]]] = {}
     for provider in providers:
@@ -154,17 +155,17 @@ async def get_provider_endpoint_handler(
     provider_id: str,
     auth: Annotated[AuthTuple, Depends(get_auth_dependency())],
 ) -> ProviderResponse:
-    """Retrieve a single provider by its unique ID.
-
+    """
+    Retrieve a single provider by its unique ID.
+    
+    Returns:
+        ProviderResponse: Provider details including `api`, `config`, `health`, `provider_id`, and `provider_type`.
+    
     Raises:
         HTTPException:
-            - 404 if provider with the given ID is not found,
-            - 500 if unable to connect to Llama Stack,
-            - 500 for any unexpected retrieval errors.
-
-    Returns:
-        ProviderResponse: A single provider's details including API, config, health,
-        provider_id, and provider_type.
+            - 404 if no provider with the given `provider_id` exists.
+            - 500 if unable to connect to Llama Stack.
+            - 500 for any other error encountered while retrieving providers.
     """
     # Used only by the middleware
     _ = auth

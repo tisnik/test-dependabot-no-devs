@@ -41,13 +41,18 @@ async def info_endpoint_handler(
     request: Request,
 ) -> InfoResponse:
     """
-    Handle request to the /info endpoint.
-
-    Process GET requests to the /info endpoint, returning the
-    service name, version and Llama-stack version.
-
+    Return service metadata: configured service name, application version, and Llama Stack version.
+    
+    Attempts to retrieve the Llama Stack version and returns an InfoResponse with:
+    - name: configured service name
+    - service_version: application version
+    - llama_stack_version: retrieved Llama Stack version
+    
+    Raises:
+        HTTPException: with status 500 and a detail object containing `response` and `cause` when unable to connect to Llama Stack.
+    
     Returns:
-        InfoResponse: An object containing the service's name and version.
+        InfoResponse: Object with `name`, `service_version`, and `llama_stack_version`.
     """
     # Used only for authorization
     _ = auth

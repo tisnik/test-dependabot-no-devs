@@ -16,7 +16,17 @@ class UserQuotaLimiter(RevokableQuotaLimiter):
         initial_quota: int = 0,
         increase_by: int = 0,
     ) -> None:
-        """Initialize quota limiter storage."""
+        """
+        Create a user-specific quota limiter and initialize its persistent storage.
+        
+        Parameters:
+            configuration (QuotaHandlersConfiguration): Configuration for quota handlers and storage.
+            initial_quota (int): Starting quota value assigned to each user.
+            increase_by (int): Amount to increase a user's quota when replenished.
+        
+        Notes:
+            Establishes the database connection and initializes required tables as part of construction.
+        """
         subject = "u"  # user
         super().__init__(configuration, initial_quota, increase_by, subject)
 
@@ -25,6 +35,11 @@ class UserQuotaLimiter(RevokableQuotaLimiter):
         self.connect()
 
     def __str__(self) -> str:
-        """Return textual representation of limiter instance."""
+        """
+        Provide a textual representation of the limiter instance.
+        
+        Returns:
+            str: String in the format "<ClassName>: initial quota: <initial_quota> increase by: <increase_by>"
+        """
         name = type(self).__name__
         return f"{name}: initial quota: {self.initial_quota} increase by: {self.increase_by}"

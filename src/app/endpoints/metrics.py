@@ -25,14 +25,12 @@ async def metrics_endpoint_handler(
     request: Request,
 ) -> PlainTextResponse:
     """
-    Handle request to the /metrics endpoint.
-
-    Process GET requests to the /metrics endpoint, returning the
-    latest Prometheus metrics in form of a plain text.
-
-    Initializes model metrics on the first request if not already
-    set up, then responds with the current metrics snapshot in
-    Prometheus format.
+    Serve Prometheus metrics for the /metrics endpoint.
+    
+    Initialize model metrics once (idempotent) and return the current metrics snapshot in Prometheus text exposition format.
+    
+    Returns:
+        PlainTextResponse: Response body containing the Prometheus metrics text and the Prometheus content type.
     """
     # Used only for authorization
     _ = auth

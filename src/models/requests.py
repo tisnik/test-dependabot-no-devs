@@ -189,13 +189,29 @@ class QueryRequest(BaseModel):
     @field_validator("conversation_id")
     @classmethod
     def check_uuid(cls, value: str | None) -> str | None:
-        """Check if conversation ID has the proper format."""
+        """
+        Validate that a conversation ID string is in the expected SUID format.
+        
+        Parameters:
+            value (str | None): The conversation ID to validate; may be None.
+        
+        Returns:
+            str | None: The original `value` if it is None or a valid SUID.
+        
+        Raises:
+            ValueError: If `value` is not None and is not a valid SUID.
+        """
         if value and not suid.check_suid(value):
             raise ValueError(f"Improper conversation ID '{value}'")
         return value
 
     def get_documents(self) -> list[Document]:
-        """Return the list of documents from the attachments."""
+        """
+        Produce Document objects from the request's attachments.
+        
+        Returns:
+            list[Document]: Documents created from each attachment's content and content_type; empty list if no attachments are present.
+        """
         if not self.attachments:
             return []
         return [
@@ -205,7 +221,15 @@ class QueryRequest(BaseModel):
 
     @model_validator(mode="after")
     def validate_provider_and_model(self) -> Self:
-        """Perform validation on the provider and model."""
+        """
+        Validate that `provider` and `model` are either both set or both unset.
+        
+        Raises:
+            ValueError: if `model` is set but `provider` is missing, or if `provider` is set but `model` is missing.
+        
+        Returns:
+            Self: the validated instance.
+        """
         if self.model and not self.provider:
             raise ValueError("Provider must be specified if model is specified")
         if self.provider and not self.model:
@@ -214,7 +238,15 @@ class QueryRequest(BaseModel):
 
     @model_validator(mode="after")
     def validate_media_type(self) -> Self:
-        """Validate media_type field."""
+        """
+        Ensure the `media_type` field, if present, is one of the allowed media types.
+        
+        Raises:
+            ValueError: If `media_type` is set to a value other than MEDIA_TYPE_JSON or MEDIA_TYPE_TEXT.
+        
+        Returns:
+            Self: The validated model instance.
+        """
         if self.media_type and self.media_type not in [
             MEDIA_TYPE_JSON,
             MEDIA_TYPE_TEXT,
@@ -342,7 +374,18 @@ class FeedbackRequest(BaseModel):
     @field_validator("conversation_id")
     @classmethod
     def check_uuid(cls, value: str) -> str:
-        """Check if conversation ID has the proper format."""
+        """
+        Validate that a conversation ID string is in the expected SUID format.
+        
+        Parameters:
+            value (str): Conversation ID to validate.
+        
+        Returns:
+            str: The original `value` if it is valid.
+        
+        Raises:
+            ValueError: If `value` is not a valid SUID conversation ID.
+        """
         if not suid.check_suid(value):
             raise ValueError(f"Improper conversation ID {value}")
         return value
@@ -350,7 +393,18 @@ class FeedbackRequest(BaseModel):
     @field_validator("sentiment")
     @classmethod
     def check_sentiment(cls, value: Optional[int]) -> Optional[int]:
-        """Check if sentiment value is as expected."""
+        """
+        Validate that the sentiment indicator is one of the allowed values.
+        
+        Parameters:
+            value (Optional[int]): Sentiment indicator where -1 represents negative feedback, 1 represents positive feedback, and `None` indicates no sentiment provided.
+        
+        Returns:
+            Optional[int]: The original `value` when it is -1, 1, or `None`.
+        
+        Raises:
+            ValueError: If `value` is not -1, 1, or `None`.
+        """
         if value not in {-1, 1, None}:
             raise ValueError(
                 f"Improper sentiment value of {value}, needs to be -1 or 1"
@@ -362,7 +416,16 @@ class FeedbackRequest(BaseModel):
     def validate_categories(
         cls, value: Optional[list[FeedbackCategory]]
     ) -> Optional[list[FeedbackCategory]]:
-        """Validate feedback categories list."""
+        """
+        Normalize and deduplicate a feedback categories list.
+        
+        Parameters:
+            value (Optional[list[FeedbackCategory]]): List of feedback categories or `None`.
+        
+        Returns:
+            Optional[list[FeedbackCategory]]: The list with duplicate categories removed while preserving order,
+            or `None` if the input is `None` or an empty list.
+        """
         if value is None:
             return value
 
@@ -374,7 +437,15 @@ class FeedbackRequest(BaseModel):
 
     @model_validator(mode="after")
     def check_feedback_provided(self) -> Self:
-        """Ensure that at least one form of feedback is provided."""
+        """
+        Validate that the request contains at least one form of feedback.
+        
+        Raises:
+            ValueError: If none of `sentiment`, `user_feedback`, or `categories` is provided.
+        
+        Returns:
+            Self: The unchanged instance when validation passes.
+        """
         if (
             self.sentiment is None
             and (self.user_feedback is None or self.user_feedback == "")
@@ -411,7 +482,12 @@ class FeedbackStatusUpdateRequest(BaseModel):
     model_config = {"extra": "forbid"}
 
     def get_value(self) -> bool:
-        """Return the value of the status attribute."""
+        """
+        Get whether feedback collection is enabled.
+        
+        Returns:
+            `true` if feedback collection is enabled, `false` otherwise.
+        """
         return self.status
 
 

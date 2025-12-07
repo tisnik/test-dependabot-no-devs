@@ -14,7 +14,18 @@ logger = logging.getLogger(__name__)
 def get_auth_dependency(
     virtual_path: str = constants.DEFAULT_VIRTUAL_PATH,
 ) -> AuthInterface:
-    """Select the configured authentication dependency interface."""
+    """
+    Selects and returns the authentication dependency implementation configured for the application.
+    
+    Parameters:
+        virtual_path (str): Virtual path passed to the authentication dependency when it is constructed.
+    
+    Returns:
+        AuthInterface: An instance implementing AuthInterface for the configured authentication module.
+    
+    Raises:
+        ValueError: If the configured authentication module is not supported.
+    """
     try:
         module = configuration.authentication_configuration.module
     except LogicError:

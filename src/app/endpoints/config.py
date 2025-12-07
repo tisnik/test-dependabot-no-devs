@@ -65,13 +65,12 @@ async def config_endpoint_handler(
     request: Request,
 ) -> Configuration:
     """
-    Handle requests to the /config endpoint.
-
-    Process GET requests to the /config endpoint and returns the
-    current service configuration.
-
+    Return the currently loaded service configuration.
+    
+    Ensures the application configuration is loaded before returning it.
+    
     Returns:
-        Configuration: The loaded service configuration object.
+        configuration (Configuration): The loaded service configuration object.
     """
     # Used only for authorization
     _ = auth

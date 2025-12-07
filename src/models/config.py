@@ -44,7 +44,12 @@ class TLSConfiguration(ConfigurationBase):
 
     @model_validator(mode="after")
     def check_tls_configuration(self) -> Self:
-        """Check TLS configuration."""
+        """
+        Perform post-initialization validation of TLS-related settings.
+        
+        Returns:
+            self (TLSConfiguration): The validated configuration instance.
+        """
         return self
 
 
@@ -60,7 +65,15 @@ class CORSConfiguration(ConfigurationBase):
 
     @model_validator(mode="after")
     def check_cors_configuration(self) -> Self:
-        """Check CORS configuration."""
+        """
+        Validate CORS settings and ensure credentials are not used with wildcard origins.
+        
+        Raises:
+            ValueError: If `allow_credentials` is true while `allow_origins` contains the "*" wildcard.
+        
+        Returns:
+            The same configuration instance (`self`) after validation.
+        """
         # credentials are not allowed with wildcard origins per CORS/Fetch spec.
         # see https://fastapi.tiangolo.com/tutorial/cors/
         if self.allow_credentials and "*" in self.allow_origins:
@@ -99,7 +112,15 @@ class PostgreSQLDatabaseConfiguration(ConfigurationBase):
 
     @model_validator(mode="after")
     def check_postgres_configuration(self) -> Self:
-        """Check PostgreSQL configuration."""
+        """
+        Validate PostgreSQL configuration values.
+        
+        Returns:
+            The model instance (`self`) if validation passes.
+        
+        Raises:
+            ValueError: If `port` is greater than 65535.
+        """
         if self.port > 65535:
             raise ValueError("Port value should be less than 65536")
         return self
@@ -113,7 +134,15 @@ class DatabaseConfiguration(ConfigurationBase):
 
     @model_validator(mode="after")
     def check_database_configuration(self) -> Self:
-        """Check that exactly one database type is configured."""
+        """
+        Ensure exactly one database backend is configured; if none is provided, configure a default SQLite file at /tmp/lightspeed-stack.db.
+        
+        Returns:
+            self (DatabaseConfiguration): The validated configuration instance with a single active database backend.
+        
+        Raises:
+            ValueError: If more than one database configuration is provided.
+        """
         total_configured_dbs = sum([self.sqlite is not None, self.postgres is not None])
 
         if total_configured_dbs == 0:
@@ -129,7 +158,15 @@ class DatabaseConfiguration(ConfigurationBase):
 
     @property
     def db_type(self) -> Literal["sqlite", "postgres"]:
-        """Return the configured database type."""
+        """
+        Determines which database backend is configured.
+        
+        Returns:
+            str: `"sqlite"` if the SQLite backend is configured, `"postgres"` if the PostgreSQL backend is configured.
+        
+        Raises:
+            ValueError: If neither SQLite nor PostgreSQL is configured.
+        """
         if self.sqlite is not None:
             return "sqlite"
         if self.postgres is not None:
@@ -138,7 +175,15 @@ class DatabaseConfiguration(ConfigurationBase):
 
     @property
     def config(self) -> SQLiteDatabaseConfiguration | PostgreSQLDatabaseConfiguration:
-        """Return the active database configuration."""
+        """
+        Return the active database backend configuration.
+        
+        Returns:
+            The configured database backend (SQLiteDatabaseConfiguration or PostgreSQLDatabaseConfiguration).
+        
+        Raises:
+            ValueError: If no database configuration is present.
+        """
         if self.sqlite is not None:
             return self.sqlite
         if self.postgres is not None:
@@ -160,7 +205,15 @@ class ServiceConfiguration(ConfigurationBase):
 
     @model_validator(mode="after")
     def check_service_configuration(self) -> Self:
-        """Check service configuration."""
+        """
+        Validate service configuration and enforce that the configured port is within the valid TCP range.
+        
+        Returns:
+            self: The instance if validation succeeds.
+        
+        Raises:
+            ValueError: If `port` is greater than 65535.
+        """
         if self.port > 65535:
             raise ValueError("Port value should be less than 65536")
         return self
@@ -186,15 +239,14 @@ class LlamaStackConfiguration(ConfigurationBase):
     def check_llama_stack_model(self) -> Self:
         """
         Validate the Llama stack configuration after model initialization.
-
-        Ensures that either a URL is provided for server mode or library client
-        mode is explicitly enabled. If library client mode is enabled, verifies
-        that a configuration file path is specified and points to an existing,
-        readable file. Raises a ValueError if any required condition is not
-        met.
-
+        
+        Ensures that either a `url` is provided for server mode or `use_as_library_client` is explicitly enabled. If `use_as_library_client` is enabled, requires `library_client_config_path` to be set and point to an existing, readable file (validated via checks.file_check). If `use_as_library_client` is unset, it will be set to `False`.
+        
         Returns:
-            Self: The validated LlamaStackConfiguration instance.
+            The validated LlamaStackConfiguration instance.
+        
+        Raises:
+            ValueError: If neither `url` nor an enabled library-client mode is configured, or if library-client mode is enabled but no valid configuration file path is provided.
         """
         if self.url is None:
             if self.use_as_library_client is None:
@@ -230,7 +282,15 @@ class UserDataCollection(ConfigurationBase):
 
     @model_validator(mode="after")
     def check_storage_location_is_set_when_needed(self) -> Self:
-        """Check that storage_location is set when enabled."""
+        """
+        Validate that required storage locations are set and writable when corresponding features are enabled.
+        
+        Raises:
+            ValueError: If feedback is enabled but `feedback_storage` is not set, or if transcripts is enabled but `transcripts_storage` is not set.
+        
+        Returns:
+            Self: The same configuration instance.
+        """
         if self.feedback_enabled:
             if self.feedback_storage is None:
                 raise ValueError(
@@ -276,7 +336,15 @@ class JwtRoleRule(ConfigurationBase):
 
     @model_validator(mode="after")
     def check_jsonpath(self) -> Self:
-        """Verify that the JSONPath expression is valid."""
+        """
+        Validate the JSONPath expression stored in the instance.
+        
+        Returns:
+            Self: The same instance on successful validation.
+        
+        Raises:
+            ValueError: If the JSONPath expression cannot be parsed; the exception message includes the original parse error.
+        """
         try:
             jsonpath_ng.parse(self.jsonpath)
             return self
@@ -287,7 +355,14 @@ class JwtRoleRule(ConfigurationBase):
 
     @model_validator(mode="after")
     def check_roles(self) -> Self:
-        """Ensure that at least one role is specified."""
+        """
+        Validate the rule's roles list for presence, uniqueness, and disallowed wildcard.
+        
+        Raises a ValueError if no roles are provided, if any roles are duplicated, or if the wildcard role `"*"` is present.
+        
+        Returns:
+            Self: The validated rule instance.
+        """
         if not self.roles:
             raise ValueError("At least one role must be specified in the rule")
 
@@ -304,7 +379,15 @@ class JwtRoleRule(ConfigurationBase):
 
     @model_validator(mode="after")
     def check_regex_pattern(self) -> Self:
-        """Verify that regex patterns are valid for MATCH operator."""
+        """
+        Ensure `value` is a valid regular expression when `operator` is `MATCH`.
+        
+        Raises:
+            ValueError: if `operator` is `MATCH` and `value` is not a string, or if the string is not a compileable regular expression.
+        
+        Returns:
+            Self: the same instance.
+        """
         if self.operator == JsonPathOperator.MATCH:
             if not isinstance(self.value, str):
                 raise ValueError(
@@ -320,7 +403,12 @@ class JwtRoleRule(ConfigurationBase):
 
     @cached_property
     def compiled_regex(self) -> Optional[Pattern[str]]:
-        """Return compiled regex pattern for MATCH operator, None otherwise."""
+        """
+        Return a compiled regular expression when the operator is `MATCH` and the rule's value is a string.
+        
+        Returns:
+            Pattern[str] or None: The compiled regex if `operator` is `JsonPathOperator.MATCH` and `value` is a string; `None` otherwise.
+        """
         if self.operator == JsonPathOperator.MATCH and isinstance(self.value, str):
             return re.compile(self.value)
         return None
@@ -418,7 +506,15 @@ class AuthenticationConfiguration(ConfigurationBase):
 
     @model_validator(mode="after")
     def check_authentication_model(self) -> Self:
-        """Validate YAML containing authentication configuration section."""
+        """
+        Validate the selected authentication module and ensure required JWK settings are present.
+        
+        Raises:
+            ValueError: If the configured module is not supported, or if the module is JWK token and `jwk_config` is not provided.
+        
+        Returns:
+            Self: The validated model instance.
+        """
         if self.module not in constants.SUPPORTED_AUTHENTICATION_MODULES:
             supported_modules = ", ".join(constants.SUPPORTED_AUTHENTICATION_MODULES)
             raise ValueError(
@@ -436,7 +532,16 @@ class AuthenticationConfiguration(ConfigurationBase):
 
     @property
     def jwk_configuration(self) -> JwkConfiguration:
-        """Return JWK configuration if the module is JWK token."""
+        """
+        Access the configured JWK settings when the authentication module is set to the JWK token module.
+        
+        Returns:
+            JwkConfiguration: The configured JWK settings.
+        
+        Raises:
+            ValueError: If the authentication module is not the JWK token module.
+            ValueError: If the JWK configuration is not provided.
+        """
         if self.module != constants.AUTH_MOD_JWK_TOKEN:
             raise ValueError(
                 "JWK configuration is only available for JWK token authentication module"
@@ -454,18 +559,31 @@ class CustomProfile:
     prompts: dict[str, str] = Field(default={}, init=False)
 
     def __post_init__(self) -> None:
-        """Validate and load profile."""
+        """
+        Validate the custom profile file and populate the profile's prompts.
+        
+        This post-init hook verifies the configured profile file exists and is importable, then extracts and stores `system_prompts` into the instance's `prompts`.
+        """
         self._validate_and_process()
 
     def _validate_and_process(self) -> None:
-        """Validate and load the profile."""
+        """
+        Validate the profile file and populate this CustomProfile's prompts from it when valid.
+        
+        Checks that the configured path points to an acceptable profile file, attempts to import the profile module, and if the imported module is recognized as a valid profile, updates self.prompts with the module's PROFILE_CONFIG["system_prompts"] (or an empty dict if that key is absent).
+        """
         checks.file_check(Path(self.path), "custom profile")
         profile_module = checks.import_python_module("profile", self.path)
         if profile_module is not None and checks.is_valid_profile(profile_module):
             self.prompts = profile_module.PROFILE_CONFIG.get("system_prompts", {})
 
     def get_prompts(self) -> dict[str, str]:
-        """Retrieve prompt attribute."""
+        """
+        Provide the custom profile's prompts.
+        
+        Returns:
+            dict[str, str]: Mapping of prompt names to their prompt text.
+        """
         return self.prompts
 
 
@@ -480,7 +598,14 @@ class Customization(ConfigurationBase):
 
     @model_validator(mode="after")
     def check_customization_model(self) -> Self:
-        """Load customizations."""
+        """
+        Load customization source into the model.
+        
+        If `profile_path` is set, creates a `CustomProfile` and assigns it to `custom_profile`. Otherwise, if `system_prompt_path` is set, validates the file and loads its `system_prompt` attribute into `system_prompt`.
+        
+        Returns:
+            self (Self): The updated Customization instance.
+        """
         if self.profile_path:
             self.custom_profile = CustomProfile(path=self.profile_path)
         elif self.system_prompt_path is not None:
@@ -499,7 +624,15 @@ class InferenceConfiguration(ConfigurationBase):
 
     @model_validator(mode="after")
     def check_default_model_and_provider(self) -> Self:
-        """Check default model and provider."""
+        """
+        Ensure `default_model` and `default_provider` are specified together.
+        
+        Raises:
+            ValueError: If `default_model` is set without `default_provider`, or vice versa.
+        
+        Returns:
+            Self: The same instance for chaining.
+        """
         if self.default_model is None and self.default_provider is not None:
             raise ValueError(
                 "Default model must be specified when default provider is set"
@@ -521,7 +654,15 @@ class ConversationCacheConfiguration(ConfigurationBase):
 
     @model_validator(mode="after")
     def check_cache_configuration(self) -> Self:
-        """Check conversation cache configuration."""
+        """
+        Validate the conversation cache configuration and enforce consistency between the selected cache type and its backend settings.
+        
+        Returns:
+            self: The same configuration instance when validation succeeds.
+        
+        Raises:
+            ValueError: If a backend configuration is provided but `type` is not set; if the selected `type` has no corresponding backend configured; or if backend configurations for other types are present when a specific type is selected.
+        """
         # if any backend config is provided, type must be explicitly selected
         if self.type is None:
             if any([self.memory, self.sqlite, self.postgres]):
@@ -617,6 +758,13 @@ class Configuration(ConfigurationBase):
     )
 
     def dump(self, filename: str = "configuration.json") -> None:
-        """Dump actual configuration into JSON file."""
+        """
+        Write the current configuration to a JSON file.
+        
+        Creates or overwrites the given file with the configuration serialized as JSON.
+        
+        Parameters:
+            filename (str): Path to the output file. Defaults to "configuration.json".
+        """
         with open(filename, "w", encoding="utf-8") as fout:
             fout.write(self.model_dump_json(indent=4))

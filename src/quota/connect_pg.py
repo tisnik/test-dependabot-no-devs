@@ -10,7 +10,18 @@ logger = get_logger(__name__)
 
 
 def connect_pg(config: PostgreSQLDatabaseConfiguration) -> Any:
-    """Initialize connection to PostgreSQL database."""
+    """
+    Create and return a psycopg2 connection to the configured PostgreSQL database.
+    
+    Parameters:
+        config (PostgreSQLDatabaseConfiguration): Configuration containing host, port, user, password (accessible via `get_secret_value()`), database name, and SSL/GSS options used to establish the connection.
+    
+    Returns:
+        connection: A psycopg2 database connection with `autocommit` set to True when the connection is successfully established.
+    
+    Raises:
+        psycopg2.Error: If establishing the database connection fails.
+    """
     logger.info("Connecting to PostgreSQL storage")
     try:
         connection = psycopg2.connect(

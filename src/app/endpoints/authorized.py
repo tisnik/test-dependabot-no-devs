@@ -40,13 +40,12 @@ async def authorized_endpoint_handler(
     auth: Annotated[AuthTuple, Depends(get_auth_dependency())],
 ) -> AuthorizedResponse:
     """
-    Handle request to the /authorized endpoint.
-
-    Process POST requests to the /authorized endpoint, returning
-    the authenticated user's ID and username.
-
+    Return the authenticated user's ID, username, and skip_userid_check flag for the /authorized endpoint.
+    
+    The response intentionally omits any authentication token.
+    
     Returns:
-        AuthorizedResponse: Contains the user ID and username of the authenticated user.
+        AuthorizedResponse: Contains `user_id`, `username`, and `skip_userid_check`.
     """
     # Ignore the user token, we should not return it in the response
     user_id, user_name, skip_userid_check, _ = auth

@@ -984,7 +984,12 @@ class AbstractErrorResponse(BaseModel):
     detail: DetailModel
 
     def dump_detail(self) -> dict:
-        """Return dict in FastAPI HTTPException format."""
+        """
+        Produce a dictionary suitable for use as the `detail` payload in a FastAPI HTTPException.
+        
+        Returns:
+            dict: A mapping with keys `response` and `cause` containing the serialized `DetailModel`.
+        """
         return self.detail.model_dump()
 
 
@@ -992,7 +997,13 @@ class BadRequestResponse(AbstractErrorResponse):
     """400 Bad Request - Invalid resource identifier."""
 
     def __init__(self, resource: str, resource_id: str):
-        """Initialize a BadRequestResponse for invalid resource identifiers."""
+        """
+        Constructs a BadRequestResponse indicating an invalid identifier format for a resource.
+        
+        Parameters:
+            resource (str): Name of the resource (used in the error message).
+            resource_id (str): The identifier value that has an invalid format.
+        """
         super().__init__(
             detail=DetailModel(
                 response="Invalid conversation ID format",
@@ -1018,7 +1029,15 @@ class AccessDeniedResponse(AbstractErrorResponse):
     """403 Access Denied - User does not have permission to perform the action."""
 
     def __init__(self, user_id: str, resource: str, resource_id: str, action: str):
-        """Initialize an AccessDeniedResponse when user lacks permission for an action."""
+        """
+        Create an AccessDeniedResponse indicating the user lacks permission to perform an action on a resource.
+        
+        Parameters:
+            user_id (str): Identifier of the user denied access.
+            resource (str): Name of the resource type (e.g., "conversation").
+            resource_id (str): Identifier of the specific resource instance.
+            action (str): Action the user attempted (e.g., "delete", "view").
+        """
         super().__init__(
             detail=DetailModel(
                 response="Access denied",
@@ -1070,7 +1089,13 @@ class ServiceUnavailableResponse(AbstractErrorResponse):
     """503 Backend Unavailable - Unable to reach backend service."""
 
     def __init__(self, backend_name: str, cause: str):
-        """Initialize a ServiceUnavailableResponse when a backend service is unreachable."""
+        """
+        Create a ServiceUnavailableResponse indicating a backend service cannot be reached.
+        
+        Parameters:
+            backend_name (str): Name of the backend service that could not be contacted.
+            cause (str): Human-readable explanation of why the backend is unavailable.
+        """
         super().__init__(
             detail=DetailModel(
                 response=f"Unable to connect to {backend_name}", cause=cause
@@ -1095,7 +1120,14 @@ class UnauthorizedResponse(AbstractErrorResponse):
     """401 Unauthorized - Missing or invalid credentials."""
 
     def __init__(self, user_id: str | None = None):
-        """Initialize an UnauthorizedResponse when authentication fails."""
+        """
+        Create an UnauthorizedResponse whose detail explains why authentication failed.
+        
+        If `user_id` is provided the cause will state "User {user_id} is unauthorized"; otherwise the cause will state "Missing or invalid credentials provided by client". The detail's `response` field is set to "Unauthorized".
+        
+        Parameters:
+            user_id (str | None): Optional user identifier used to tailor the cause message.
+        """
         cause_msg = (
             f"User {user_id} is unauthorized"
             if user_id
@@ -1121,7 +1153,14 @@ class ForbiddenResponse(UnauthorizedResponse):
     """403 Forbidden - User does not have access to this resource."""
 
     def __init__(self, user_id: str, resource: str, resource_id: str):
-        """Initialize a ForbiddenResponse when user is authenticated but lacks resource access."""
+        """
+        Initialize a ForbiddenResponse for an authenticated user who lacks permission to access a specific resource.
+        
+        Parameters:
+            user_id (str): Identifier of the authenticated user.
+            resource (str): Name of the resource type being accessed (e.g., "conversation").
+            resource_id (str): Identifier of the specific resource instance the user attempted to access.
+        """
         super().__init__(user_id=user_id)
         self.detail = DetailModel(
             response="Access denied",
@@ -1151,7 +1190,14 @@ class QuotaExceededResponse(AbstractErrorResponse):
         model_name: str,  # pylint: disable=unused-argument
         limit: int,  # pylint: disable=unused-argument
     ):
-        """Initialize a QuotaExceededResponse."""
+        """
+        Constructs a QuotaExceededResponse indicating the specified user has exhausted their token quota.
+        
+        Parameters:
+            user_id (str): Identifier of the user whose quota was exceeded.
+            model_name (str): Name of the model associated with the quota (may be used to customize the message).
+            limit (int): The quota limit that was reached or exceeded.
+        """
         super().__init__(
             detail=DetailModel(
                 response="The quota has been exceeded",
@@ -1214,7 +1260,12 @@ class InvalidFeedbackStoragePathResponse(AbstractErrorResponse):
     """500 Internal Error - Invalid feedback storage path."""
 
     def __init__(self, storage_path: str):
-        """Initialize an InvalidFeedbackStoragePathResponse for feedback storage failures."""
+        """
+        Initialize an InvalidFeedbackStoragePathResponse indicating feedback storage failed due to an invalid path.
+        
+        Parameters:
+            storage_path (str): The invalid storage path; its value is included in the error cause message.
+        """
         super().__init__(
             detail=DetailModel(
                 response="Failed to store feedback",

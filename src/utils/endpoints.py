@@ -26,7 +26,14 @@ logger = get_logger(__name__)
 
 
 def delete_conversation(conversation_id: str) -> None:
-    """Delete a conversation according to its ID."""
+    """
+    Delete the UserConversation with the given ID from the local database.
+    
+    If a conversation with the ID exists, it is removed and the change is committed; if not, no change is made and a not-found condition is logged.
+    
+    Parameters:
+        conversation_id (str): ID of the conversation to delete.
+    """
     with get_session() as session:
         db_conversation = (
             session.query(UserConversation).filter_by(id=conversation_id).first()
@@ -43,13 +50,11 @@ def delete_conversation(conversation_id: str) -> None:
 
 
 def retrieve_conversation(conversation_id: str) -> UserConversation | None:
-    """Retrieve a conversation from the database by its ID.
-
-    Args:
-        conversation_id (str): The unique identifier of the conversation to retrieve.
-
+    """
+    Retrieve a UserConversation by its ID.
+    
     Returns:
-        UserConversation | None: The conversation object if found, otherwise None.
+        The UserConversation with the given ID, or `None` if no matching conversation exists.
     """
     with get_session() as session:
         return session.query(UserConversation).filter_by(id=conversation_id).first()
@@ -58,11 +63,16 @@ def retrieve_conversation(conversation_id: str) -> UserConversation | None:
 def validate_conversation_ownership(
     user_id: str, conversation_id: str, others_allowed: bool = False
 ) -> UserConversation | None:
-    """Validate that the conversation belongs to the user.
-
-    Validates that the conversation with the given ID belongs to the user with the given ID.
-    If `others_allowed` is True, it allows conversations that do not belong to the user,
-    which is useful for admin access.
+    """
+    Validate whether a conversation matches the provided identifiers.
+    
+    If `others_allowed` is True, returns any conversation with the given `conversation_id`; otherwise restricts to conversations owned by `user_id`.
+    
+    Parameters:
+        others_allowed (bool): If True, allow conversations not owned by `user_id`.
+    
+    Returns:
+        UserConversation | None: `UserConversation` if a matching conversation is found, `None` otherwise.
     """
     with get_session() as session:
         conversation_query = session.query(UserConversation)
@@ -81,15 +91,19 @@ def validate_conversation_ownership(
 def can_access_conversation(
     conversation_id: str, user_id: str, others_allowed: bool
 ) -> bool:
-    """Check only whether a user is allowed to access a conversation.
-
-    Args:
-        conversation_id (str): The ID of the conversation to check.
-        user_id (str): The ID of the user requesting access.
-        others_allowed (bool): Whether the user can access conversations owned by others.
-
+    """
+    Determine whether a user may access a conversation.
+    
+    Parameters:
+        conversation_id (str): ID of the conversation to check.
+        user_id (str): ID of the user requesting access.
+        others_allowed (bool): If True, access to conversations owned by other users is permitted.
+    
     Returns:
-        bool: True if the user is allowed to access the conversation, False otherwise.
+        `true` if the user may access the conversation, `false` otherwise.
+    
+    Notes:
+        If `others_allowed` is False and the conversation does not exist, access is allowed.
     """
     if others_allowed:
         return True
@@ -125,29 +139,22 @@ def check_configuration_loaded(config: AppConfig) -> None:
 
 def get_system_prompt(query_request: QueryRequest, config: AppConfig) -> str:
     """
-    Resolve which system prompt to use for a query.
-
-    Precedence:
-    1. If the request includes `system_prompt`, that value is returned (highest
-       precedence).
-    2. Else if the application configuration provides a customization
-       `system_prompt`, that value is returned.
-    3. Otherwise the module default `constants.DEFAULT_SYSTEM_PROMPT` is
-       returned (lowest precedence).
-
-    If configuration disables per-request system prompts
-    (config.customization.disable_query_system_prompt) and the incoming
-    `query_request` contains a `system_prompt`, an HTTP 422 Unprocessable
-    Entity is raised instructing the client to remove the field.
-
+    Determine the system prompt to apply to a query using per-request, profile, configuration, and default precedence.
+    
+    Precedence (highest → lowest):
+    1) `query_request.system_prompt` (unless per-request prompts are disabled),
+    2) customization profile default prompt from `config.customization.custom_profile`,
+    3) `config.customization.system_prompt`,
+    4) `constants.DEFAULT_SYSTEM_PROMPT`.
+    
+    If `config.customization.disable_query_system_prompt` is true and `query_request.system_prompt` is provided, an HTTP 422 Unprocessable Entity is raised instructing removal of the field.
+    
     Parameters:
-        query_request (QueryRequest): The incoming query payload; may contain a
-        per-request `system_prompt`.
-        config (AppConfig): Application configuration which may include
-        customization flags and a default `system_prompt`.
-
+        query_request (QueryRequest): The incoming query payload; may include `system_prompt`.
+        config (AppConfig): Application configuration that may contain customization flags, a custom profile, or a configured system prompt.
+    
     Returns:
-        str: The resolved system prompt to apply to the request.
+        str: The resolved system prompt to use for the request.
     """
     system_prompt_disabled = (
         config.customization is not None
@@ -191,7 +198,14 @@ def get_system_prompt(query_request: QueryRequest, config: AppConfig) -> str:
 
 
 def get_topic_summary_system_prompt(config: AppConfig) -> str:
-    """Get the topic summary system prompt."""
+    """
+    Resolve the system prompt to use for topic summaries.
+    
+    Checks for a topic summary prompt in the active custom profile and returns it if present; otherwise returns the module default prompt.
+    
+    Returns:
+        str: The topic summary system prompt from the custom profile if available, otherwise the default prompt.
+    """
     # profile takes precedence for setting prompt
     if (
         config.customization is not None
@@ -207,10 +221,12 @@ def get_topic_summary_system_prompt(config: AppConfig) -> str:
 def validate_model_provider_override(
     query_request: QueryRequest, authorized_actions: set[Action] | frozenset[Action]
 ) -> None:
-    """Validate whether model/provider overrides are allowed by RBAC.
-
-    Raises HTTP 403 if the request includes model or provider and the caller
-    lacks Action.MODEL_OVERRIDE permission.
+    """
+    Validate whether a request is allowed to override the model or provider under RBAC.
+    
+    Raises:
+        HTTPException: with status 403 if `query_request` specifies `model` or `provider` and
+        `Action.MODEL_OVERRIDE` is not present in `authorized_actions`.
     """
     if (query_request.model is not None or query_request.provider is not None) and (
         Action.MODEL_OVERRIDE not in authorized_actions
@@ -236,7 +252,20 @@ def store_conversation_into_cache(
     _skip_userid_check: bool,
     topic_summary: str | None,
 ) -> None:
-    """Store one part of conversation into conversation history cache."""
+    """
+    Persist a cache entry and optional topic summary for a user's conversation when a conversation cache is configured.
+    
+    Parameters:
+        config (AppConfig): Application configuration containing conversation cache settings and instance.
+        user_id (str): ID of the user owning the conversation.
+        conversation_id (str): ID of the conversation to update in the cache.
+        cache_entry (CacheEntry): Entry to insert or append into the conversation cache.
+        _skip_userid_check (bool): If True, bypass user ID checks performed by the cache when inserting/appending or setting the topic summary.
+        topic_summary (str | None): Optional topic summary to store alongside the cache entry; ignored if None or empty.
+    
+    Notes:
+        - If the configuration specifies a conversation cache type but the cache instance is not initialized, the function returns without storing anything.
+    """
     if config.conversation_cache_configuration.type is not None:
         cache = config.conversation_cache
         if cache is None:
@@ -352,17 +381,18 @@ async def get_temp_agent(
     model_id: str,
     system_prompt: str,
 ) -> tuple[AsyncAgent, str, str]:
-    """Create a temporary agent with new agent_id and session_id.
-
-    This function creates a new agent without persistence, shields, or tools.
-    Useful for temporary operations or one-off queries, such as validating a
-    question or generating a summary.
-    Args:
-        client: The AsyncLlamaStackClient to use for the request.
-        model_id: The ID of the model to use.
-        system_prompt: The system prompt/instructions for the agent.
+    """
+    Create a temporary, non-persistent AsyncAgent configured with the provided model and system prompt.
+    
+    This agent is created for short-lived operations and does not enable session persistence, shields, or tools.
+    
+    Parameters:
+        client (AsyncLlamaStackClient): Client used to construct the agent.
+        model_id (str): Identifier of the model to instantiate.
+        system_prompt (str): System-level instructions provided to the agent.
+    
     Returns:
-        tuple[AsyncAgent, str]: A tuple containing the agent and session_id.
+        tuple[AsyncAgent, str, str]: A tuple containing the created agent, the new `session_id`, and the new `conversation_id` (in that order).
     """
     logger.debug("Creating temporary agent")
     agent = AsyncAgent(
@@ -382,13 +412,13 @@ async def get_temp_agent(
 
 def create_rag_chunks_dict(summary: TurnSummary) -> list[dict[str, Any]]:
     """
-    Create dictionary representation of RAG chunks for streaming response.
-
-    Args:
-        summary: TurnSummary containing RAG chunks
-
+    Create a serializable list of RAG chunk dictionaries for streaming responses.
+    
+    Parameters:
+        summary (TurnSummary): TurnSummary containing the RAG chunks to convert.
+    
     Returns:
-        List of dictionaries with content, source, and score
+        list[dict[str, Any]]: List of dictionaries where each dictionary has keys `content`, `source`, and `score`.
     """
     return [
         {"content": chunk.content, "source": chunk.source, "score": chunk.score}
@@ -399,7 +429,18 @@ def create_rag_chunks_dict(summary: TurnSummary) -> list[dict[str, Any]]:
 def _process_http_source(
     src: str, doc_urls: set[str]
 ) -> tuple[AnyUrl | None, str] | None:
-    """Process HTTP source and return (doc_url, doc_title) tuple."""
+    """
+    Validate and deduplicate an HTTP source URL and produce its display title.
+    
+    Parameters:
+        src (str): The source URL string to process.
+        doc_urls (set[str]): A set of already-seen source strings; the function will add `src` to this set when processing.
+    
+    Returns:
+        tuple[AnyUrl | None, str] | None: A tuple `(validated_url, doc_title)` where `validated_url` is a validated `AnyUrl`
+        or `None` if validation failed, and `doc_title` is the URL's last path segment (or the original `src` if none).
+        Returns `None` if `src` was already present in `doc_urls`.
+    """
     if src not in doc_urls:
         doc_urls.add(src)
         try:
@@ -420,7 +461,19 @@ def _process_document_id(
     metas_by_id: dict[str, dict[str, Any]],
     metadata_map: dict[str, Any] | None,
 ) -> tuple[AnyUrl | None, str] | None:
-    """Process document ID and return (doc_url, doc_title) tuple."""
+    """
+    Resolve a referenced document ID into a validated document URL and title, deduplicating by ID and URL.
+    
+    Parameters:
+    	src (str): Document identifier to process.
+    	doc_ids (set[str]): Set of already-seen document IDs; `src` will be added to this set.
+    	doc_urls (set[str]): Set of already-seen document URLs; a discovered URL will be added to this set to prevent duplicates.
+    	metas_by_id (dict[str, dict[str, Any]]): Mapping of document IDs to metadata dictionaries; used to look up `docs_url` and `title`.
+    	metadata_map (dict[str, Any] | None): If provided, enables metadata lookup; if None, metadata lookup is skipped.
+    
+    Returns:
+    	tuple[AnyUrl | None, str] | None: A pair of (validated AnyUrl or None, document title). Returns `None` if the ID or its URL was already processed. If a `docs_url` is present and starts with "http", it will be validated; invalid URLs yield `None` for the URL and produce a warning in logs.
+    """
     if src in doc_ids:
         return None
     doc_ids.add(src)
@@ -455,7 +508,22 @@ def _add_additional_metadata_docs(
     doc_urls: set[str],
     metas_by_id: dict[str, dict[str, Any]],
 ) -> list[tuple[AnyUrl | None, str]]:
-    """Add additional referenced documents from metadata_map."""
+    """
+    Collect additional referenced documents from a metadata map that are not already present.
+    
+    Iterates the provided metadata-by-id mapping and for each entry that contains a string `docs_url`
+    and a string `title` (exact key "title"), adds a tuple of (validated_url, title) to the result
+    when the URL is not already in `doc_urls`. The function mutates `doc_urls` by adding new
+    string URLs that are accepted. For `docs_url` values that start with "http", an `AnyUrl` is
+    constructed; if validation fails the tuple contains `None` for the URL and a warning is logged.
+    
+    Parameters:
+        doc_urls (set[str]): Set of already-seen document URL strings; new valid URLs are added.
+        metas_by_id (dict[str, dict[str, Any]]): Mapping from document id to its metadata dict.
+    
+    Returns:
+        list[tuple[AnyUrl | None, str]]: A list of (validated_url_or_None, title) pairs for additional documents.
+    """
     additional_entries: list[tuple[AnyUrl | None, str]] = []
     for meta in metas_by_id.values():
         doc_url = meta.get("docs_url")
@@ -484,9 +552,15 @@ def _process_rag_chunks_for_documents(
     metadata_map: dict[str, Any] | None = None,
 ) -> list[tuple[AnyUrl | None, str]]:
     """
-    Process RAG chunks and return a list of (doc_url, doc_title) tuples.
-
-    This is the core logic shared between both return formats.
+    Extract referenced documents from a list of RAG chunks, returning validated (doc_url, doc_title) pairs.
+    
+    Parameters:
+        rag_chunks (list): Iterable of RAG chunk objects; each chunk must expose a `source` attribute.
+        metadata_map (dict[str, Any] | None): Optional mapping of document IDs to metadata dicts used to resolve non-HTTP sources and to include additional referenced documents.
+    
+    Returns:
+        list[tuple[AnyUrl | None, str]]: Ordered list of tuples where each tuple is (validated_doc_url or None, doc_title).
+            `validated_doc_url` is an AnyUrl when the source could be validated as an HTTP(S) URL, or `None` when no URL is available.
     """
     doc_urls: set[str] = set()
     doc_ids: set[str] = set()
@@ -528,20 +602,17 @@ def create_referenced_documents(
     return_dict_format: bool = False,
 ) -> list[ReferencedDocument] | list[dict[str, str | None]]:
     """
-    Create referenced documents from RAG chunks with optional metadata enrichment.
-
-    This unified function processes RAG chunks and creates referenced documents with
-    optional metadata enrichment, deduplication, and proper URL handling. It can return
-    either ReferencedDocument objects (for query endpoint) or dictionaries (for streaming).
-
-    Args:
-        rag_chunks: List of RAG chunks with source information
-        metadata_map: Optional mapping containing metadata about referenced documents
-        return_dict_format: If True, returns list of dicts; if False, returns list of
-            ReferencedDocument objects
-
+    Produce referenced documents from RAG chunks, optionally enriching them with metadata.
+    
+    Parameters:
+        rag_chunks (list): RAG chunks containing source references to convert into referenced documents.
+        metadata_map (dict[str, Any] | None): Optional mapping of document metadata keyed by document ID used to enrich or add referenced documents.
+        return_dict_format (bool): If True, return a list of dictionaries with keys `doc_url` and `doc_title`; otherwise return a list of `ReferencedDocument` objects.
+    
     Returns:
-        List of ReferencedDocument objects or dictionaries with doc_url and doc_title
+        list[ReferencedDocument] | list[dict[str, str | None]]: A list of `ReferencedDocument` instances when `return_dict_format` is False; otherwise a list of dictionaries each containing:
+            - `doc_url` (str | None): The document URL as a string, or `None` if unavailable.
+            - `doc_title` (str | None): The document title, or `None` if unavailable.
     """
     document_entries = _process_rag_chunks_for_documents(rag_chunks, metadata_map)
 
@@ -564,9 +635,14 @@ def create_referenced_documents_with_metadata(
     summary: TurnSummary, metadata_map: dict[str, Any]
 ) -> list[ReferencedDocument]:
     """
-    Create referenced documents from RAG chunks with metadata enrichment for streaming.
-
-    This function now returns ReferencedDocument objects for consistency with the query endpoint.
+    Produce ReferencedDocument objects from a TurnSummary's RAG chunks, using the provided metadata_map to enrich document references.
+    
+    Parameters:
+        summary (TurnSummary): The turn summary containing RAG chunks to extract referenced documents from.
+        metadata_map (dict[str, Any]): Mapping of document IDs to metadata used to resolve or enrich document URLs and titles.
+    
+    Returns:
+        list[ReferencedDocument]: A list of ReferencedDocument objects with `doc_url` (which may be None) and `doc_title`.
     """
     document_entries = _process_rag_chunks_for_documents(
         summary.rag_chunks, metadata_map
@@ -581,10 +657,13 @@ def create_referenced_documents_from_chunks(
     rag_chunks: list,
 ) -> list[ReferencedDocument]:
     """
-    Create referenced documents from RAG chunks for query endpoint.
-
-    This is a backward compatibility wrapper around the unified
-    create_referenced_documents function.
+    Produce ReferencedDocument objects extracted from RAG chunks for the query endpoint.
+    
+    Parameters:
+        rag_chunks (list): Iterable of RAG chunk entries to scan for document references.
+    
+    Returns:
+        list[ReferencedDocument]: A list of ReferencedDocument objects with `doc_url` and `doc_title` extracted from the chunks; `doc_url` may be `None` if no valid URL was found.
     """
     document_entries = _process_rag_chunks_for_documents(rag_chunks)
     return [

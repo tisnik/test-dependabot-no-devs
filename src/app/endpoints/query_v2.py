@@ -74,7 +74,15 @@ query_v2_response: dict[int | str, dict[str, Any]] = {
 
 
 def _extract_text_from_response_output_item(output_item: Any) -> str:
-    """Extract assistant message text from a Responses API output item."""
+    """
+    Extract the assistant's message text from a Responses API output item.
+    
+    Parameters:
+        output_item (Any): An output item from the Responses API (message-like object or dict).
+    
+    Returns:
+        str: The concatenated assistant message text, or an empty string if the item is not an assistant message or contains no text.
+    """
     if getattr(output_item, "type", None) != "message":
         return ""
     if getattr(output_item, "role", None) != "assistant":
@@ -109,12 +117,14 @@ def _extract_text_from_response_output_item(output_item: Any) -> str:
 def _build_tool_call_summary(  # pylint: disable=too-many-return-statements,too-many-branches
     output_item: Any,
 ) -> ToolCallSummary | None:
-    """Translate applicable Responses API tool outputs into ``ToolCallSummary`` records.
-
-    The OpenAI ``response.output`` array may contain any ``OpenAIResponseOutput`` variant:
-    ``message``, ``function_call``, ``file_search_call``, ``web_search_call``, ``mcp_call``,
-    ``mcp_list_tools``, or ``mcp_approval_request``. The OpenAI Spec supports more types
-    but as llamastack does not support them yet they are not considered here.
+    """
+    Translate a Responses API output item into a ToolCallSummary when the item represents a tool invocation.
+    
+    Parameters:
+        output_item (Any): An output item from a Responses API `response.output` entry.
+    
+    Returns:
+        ToolCallSummary | None: A ToolCallSummary for supported tool item types (`function_call`, `file_search_call`, `web_search_call`, `mcp_call`, `mcp_list_tools`, `mcp_approval_request`); returns `None` if the item type is not a recognized tool output.
     """
     item_type = getattr(output_item, "type", None)
 
@@ -241,18 +251,12 @@ async def get_topic_summary(  # pylint: disable=too-many-nested-blocks
     question: str, client: AsyncLlamaStackClient, model_id: str
 ) -> str:
     """
-    Get a topic summary for a question using Responses API.
-
-    This is the Responses API version of get_topic_summary, which uses
-    client.responses.create() instead of the Agent API.
-
-    Args:
-        question: The question to generate a topic summary for
-        client: The AsyncLlamaStackClient to use for the request
-        model_id: The llama stack model ID (full format: provider/model)
-
+    Generate a concise topic summary for a question using the Responses API.
+    
+    Uses the configured topic-summary system prompt with the provided async Llama Stack client; returns the generated summary text trimmed, or an empty string on failure.
+    
     Returns:
-        str: The topic summary for the question
+        str: Trimmed topic summary text if generation succeeded, otherwise an empty string.
     """
     topic_summary_system_prompt = get_topic_summary_system_prompt(configuration)
 
@@ -288,13 +292,10 @@ async def query_endpoint_handler_v2(
     mcp_headers: dict[str, dict[str, str]] = Depends(mcp_headers_dependency),
 ) -> QueryResponse:
     """
-    Handle request to the /query endpoint using Responses API.
-
-    This is a wrapper around query_endpoint_handler_base that provides
-    the Responses API specific retrieve_response and get_topic_summary functions.
-
+    Handle POST /query requests using the Responses API and return a QueryResponse containing the conversation result.
+    
     Returns:
-        QueryResponse: Contains the conversation ID and the LLM-generated response.
+        QueryResponse: Conversation ID, LLM-generated response text, tool call summaries, referenced documents, and token usage.
     """
     return await query_endpoint_handler_base(
         request=request,
@@ -316,31 +317,25 @@ async def retrieve_response(  # pylint: disable=too-many-locals,too-many-branche
     provider_id: str = "",
 ) -> tuple[TurnSummary, str, list[ReferencedDocument], TokenCounter]:
     """
-    Retrieve response from LLMs and agents.
-
-    Retrieves a response from the Llama Stack LLM or agent for a
-    given query, handling shield configuration, tool usage, and
-    attachment validation.
-
-    This function configures system prompts and toolgroups
-    (including RAG and MCP integration) as needed based on
-    the query request and system configuration. It
-    validates attachments, manages conversation and session
-    context, and processes MCP headers for multi-component
-    processing. Corresponding metrics are updated.
-
+    Retrieve a response for a user query from the Responses API and assemble a TurnSummary.
+    
+    Builds and sends a Responses API request (including system prompt, optional attachments, and configured tool groups such as RAG and MCP tools), then collects the assistant text, translated tool-call summaries, referenced documents, and token usage metrics from the response.
+    
     Parameters:
-        client (AsyncLlamaStackClient): The AsyncLlamaStackClient to use for the request.
-        model_id (str): The identifier of the LLM model to use.
-        query_request (QueryRequest): The user's query and associated metadata.
-        token (str): The authentication token for authorization.
-        mcp_headers (dict[str, dict[str, str]], optional): Headers for multi-component processing.
-        provider_id (str): The identifier of the LLM provider to use.
-
+        client: Async Llama Stack client used to call the Responses API.
+        model_id: Identifier of the LLM model to use.
+        query_request: QueryRequest containing the user's query, optional attachments, conversation_id, and tool flags.
+        token: Authentication token used when constructing MCP tool headers.
+        mcp_headers: Optional per-MCP-server headers to attach to MCP tools.
+        provider_id: Optional provider identifier used when recording token usage metrics.
+    
     Returns:
-        tuple[TurnSummary, str]: A tuple containing a summary of the LLM or agent's response content
-        and the conversation ID, the list of parsed referenced documents,
-        and token usage information.
+        tuple[TurnSummary, str, list[ReferencedDocument], TokenCounter]: 
+            A 4-tuple with:
+            - TurnSummary: assembled LLM text and tool-call summaries for this turn,
+            - conversation ID assigned by the Responses API,
+            - list of ReferencedDocument parsed from the response,
+            - TokenCounter with extracted token usage metrics.
     """
     # TODO(ltomasbo): implement shields support once available in Responses API
     logger.info("Shields are not yet supported in Responses API. Disabling safety")
@@ -482,23 +477,18 @@ def extract_token_usage_from_responses_api(
     system_prompt: str = "",  # pylint: disable=unused-argument
 ) -> TokenCounter:
     """
-    Extract token usage from OpenAI Responses API response and update metrics.
-
-    This function extracts token usage information from the Responses API response
-    object and updates Prometheus metrics. If usage information is not available,
-    it returns zero values without estimation.
-
-    Note: When llama stack internally uses chat_completions, the usage field may be
-    empty or a dict. This is expected and will be populated in future llama stack versions.
-
-    Args:
-        response: The OpenAI Response API response object
-        model: The model identifier for metrics labeling
-        provider: The provider identifier for metrics labeling
-        system_prompt: The system prompt used (unused, kept for compatibility)
-
+    Extract token counts from a Responses API response and update LLM token metrics.
+    
+    Parses the response's `usage` field (supports both dict and object shapes), sets `input_tokens` and `output_tokens` on a returned TokenCounter, and increments the LLM call and token Prometheus metrics when actual usage values are present. If no usable usage data exists, returns a TokenCounter with zero token counts but still records the LLM call metric.
+    
+    Parameters:
+        response (OpenAIResponseObject): The Responses API response object that may contain a `usage` attribute.
+        model (str): Model identifier used for metrics labeling.
+        provider (str): Provider identifier used for metrics labeling.
+        system_prompt (str): Unused; kept for compatibility.
+    
     Returns:
-        TokenCounter: Token usage information with input_tokens and output_tokens
+        TokenCounter: Token usage with `input_tokens`, `output_tokens`, and `llm_calls` populated.
     """
     token_counter = TokenCounter()
     token_counter.llm_calls = 1
@@ -569,7 +559,13 @@ def extract_token_usage_from_responses_api(
 
 
 def _increment_llm_call_metric(provider: str, model: str) -> None:
-    """Safely increment LLM call metric."""
+    """
+    Increment the LLM call metric for the given provider and model, logging a warning on failure.
+    
+    Parameters:
+        provider (str): Provider label to attach to the metric (e.g., "openai").
+        model (str): Model label to attach to the metric (e.g., "gpt-4").
+    """
     try:
         metrics.llm_calls_total.labels(provider, model).inc()
     except (AttributeError, TypeError, ValueError) as e:
@@ -578,14 +574,10 @@ def _increment_llm_call_metric(provider: str, model: str) -> None:
 
 def get_rag_tools(vector_store_ids: list[str]) -> list[dict[str, Any]] | None:
     """
-    Convert vector store IDs to tools format for Responses API.
-
-    Args:
-        vector_store_ids: List of vector store identifiers
-
+    Return a Responses API tool definition for retrieval-augmented generation (RAG).
+    
     Returns:
-        list[dict[str, Any]] | None: List containing file_search tool configuration,
-        or None if no vector stores provided
+        A list containing one `file_search` tool dictionary configured with the provided `vector_store_ids` and `max_num_results` set to 10, or `None` if `vector_store_ids` is empty.
     """
     if not vector_store_ids:
         return None
@@ -605,16 +597,15 @@ def get_mcp_tools(
     mcp_headers: dict[str, dict[str, str]] | None = None,
 ) -> list[dict[str, Any]]:
     """
-    Convert MCP servers to tools format for Responses API.
-
-    Args:
-        mcp_servers: List of MCP server configurations
-        token: Optional authentication token for MCP server authorization
-        mcp_headers: Optional per-request headers for MCP servers, keyed by server URL
-
+    Construct Responses API tool definitions for configured MCP servers.
+    
+    Parameters:
+        mcp_servers (list): Iterable of MCP server configuration objects with at least `name` and `url` attributes.
+        token (str | None): Optional bearer token to attach as an Authorization header when per-server headers are not provided.
+        mcp_headers (dict[str, dict[str, str]] | None): Optional mapping from server URL to headers to include for that server.
+    
     Returns:
-        list[dict[str, Any]]: List of MCP tool definitions with server
-            details and optional auth headers
+        list[dict[str, Any]]: A list of tool definition dictionaries for the Responses API, each containing `type`, `server_label`, `server_url`, `require_approval`, and optionally `headers`.
     """
     tools = []
     for mcp_server in mcp_servers:

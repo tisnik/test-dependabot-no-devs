@@ -120,7 +120,15 @@ async def get_conversations_list_endpoint_handler(
     request: Request,  # pylint: disable=unused-argument
     auth: Any = Depends(get_auth_dependency()),
 ) -> ConversationsListResponseV2:
-    """Handle request to retrieve all conversations for the authenticated user."""
+    """
+    Retrieve all conversations belonging to the authenticated user.
+    
+    Returns:
+        ConversationsListResponseV2: Response containing the list of conversations for the authenticated user.
+    
+    Raises:
+        HTTPException: 404 if the conversation cache is not configured.
+    """
     check_configuration_loaded(configuration)
 
     user_id = auth[0]
@@ -152,7 +160,19 @@ async def get_conversation_endpoint_handler(
     conversation_id: str,
     auth: Any = Depends(get_auth_dependency()),
 ) -> ConversationResponse:
-    """Handle request to retrieve a conversation by ID."""
+    """
+    Retrieve a conversation and its transformed chat history for the authenticated user.
+    
+    Parameters:
+        conversation_id (str): Conversation identifier; validated for correct format.
+    
+    Returns:
+        ConversationResponse: Response object containing `conversation_id` and `chat_history` where each entry is a transformed cache message.
+    
+    Raises:
+        HTTPException: 400 if `conversation_id` is invalid.
+        HTTPException: 404 if the conversation cache is not configured or the conversation is not found for the user.
+    """
     check_configuration_loaded(configuration)
     check_valid_conversation_id(conversation_id)
 
@@ -192,7 +212,18 @@ async def delete_conversation_endpoint_handler(
     conversation_id: str,
     auth: Any = Depends(get_auth_dependency()),
 ) -> ConversationDeleteResponse:
-    """Handle request to delete a conversation by ID."""
+    """
+    Delete a conversation identified by `conversation_id` for the authenticated user.
+    
+    Validates configuration and conversation ID, ensures the conversation exists, and attempts to remove it from the configured conversation cache. Returns a ConversationDeleteResponse indicating whether the deletion was performed and includes a human-readable message.
+    
+    Raises:
+        HTTPException: 400 if `conversation_id` is invalid.
+        HTTPException: 404 if the conversation cache is not configured or the conversation does not exist.
+    
+    Returns:
+        ConversationDeleteResponse: Object containing `conversation_id`, `success`, and `response` message.
+    """
     check_configuration_loaded(configuration)
     check_valid_conversation_id(conversation_id)
 
@@ -238,7 +269,22 @@ async def update_conversation_endpoint_handler(
     update_request: ConversationUpdateRequest,
     auth: Any = Depends(get_auth_dependency()),
 ) -> ConversationUpdateResponse:
-    """Handle request to update a conversation topic summary by ID."""
+    """
+    Update the stored topic summary for a conversation.
+    
+    Updates the conversation's topic summary in the configured conversation cache for the authenticated user and returns a success response on completion.
+    
+    Parameters:
+        conversation_id (str): Identifier of the conversation to update.
+        update_request (ConversationUpdateRequest): Request object containing the new `topic_summary`.
+    
+    Returns:
+        ConversationUpdateResponse: Response indicating the conversation id, success status, and a descriptive message.
+    
+    Raises:
+        HTTPException: 400 if `conversation_id` is invalid.
+        HTTPException: 404 if the conversation cache is not configured or the conversation is not found.
+    """
     check_configuration_loaded(configuration)
     check_valid_conversation_id(conversation_id)
 
@@ -282,7 +328,15 @@ async def update_conversation_endpoint_handler(
 
 
 def check_valid_conversation_id(conversation_id: str) -> None:
-    """Check validity of conversation ID format."""
+    """
+    Validate that `conversation_id` is a valid SUID/UUID-like identifier.
+    
+    Parameters:
+        conversation_id (str): The conversation identifier to validate.
+    
+    Raises:
+        HTTPException: With status 400 when `conversation_id` is not a valid SUID/UUID-like ID.
+    """
     if not check_suid(conversation_id):
         logger.error("Invalid conversation ID format: %s", conversation_id)
         raise HTTPException(
@@ -295,7 +349,18 @@ def check_valid_conversation_id(conversation_id: str) -> None:
 
 
 def check_conversation_existence(user_id: str, conversation_id: str) -> None:
-    """Check if conversation exists."""
+    """
+    Verify that a conversation with the given ID exists for the specified user.
+    
+    If a conversation cache is configured, raises an HTTPException with status 404 when the conversation ID is not present for the user; otherwise does nothing.
+    
+    Parameters:
+        user_id (str): ID of the user who owns the conversation.
+        conversation_id (str): Conversation identifier to check.
+    
+    Raises:
+        HTTPException: Raised with status 404 and a descriptive detail when the conversation is not found.
+    """
     # checked already, but we need to make pyright happy
     if configuration.conversation_cache is None:
         return
@@ -313,7 +378,19 @@ def check_conversation_existence(user_id: str, conversation_id: str) -> None:
 
 
 def transform_chat_message(entry: CacheEntry) -> dict[str, Any]:
-    """Transform the message read from cache into format used by response payload."""
+    """
+    Convert a cached CacheEntry into the response-ready payload for API responses.
+    
+    The returned dictionary contains keys: `provider`, `model`, `messages`, `started_at`, and `completed_at`. `messages` is a list with a user message (`type`: "user", `content`: the entry query) followed by an assistant message (`type`: "assistant", `content`: the entry response). If the entry includes `referenced_documents`, they are added to the assistant message as a list of serialized document objects.
+    
+    Returns:
+        response_payload (dict): Payload dictionary suitable for the ConversationResponse body:
+            - provider: provider identifier from the cache entry
+            - model: model identifier from the cache entry
+            - messages: list[dict] with the user and assistant message objects (assistant may include `referenced_documents`)
+            - started_at: timestamp when the interaction started
+            - completed_at: timestamp when the interaction completed
+    """
     user_message = {"content": entry.query, "type": "user"}
     assistant_message: dict[str, Any] = {"content": entry.response, "type": "assistant"}
 

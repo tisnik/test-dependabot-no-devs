@@ -18,10 +18,17 @@ class CacheFactory:
 
     @staticmethod
     def conversation_cache(config: ConversationCacheConfiguration) -> Cache:
-        """Create an instance of Cache based on loaded configuration.
-
+        """
+        Create a concrete Cache instance based on the provided conversation cache configuration.
+        
+        Parameters:
+            config (ConversationCacheConfiguration): Configuration that selects the cache type and provides type-specific settings.
+        
         Returns:
-            An instance of `Cache` (either `SQLiteCache`, `PostgresCache` or `InMemoryCache`).
+            Cache: A concrete cache implementation matching `config.type` (NoopCache, InMemoryCache, SQLiteCache, or PostgresCache).
+        
+        Raises:
+            ValueError: If `config.type` is None, if required type-specific configuration is missing, or if `config.type` is not a recognized cache type.
         """
         logger.info("Creating cache instance of type %s", config.type)
         match config.type:

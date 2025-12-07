@@ -13,27 +13,23 @@ logger = logging.getLogger("app.endpoints.dependencies")
 
 
 async def mcp_headers_dependency(request: Request) -> dict[str, dict[str, str]]:
-    """Get the MCP headers dependency to passed to mcp servers.
-
-    mcp headers is a json dictionary or mcp url paths and their respective headers
-
-    Args:
-        request (Request): The FastAPI request object.
-
+    """
+    Provide MCP headers extracted from the incoming request for use with MCP servers.
+    
     Returns:
-        The mcp headers dictionary, or empty dictionary if not found or on json decoding error
+        dict[str, dict[str, str]]: Parsed MCP headers from the "MCP-HEADERS" request header, or an empty dict if the header is missing, not valid JSON, or not a JSON object.
     """
     return extract_mcp_headers(request)
 
 
 def extract_mcp_headers(request: Request) -> dict[str, dict[str, str]]:
-    """Extract mcp headers from MCP-HEADERS header.
-
-    Args:
-        request: The FastAPI request object
-
+    """
+    Parse the "MCP-HEADERS" request header and return it as a dictionary mapping server URLs or toolgroup names to header dictionaries.
+    
+    If the header is missing, contains invalid JSON, or the decoded value is not a dictionary, an empty dictionary is returned.
+    
     Returns:
-        The mcp headers dictionary, or empty dictionary if not found or on json decoding error
+        dict[str, dict[str, str]]: Parsed MCP headers mapping, or an empty dict on missing/invalid header.
     """
     mcp_headers_string = request.headers.get("MCP-HEADERS", "")
     mcp_headers = {}
@@ -56,20 +52,15 @@ def extract_mcp_headers(request: Request) -> dict[str, dict[str, str]]:
 def handle_mcp_headers_with_toolgroups(
     mcp_headers: dict[str, dict[str, str]], config: AppConfig
 ) -> dict[str, dict[str, str]]:
-    """Process MCP headers by converting toolgroup names to URLs.
-
-    This function takes MCP headers where keys can be either valid URLs or
-    toolgroup names. For valid URLs (HTTP/HTTPS), it keeps them as-is. For
-    toolgroup names, it looks up the corresponding MCP server URL in the
-    configuration and replaces the key with the URL. Unknown toolgroup names
-    are filtered out.
-
-    Args:
-        mcp_headers: Dictionary with keys as URLs or toolgroup names
-        config: Application configuration containing MCP server definitions
-
+    """
+    Normalize MCP headers by resolving toolgroup names to MCP server URLs.
+    
+    Parameters:
+        mcp_headers (dict[str, dict[str, str]]): Mapping where keys are either full MCP server URLs or toolgroup names and values are header dictionaries to send.
+        config (AppConfig): Application configuration containing `mcp_servers`, each with `name` and `url` fields.
+    
     Returns:
-        Dictionary with URLs as keys and their corresponding headers as values
+        dict[str, dict[str, str]]: A mapping with MCP server URLs as keys and their corresponding header dictionaries as values. Entries for unknown toolgroup names are omitted.
     """
     converted_mcp_headers = {}
 

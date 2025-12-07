@@ -28,12 +28,10 @@ router = APIRouter(tags=["health"])
 
 async def get_providers_health_statuses() -> list[ProviderHealthStatus]:
     """
-    Retrieve the health status of all configured providers.
-
+    Retrieve the health status for each configured provider.
+    
     Returns:
-        list[ProviderHealthStatus]: A list containing the health
-        status of each provider. If provider health cannot be
-        determined, returns a single entry indicating an error.
+        list[ProviderHealthStatus]: A list of provider health entries. If providers cannot be queried or an error occurs, returns a single `ProviderHealthStatus` with `provider_id == "unknown"`, `status == HealthStatus.ERROR.value`, and a `message` describing the failure.
     """
     try:
         client = AsyncLlamaStackClientHolder().get_client()
@@ -82,11 +80,13 @@ async def readiness_probe_get_method(
     response: Response,
 ) -> ReadinessResponse:
     """
-    Handle the readiness probe endpoint, returning service readiness.
-
-    If any provider reports an error status, responds with HTTP 503
-    and details of unhealthy providers; otherwise, indicates the
-    service is ready.
+    Assess service readiness by evaluating configured providers' health.
+    
+    Sets response.status_code to 503 if any provider reports an ERROR status; otherwise the response remains 200.
+    Parameters:
+        response (fastapi.Response): FastAPI response object used to set the HTTP status code.
+    Returns:
+        ReadinessResponse: Object with `ready` indicating overall readiness, `reason` explaining the outcome, and `providers` containing the list of unhealthy ProviderHealthStatus entries (empty when ready).
     """
     # Used only for authorization
     _ = auth
@@ -127,10 +127,10 @@ async def liveness_probe_get_method(
     auth: Annotated[AuthTuple, Depends(get_auth_dependency())],
 ) -> LivenessResponse:
     """
-    Return the liveness status of the service.
-
+    Indicates whether the service is alive.
+    
     Returns:
-        LivenessResponse: Indicates that the service is alive.
+        LivenessResponse: Response object with `alive` set to `True`.
     """
     # Used only for authorization
     _ = auth

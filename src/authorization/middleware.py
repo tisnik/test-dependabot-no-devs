@@ -23,7 +23,14 @@ logger = logging.getLogger(__name__)
 
 @lru_cache(maxsize=1)
 def get_authorization_resolvers() -> Tuple[RolesResolver, AccessResolver]:
-    """Get authorization resolvers from configuration (cached)."""
+    """
+    Return the configured RolesResolver and AccessResolver based on authentication and authorization settings.
+    
+    The selection mirrors configuration: returns noop resolvers for NOOP/K8S/NOOP_WITH_TOKEN or when JWT role rules or authorization access rules are not set; returns JwtRolesResolver and GenericAccessResolver when JWK_TOKEN configuration provides role and access rules. The result is cached to avoid recomputing resolvers.
+    
+    Returns:
+        tuple[RolesResolver, AccessResolver]: (roles_resolver, access_resolver) appropriate for the current configuration.
+    """
     authorization_cfg = configuration.authorization_configuration
     authentication_config = configuration.authentication_configuration
 
@@ -68,7 +75,20 @@ def get_authorization_resolvers() -> Tuple[RolesResolver, AccessResolver]:
 async def _perform_authorization_check(
     action: Action, args: tuple[Any, ...], kwargs: dict[str, Any]
 ) -> None:
-    """Perform authorization check - common logic for all decorators."""
+    """
+    Perform the authorization check for an endpoint call and attach authorized actions to the request state.
+    
+    Performs role resolution and access verification for the supplied `action` using configured resolvers. Expects `kwargs` to contain an `auth` value from the authentication dependency; if a Request is present in `args` or `kwargs` its `state.authorized_actions` will be set to the set of actions the resolved roles are authorized to perform.
+    
+    Parameters:
+        action (Action): The action to authorize.
+        args (tuple[Any, ...]): Positional arguments passed to the endpoint; used to locate a Request instance if present.
+        kwargs (dict[str, Any]): Keyword arguments passed to the endpoint; must include `auth` (authentication info) and may include `request`.
+    
+    Raises:
+        HTTPException: with 500 Internal Server Error if `auth` is missing from `kwargs`.
+        HTTPException: with 403 Forbidden if the resolved roles are not permitted to perform `action`.
+    """
     role_resolver, access_resolver = get_authorization_resolvers()
 
     try:
@@ -109,9 +129,26 @@ async def _perform_authorization_check(
 
 
 def authorize(action: Action) -> Callable:
-    """Check authorization for an endpoint (async version)."""
+    """
+    Create a decorator that enforces the specified authorization action on an endpoint.
+    
+    Parameters:
+        action (Action): The action that the decorated endpoint must be authorized to perform.
+    
+    Returns:
+        Callable: A decorator which, when applied to an endpoint function, performs the authorization check for the given action before invoking the function.
+    """
 
     def decorator(func: Callable) -> Callable:
+        """
+        Wraps an endpoint function to perform an authorization check before invoking the original callable.
+        
+        Parameters:
+            func (Callable): The function to wrap.
+        
+        Returns:
+            Callable: A wrapper that performs authorization then calls `func`.
+        """
         @wraps(func)
         async def wrapper(*args: Any, **kwargs: Any) -> Any:
             await _perform_authorization_check(action, args, kwargs)

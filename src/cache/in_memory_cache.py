@@ -14,33 +14,50 @@ class InMemoryCache(Cache):
     """In-memory cache implementation."""
 
     def __init__(self, config: InMemoryCacheConfig) -> None:
-        """Create a new instance of in-memory cache."""
+        """
+        Initialize the InMemoryCache with the provided configuration.
+        
+        Parameters:
+            config (InMemoryCacheConfig): Configuration options controlling cache behavior.
+        """
         self.cache_config = config
 
     def connect(self) -> None:
-        """Initialize connection to database."""
+        """
+        Log the start of a storage connection for the in-memory cache; does not establish an external connection.
+        
+        This method records (via logger) that the cache is connecting to its storage backend. For the in-memory implementation this is a no-op with respect to network or persistent connections.
+        """
         logger.info("Connecting to storage")
 
     def connected(self) -> bool:
-        """Check if connection to cache is alive."""
+        """
+        Report whether the cache connection is currently available.
+        
+        Returns:
+            True if the cache is available, False otherwise.
+        """
         return True
 
     def initialize_cache(self) -> None:
-        """Initialize cache."""
+        """
+        No-op placeholder for cache initialization.
+        
+        This implementation performs no actions and exists only to satisfy the cache interface.
+        """
 
     @connection
     def get(
         self, user_id: str, conversation_id: str, skip_user_id_check: bool = False
     ) -> list[CacheEntry]:
-        """Get the value associated with the given key.
-
-        Args:
-            user_id: User identification.
-            conversation_id: Conversation ID unique for given user.
-            skip_user_id_check: Skip user_id suid check.
-
+        """
+        Validate the provided identifiers and retrieve cache entries for a user's conversation.
+        
+        Parameters:
+            skip_user_id_check (bool): If True, skip validation of `user_id`. Validation for `user_id` and `conversation_id` requires them to be well-formed UUIDs.
+        
         Returns:
-            Empty list.
+            list[CacheEntry]: An empty list.
         """
         # just check if user_id and conversation_id are UUIDs
         super().construct_key(user_id, conversation_id, skip_user_id_check)
@@ -54,14 +71,16 @@ class InMemoryCache(Cache):
         cache_entry: CacheEntry,
         skip_user_id_check: bool = False,
     ) -> None:
-        """Set the value associated with the given key.
-
-        Args:
-            user_id: User identification.
-            conversation_id: Conversation ID unique for given user.
-            cache_entry: The `CacheEntry` object to store.
-            skip_user_id_check: Skip user_id suid check.
-
+        """
+        Validate and construct the cache key for a user's conversation without storing data.
+        
+        This method verifies the provided `user_id` and `conversation_id` (via the base class key construction/validation) and performs no persistent storage or mutation.
+        
+        Parameters:
+            user_id (str): Identifier for the user.
+            conversation_id (str): Identifier for the conversation within the user scope.
+            cache_entry (CacheEntry): The cache entry that would be stored (not persisted by this implementation).
+            skip_user_id_check (bool): If true, skip additional user-id validation.
         """
         # just check if user_id and conversation_id are UUIDs
         super().construct_key(user_id, conversation_id, skip_user_id_check)
@@ -70,16 +89,16 @@ class InMemoryCache(Cache):
     def delete(
         self, user_id: str, conversation_id: str, skip_user_id_check: bool = False
     ) -> bool:
-        """Delete conversation history for a given user_id and conversation_id.
-
-        Args:
-            user_id: User identification.
-            conversation_id: Conversation ID unique for given user.
-            skip_user_id_check: Skip user_id suid check.
-
+        """
+        Validate the provided user and conversation identifiers and report deletion success.
+        
+        Parameters:
+            user_id (str): User identifier to validate.
+            conversation_id (str): Conversation identifier to validate.
+            skip_user_id_check (bool): If True, skip validation of the `user_id` format.
+        
         Returns:
-            bool: True in all cases.
-
+            bool: `True` (operation is considered successful in all cases).
         """
         # just check if user_id and conversation_id are UUIDs
         super().construct_key(user_id, conversation_id, skip_user_id_check)
@@ -89,15 +108,15 @@ class InMemoryCache(Cache):
     def list(
         self, user_id: str, skip_user_id_check: bool = False
     ) -> list[ConversationData]:
-        """List all conversations for a given user_id.
-
-        Args:
-            user_id: User identification.
-            skip_user_id_check: Skip user_id suid check.
-
+        """
+        Return the list of conversations for the specified user.
+        
+        Parameters:
+            user_id (str): The user's identifier to list conversations for.
+            skip_user_id_check (bool): If True, skip validation of `user_id`.
+        
         Returns:
-            An empty list.
-
+            list[ConversationData]: A list of conversation entries for the user; may be empty.
         """
         super()._check_user_id(user_id, skip_user_id_check)
         return []
@@ -110,21 +129,23 @@ class InMemoryCache(Cache):
         topic_summary: str,
         skip_user_id_check: bool = False,
     ) -> None:
-        """Set the topic summary for the given conversation.
-
-        Args:
-            user_id: User identification.
-            conversation_id: Conversation ID unique for given user.
-            topic_summary: The topic summary to store.
-            skip_user_id_check: Skip user_id suid check.
+        """
+        Store the topic summary for a specific user's conversation.
+        
+        Parameters:
+            user_id (str): The user's identifier (expected to be a UUID unless `skip_user_id_check` is True).
+            conversation_id (str): The conversation identifier (expected to be a UUID).
+            topic_summary (str): The summary text to associate with the conversation's topic.
+            skip_user_id_check (bool): If True, skip validation of `user_id`.
         """
         # just check if user_id and conversation_id are UUIDs
         super().construct_key(user_id, conversation_id, skip_user_id_check)
 
     def ready(self) -> bool:
-        """Check if the cache is ready.
-
+        """
+        Report whether the cache is ready.
+        
         Returns:
-            True in all cases.
+            True (`bool`): Always `True` for this in-memory cache implementation.
         """
         return True
