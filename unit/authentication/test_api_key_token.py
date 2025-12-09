@@ -13,7 +13,12 @@ from models.config import APIKeyTokenConfiguration
 
 @pytest.fixture
 def default_api_key_token_configuration() -> APIKeyTokenConfiguration:
-    """Default APIKeyTokenConfiguration for testing."""
+    """
+    Provide a default APIKeyTokenConfiguration for tests.
+    
+    Returns:
+        APIKeyTokenConfiguration: configuration with `api_key` set to `SecretStr("some-test-api-key")`.
+    """
     return APIKeyTokenConfiguration(api_key=SecretStr("some-test-api-key"))
 
 
@@ -47,13 +52,9 @@ async def test_api_key_with_token_auth_dependency_no_token(
     default_api_key_token_configuration: APIKeyTokenConfiguration,
 ) -> None:
     """
-    Test if checks for Authorization header is in place.
-
-    Test that APIKeyTokenConfiguration raises an HTTPException when no
-    Authorization header is present in the request.
-
-    Asserts that the exception has a status code of 401 and the detail message
-    "No Authorization header found".
+    Verify that APIKeyTokenAuthDependency raises an HTTPException when the request lacks an Authorization header.
+    
+    Asserts the raised exception has status_code 401 and that detail["cause"] equals "No Authorization header found".
     """
     dependency = APIKeyTokenAuthDependency(default_api_key_token_configuration)
 

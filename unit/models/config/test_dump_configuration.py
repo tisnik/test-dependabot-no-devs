@@ -26,10 +26,12 @@ from models.config import (
 
 def test_dump_configuration(tmp_path: Path) -> None:
     """
-    Test that the Configuration object can be serialized to a JSON file and
-    that the resulting file contains all expected sections and values.
-
-    Please note that redaction process is not in place.
+    Verify that a Configuration instance serializes to a JSON file containing all expected top-level sections, nested values, and redaction of sensitive fields.
+    
+    Writes the serialized configuration to a file named "test.json" under the provided tmp_path, then loads and asserts the JSON contains the expected structure and exact values (including redacted secrets such as API keys and passwords).
+    
+    Parameters:
+        tmp_path (Path): Directory where the test JSON file will be written.
     """
     cfg = Configuration(
         name="test_name",
@@ -306,10 +308,7 @@ def test_dump_configuration_with_more_mcp_servers(tmp_path: Path) -> None:
 
 def test_dump_configuration_with_quota_limiters(tmp_path: Path) -> None:
     """
-    Test that the Configuration object can be serialized to a JSON file and
-    that the resulting file contains all expected sections and values.
-
-    Please note that redaction process is not in place.
+    Verify that a Configuration containing quota_handlers serializes to a JSON file with the expected top-level sections, quota limiter entries (including their names, types, initial_quota, quota_increase, and period), scheduler settings, and enable_token_history flag, and that sensitive values are redacted in the dumped output.
     """
     cfg = Configuration(
         name="test_name",
