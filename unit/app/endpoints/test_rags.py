@@ -71,12 +71,23 @@ async def test_rags_endpoint_success(
         """RagInfo mock."""
 
         def __init__(self, rag_id: str) -> None:
+            """
+            Initialize a RagInfo instance with the given identifier.
+            
+            Parameters:
+            	rag_id (str): The unique identifier for the RAG.
+            """
             self.id = rag_id
 
     class RagList:
         """List of RAGs mock."""
 
         def __init__(self) -> None:
+            """
+            Initialize the object with a predefined list of RagInfo objects used as mock data.
+            
+            The instance attribute `data` contains three RagInfo instances with fixed IDs simulating available RAG entries for tests.
+            """
             self.data = [
                 RagInfo("vs_00000000-cafe-babe-0000-000000000000"),
                 RagInfo("vs_7b52a8cf-0fa3-489c-beab-27e061d102f3"),
@@ -190,17 +201,19 @@ async def test_rag_info_endpoint_success(
         """RagInfo mock."""
 
         def __init__(self) -> None:
-            """This function initializes an instance with predefined attributes.
-
+            """
+            Create an instance populated with fixed example RAG metadata.
+            
             Attributes:
-                id (str): Identifier for the instance, set to "xyzzy".
-                name (str): Name of the instance, set to "rag_name".
+                id (str): Identifier, set to "xyzzy".
+                name (str): Human-readable name, set to "rag_name".
                 created_at (int): Creation timestamp, set to 123456.
                 last_active_at (int): Last active timestamp, set to 1234567.
-                expires_at (int): Expiry timestamp, set to 12345678.
-                object (str): Type of object, set to "faiss".
-                status (str): Status of the instance, set to "completed".
-                usage_bytes (int): Usage in bytes, set to 100."""
+                expires_at (int): Expiration timestamp, set to 12345678.
+                object (str): Object type, set to "faiss".
+                status (str): Current status, set to "completed".
+                usage_bytes (int): Storage usage in bytes, set to 100.
+            """
             self.id = "xyzzy"
             self.name = "rag_name"
             self.created_at = 123456

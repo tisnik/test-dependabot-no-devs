@@ -15,7 +15,15 @@ import constants
 
 
 def claims_to_token(claims: dict) -> str:
-    """Convert JWT claims dictionary to a JSON string token."""
+    """
+    Create a JWT-like token by encoding the provided claims into a base64url JSON payload and wrapping it with placeholder header and signature.
+    
+    Parameters:
+        claims (dict): JWT claims to serialize and encode.
+    
+    Returns:
+        token (str): A token string in the form "foo_header.<base64url(JSON claims)>.foo_signature", where the payload is base64url-encoded without padding.
+    """
 
     string_claims = json.dumps(claims)
     b64_encoded_claims = (
@@ -26,7 +34,15 @@ def claims_to_token(claims: dict) -> str:
 
 
 def claims_to_auth_tuple(claims: dict) -> AuthTuple:
-    """Convert JWT claims dictionary to an auth tuple."""
+    """
+    Builds an AuthTuple from JWT claims for use in tests.
+    
+    Parameters:
+        claims (dict): JWT claims to encode into the returned token.
+    
+    Returns:
+        AuthTuple: A 4-tuple (username, token_id, expired, jwt_token) where `username` is the fixed string "user", `token_id` is the fixed string "token", `expired` is False, and `jwt_token` is the token produced from `claims`.
+    """
     return ("user", "token", False, claims_to_token(claims))
 
 
@@ -35,7 +51,12 @@ class TestJwtRolesResolver:
 
     @pytest.fixture
     async def employee_role_rule(self) -> JwtRoleRule:
-        """Role rule for RedHat employees."""
+        """
+        JwtRoleRule that grants the "employee" role when `realm_access.roles` contains "redhat:employees".
+        
+        Returns:
+            JwtRoleRule: Configured to match `$.realm_access.roles[*]` with a CONTAINS operator for the value `"redhat:employees"` and map matches to the `["employee"]` role.
+        """
         return JwtRoleRule(
             jsonpath="$.realm_access.roles[*]",
             operator=JsonPathOperator.CONTAINS,
@@ -47,7 +68,15 @@ class TestJwtRolesResolver:
     async def employee_resolver(
         self, employee_role_rule: JwtRoleRule
     ) -> JwtRolesResolver:
-        """JwtRolesResolver with a rule for RedHat employees."""
+        """
+        Create a JwtRolesResolver configured with the provided employee role rule.
+        
+        Parameters:
+            employee_role_rule (JwtRoleRule): Rule used to map JWT claims to the employee role.
+        
+        Returns:
+            JwtRolesResolver: Resolver initialized with the given rule.
+        """
         return JwtRolesResolver([employee_role_rule])
 
     @pytest.fixture
@@ -70,7 +99,13 @@ class TestJwtRolesResolver:
 
     @pytest.fixture
     async def non_employee_claims(self) -> dict[str, Any]:
-        """JWT claims for a non-RedHat employee."""
+        """
+        Provide JWT claims representing a non-Red Hat employee.
+        
+        Returns:
+            dict: JWT claims where `realm_access.roles` does not include the Red Hat employee role
+            (e.g., contains `"uma_authorization"` and `"default-roles-example"`).
+        """
         return {
             "exp": 1754489339,
             "iat": 1754488439,
@@ -114,7 +149,12 @@ class TestJwtRolesResolver:
 
     @pytest.fixture
     async def email_rule_resolver(self) -> JwtRolesResolver:
-        """JwtRolesResolver with a rule for email domain."""
+        """
+        Create a JwtRolesResolver that maps emails ending with "@redhat.com" to the "redhat_employee" role.
+        
+        Returns:
+            JwtRolesResolver: Resolver configured with a single MATCH rule on `$.email` using the regex `@redhat\.com$` that yields the `redhat_employee` role.
+        """
         return JwtRolesResolver(
             [
                 JwtRoleRule(
@@ -128,7 +168,12 @@ class TestJwtRolesResolver:
 
     @pytest.fixture
     async def equals_rule_resolver(self) -> JwtRolesResolver:
-        """JwtRolesResolver with a rule for exact email match."""
+        """
+        Create a JwtRolesResolver with a single EQUALS rule that matches the JSONPath `$.foo` to the exact value "bar" and maps that match to the role "foobar".
+        
+        Returns:
+            JwtRolesResolver: Resolver configured with one JwtRoleRule (jsonpath="$.foo", operator=EQUALS, value=["bar"], roles=["foobar"]).
+        """
         return JwtRolesResolver(
             [
                 JwtRoleRule(
@@ -150,7 +195,12 @@ class TestJwtRolesResolver:
 
     @pytest.fixture
     async def in_rule_resolver(self) -> JwtRolesResolver:
-        """JwtRolesResolver with a rule for IN operator."""
+        """
+        Create a JwtRolesResolver configured with a single IN operator rule for JSONPath "$.foo".
+        
+        Returns:
+            JwtRolesResolver: Resolver that maps the JSONPath value ['bar'] or ['baz'] at "$.foo" to the role "in_role".
+        """
         return JwtRolesResolver(
             [
                 JwtRoleRule(
@@ -262,7 +312,9 @@ class TestJwtRolesResolver:
     async def test_resolve_roles_with_no_user_token(
         self, employee_resolver: JwtRolesResolver
     ) -> None:
-        """Test NO_USER_TOKEN returns empty claims."""
+        """
+        Verify the resolver produces no roles and does not raise an exception when given NO_USER_TOKEN.
+        """
         guest_tuple = (
             "user",
             "username",
@@ -281,12 +333,22 @@ class TestGenericAccessResolver:
 
     @pytest.fixture
     def admin_access_rules(self) -> list[AccessRule]:
-        """Access rules with admin role for testing."""
+        """
+        Provide access rules containing a single admin role for use in tests.
+        
+        Returns:
+            list[AccessRule]: A list with one AccessRule for role "superuser" whose actions include Action.ADMIN.
+        """
         return [AccessRule(role="superuser", actions=[Action.ADMIN])]
 
     @pytest.fixture
     def multi_role_access_rules(self) -> list[AccessRule]:
-        """Access rules with multiple roles for testing."""
+        """
+        Provide test access rules mapping multiple roles to their allowed actions.
+        
+        Returns:
+            list[AccessRule]: A list containing two AccessRule instances — the "user" role allowing `Action.QUERY` and `Action.GET_MODELS`, and the "moderator" role allowing `Action.FEEDBACK`.
+        """
         return [
             AccessRule(role="user", actions=[Action.QUERY, Action.GET_MODELS]),
             AccessRule(role="moderator", actions=[Action.FEEDBACK]),
@@ -337,7 +399,9 @@ class TestGenericAccessResolver:
     def test_admin_role_allows_all_actions(
         self, admin_access_rules: list[AccessRule]
     ) -> None:
-        """Test admin action allows all actions via recursive check."""
+        """
+        Verify that a role granted the ADMIN action confers permission for all actions.
+        """
         resolver = GenericAccessResolver(admin_access_rules)
         assert resolver.check_access(Action.QUERY, {"superuser"}) is True
 

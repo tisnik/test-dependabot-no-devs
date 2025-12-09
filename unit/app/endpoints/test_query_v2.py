@@ -29,7 +29,12 @@ MOCK_AUTH = (
 
 @pytest.fixture
 def dummy_request() -> Request:
-    """Create a dummy FastAPI Request object for testing."""
+    """
+    Create a minimal FastAPI Request object suitable for unit tests.
+    
+    Returns:
+        request (fastapi.Request): A Request constructed with a bare HTTP scope (type "http") for use in tests.
+    """
     req = Request(scope={"type": "http"})
     return req
 
@@ -509,17 +514,11 @@ async def test_query_endpoint_handler_v2_api_connection_error(
     mocker.patch("app.endpoints.query_v2.configuration", mock_config)
 
     def _raise(*_args: Any, **_kwargs: Any) -> Exception:
-        """Raises a custom APIConnectionError exception.
-
-        Args:
-            *_args: Variable length argument list.
-            **_kwargs: Arbitrary keyword arguments.
-
-        Returns:
-            None
-
+        """
+        Raise an APIConnectionError constructed with a minimal HTTP Request.
+        
         Raises:
-            APIConnectionError: Always raises this exception with a Request object.
+            APIConnectionError: Always raised with a `Request` whose scope is `{"type": "http"}`.
         """
         request = Request(scope={"type": "http"})
         raise APIConnectionError(request=request)  # type: ignore
