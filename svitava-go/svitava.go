@@ -47,6 +47,9 @@ func runInDemoMode() {
 	r := renderer.NewSingleGoroutineRenderer()
 
 	parameters, err := params.LoadFractalParameters("data/complex_fractals.toml")
+	if err != nil {
+		log.Fatalf("Failed to load fractal parameters: %v", err)
+	}
 	log.Printf("Fractal configuration:  %v  %v", parameters, err)
 
 	var writer image.Writer
