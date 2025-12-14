@@ -1,0 +1,68 @@
+[[fractal]]
+name = "Bedhead"
+type = "bedhead"
+maxiter = 1000000
+A = 0.06
+B = 0.99
+scale = 35
+x_offset = 40
+y_offset = 10
+
+[[fractal]]
+name = "De Jong"
+type = "de_jong"
+maxiter = 1000000
+A = -2.7
+B = -0.09
+C = -0.86
+D = -2.20
+scale = 80
+x_offset = 80
+y_offset = -40
+
+[[fractal]]
+name = "Fractal Dream"
+type = "fractal_dream"
+maxiter = 1000000
+A = -0.97
+B = 2.88
+C = 0.77
+D = 0.74
+scale = 70
+x_offset = 0
+y_offset = 0
+
+[[fractal]]
+name = "Hopalong"
+type = "hopalong"
+maxiter = 1000000
+A = 7.16878197155893
+B = 8.43659746693447
+C = 2.55983412731439
+scale = 2
+x_offset = 0
+y_offset = 0
+
+[[fractal]]
+name = "Jason Rampe 1"
+type = "jason_rampe_1"
+maxiter = 1000000
+A = -2.7918
+B = 2.1196
+C = 1.0284
+D = 0.1384
+scale = 60
+x_offset = -10
+y_offset = 0
+
+[[fractal]]
+name = "Jason Rampe 2"
+type = "jason_rampe_2"
+maxiter = 1000000
+A = -2.9581
+B = 0.927
+C = 2.7842
+D = 0.6267
+scale = 40
+x_offset = -25
+y_offset = 0
