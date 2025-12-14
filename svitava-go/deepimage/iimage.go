@@ -15,11 +15,13 @@ package deepimage
 // IImage is representation of raster image consisting of IPixels
 type IImage [][]IPixel
 
-// NewIImage constructs new instance of ZImage
+// NewIImage constructs new instance of IImage
 func NewIImage(resolution Resolution) IImage {
-	iimage := make([][]IPixel, resolution.Height)
-	for y := uint(0); y < resolution.Height; y++ {
-		iimage[y] = make([]IPixel, resolution.Width)
+	h := int(resolution.Height)
+	w := int(resolution.Width)
+	iimage := make([][]IPixel, h)
+	for y := 0; y < h; y++ {
+		iimage[y] = make([]IPixel, w)
 	}
 	return iimage
 }
