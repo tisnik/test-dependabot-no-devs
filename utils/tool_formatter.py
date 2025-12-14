@@ -8,18 +8,22 @@ logger = logging.getLogger(__name__)
 
 def format_tool_response(tool_dict: dict[str, Any]) -> dict[str, Any]:
     """
-    Format a tool dictionary to include only required fields.
-
-    If the input description contains structured metadata (e.g.,
-    lines starting with `TOOL_NAME=` or `DISPLAY_NAME=`), the
-    description will be replaced with a cleaned, human-readable
-    version extracted by `extract_clean_description`.
-
+    Normalize a raw tool dictionary into a minimal, user-facing tool representation.
+    
+    If the incoming description contains structured metadata sections (for example, keys like TOOL_NAME= or DISPLAY_NAME=), the function replaces it with a cleaned, human-facing description; other fields are passed through with sensible defaults.
+    
     Parameters:
-        tool_dict: Raw tool dictionary from Llama Stack
-
+        tool_dict (dict[str, Any]): Raw tool dictionary from upstream sources.
+    
     Returns:
-        Formatted tool dictionary with only required fields
+        dict[str, Any]: Formatted tool dictionary containing the following keys:
+            - identifier: tool identifier string (defaults to "").
+            - description: cleaned or original description string.
+            - parameters: list of parameter definitions (defaults to empty list).
+            - provider_id: provider identifier string (defaults to "").
+            - toolgroup_id: tool group identifier string (defaults to "").
+            - server_source: server source string (defaults to "").
+            - type: tool type string (defaults to "").
     """
     # Clean up description if it contains structured metadata
     description = tool_dict.get("description", "")
@@ -44,25 +48,15 @@ def format_tool_response(tool_dict: dict[str, Any]) -> dict[str, Any]:
 
 def extract_clean_description(description: str) -> str:
     """
-    Extract a clean description from structured metadata format.
-
-    Parses a raw description that may contain structured metadata
-    (e.g., lines or sections starting with TOOL_NAME=,
-    DISPLAY_NAME=, USECASE=, INSTRUCTIONS=, INPUT_DESCRIPTION=,
-    OUTPUT_DESCRIPTION=, EXAMPLES=, PREREQUISITES=,
-    AGENT_DECISION_CRITERIA=) and returns a cleaned, user-facing
-    description.  The function prefers the first paragraph that
-    does not start with a known metadata prefix and is longer than
-    20 characters. If no such paragraph exists, it returns the
-    value of a `USECASE=` line if present. If neither is found, it
-    returns the first 200 characters of the input, appending "..."
-    when truncation occurs.
-
+    Produce a user-facing description by removing structured metadata from a raw description.
+    
+    Prefers the first paragraph that does not start with known metadata prefixes and is longer than 20 characters; if none is found, returns the value of a `USECASE=` line when present; otherwise returns the input truncated to 200 characters with "..." appended when truncated.
+    
     Parameters:
-        description: Raw description with structured metadata
-
+        description (str): Raw description text that may contain structured metadata lines or sections.
+    
     Returns:
-        Clean description without metadata
+        str: A cleaned, user-facing description string.
     """
     min_description_length = 20
     fallback_truncation_length = 200
@@ -114,12 +108,12 @@ def extract_clean_description(description: str) -> str:
 
 def format_tools_list(tools: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """
-    Format a list of tools with structured description parsing.
-
-    Args:
-        tools: List of raw tool dictionaries
-
+    Normalize a list of raw tool dictionaries into the standardized formatted form.
+    
+    Parameters:
+        tools (list[dict[str, Any]]): Raw tool dictionaries to format.
+    
     Returns:
-        List of formatted tool dictionaries
+        list[dict[str, Any]]: Formatted tool dictionaries with normalized fields and cleaned descriptions.
     """
     return [format_tool_response(tool) for tool in tools]

@@ -56,13 +56,11 @@ def delete_conversation(conversation_id: str) -> bool:
 
 
 def retrieve_conversation(conversation_id: str) -> UserConversation | None:
-    """Retrieve a conversation from the database by its ID.
-
-    Args:
-        conversation_id (str): The unique identifier of the conversation to retrieve.
-
+    """
+    Retrieve a user conversation by its ID from the database.
+    
     Returns:
-        UserConversation | None: The conversation object if found, otherwise None.
+        The UserConversation if found, otherwise None.
     """
     with get_session() as session:
         return session.query(UserConversation).filter_by(id=conversation_id).first()
@@ -94,15 +92,18 @@ def validate_conversation_ownership(
 def can_access_conversation(
     conversation_id: str, user_id: str, others_allowed: bool
 ) -> bool:
-    """Check only whether a user is allowed to access a conversation.
-
-    Args:
-        conversation_id (str): The ID of the conversation to check.
-        user_id (str): The ID of the user requesting access.
-        others_allowed (bool): Whether the user can access conversations owned by others.
-
+    """
+    Determine whether a user may access a conversation.
+    
+    If `others_allowed` is True, access is permitted. If the conversation does not exist, access is permitted. If the conversation exists, access is permitted only when the conversation's owner matches `user_id`.
+    
+    Parameters:
+        conversation_id (str): ID of the conversation to check.
+        user_id (str): ID of the requesting user.
+        others_allowed (bool): If True, bypasses ownership checks and allows access to conversations owned by others.
+    
     Returns:
-        bool: True if the user is allowed to access the conversation, False otherwise.
+        bool: True if access is permitted, False otherwise.
     """
     if others_allowed:
         return True
@@ -205,7 +206,15 @@ def get_system_prompt(query_request: QueryRequest, config: AppConfig) -> str:
 
 
 def get_topic_summary_system_prompt(config: AppConfig) -> str:
-    """Get the topic summary system prompt."""
+    """
+    Return the system prompt used for topic summaries, preferring a per-profile customization when available.
+    
+    Parameters:
+        config (AppConfig): Application configuration from which to read customization/profile settings.
+    
+    Returns:
+        str: The topic summary system prompt from the active custom profile if set, otherwise the default prompt.
+    """
     # profile takes precedence for setting prompt
     if (
         config.customization is not None
@@ -221,10 +230,11 @@ def get_topic_summary_system_prompt(config: AppConfig) -> str:
 def validate_model_provider_override(
     query_request: QueryRequest, authorized_actions: set[Action] | frozenset[Action]
 ) -> None:
-    """Validate whether model/provider overrides are allowed by RBAC.
-
-    Raises HTTP 403 if the request includes model or provider and the caller
-    lacks Action.MODEL_OVERRIDE permission.
+    """
+    Enforces RBAC for model/provider override fields in a QueryRequest.
+    
+    Raises:
+        HTTPException: If `query_request` specifies `model` or `provider` and `authorized_actions` does not include `Action.MODEL_OVERRIDE`. The exception is created from `ForbiddenResponse.model_override()`.
     """
     if (query_request.model is not None or query_request.provider is not None) and (
         Action.MODEL_OVERRIDE not in authorized_actions
@@ -242,7 +252,19 @@ def store_conversation_into_cache(
     _skip_userid_check: bool,
     topic_summary: str | None,
 ) -> None:
-    """Store one part of conversation into conversation history cache."""
+    """
+    Insert a conversation entry and optional topic summary into the configured conversation cache.
+    
+    If a conversation cache type is configured but the cache instance is not initialized, the function logs a warning and returns without persisting anything.
+    
+    Parameters:
+        config (AppConfig): Application configuration that may contain conversation cache settings and instance.
+        user_id (str): Owner identifier used as the cache key.
+        conversation_id (str): Conversation identifier used as the cache key.
+        cache_entry (CacheEntry): Entry to insert or append to the conversation history.
+        _skip_userid_check (bool): When true, bypasses enforcing that the cache operation must match the user id.
+        topic_summary (str | None): Optional topic summary to store alongside the conversation; ignored if None or empty.
+    """
     if config.conversation_cache_configuration.type is not None:
         cache = config.conversation_cache
         if cache is None:
@@ -268,44 +290,23 @@ async def get_agent(
     no_tools: bool = False,
 ) -> tuple[AsyncAgent, str, str]:
     """
-    Create or reuse an AsyncAgent with session persistence.
-
-    Return the agent, conversation and session IDs.
-
-    If a conversation_id is provided, the function attempts to retrieve the
-    existing agent and, on success, rebinds a newly created agent instance to
-    that conversation (deleting the temporary/orphan agent) and returns the
-    first existing session_id for the conversation. If no conversation_id is
-    provided or the existing agent cannot be retrieved, a new agent and session
-    are created.
-
+    Create or reuse an AsyncAgent with session persistence for a conversation.
+    
+    If a conversation_id is provided the function will attempt to bind the agent to that conversation and return an existing session; otherwise it creates a new conversation and session.
+    
     Parameters:
-        model_id (str): Identifier of the model to instantiate the agent with.
-        system_prompt (str): Instructions/system prompt to initialize the agent with.
-
-        available_input_shields (list[str]): Input shields to apply to the
-        agent; empty list used if None/empty.
-
-        available_output_shields (list[str]): Output shields to apply to the
-        agent; empty list used if None/empty.
-
-        conversation_id (str | None): If provided, attempt to reuse the agent
-        for this conversation; otherwise a new conversation_id is created.
-
-        no_tools (bool): When True, disables tool parsing for the agent (uses no tool parser).
-
+        model_id (str): Model identifier to instantiate the agent with.
+        system_prompt (str): System/instruction prompt for the agent.
+        available_input_shields (list[str]): Input shields to apply to the agent.
+        available_output_shields (list[str]): Output shields to apply to the agent.
+        conversation_id (str | None): Conversation identifier to reuse; if None a new conversation is created.
+        no_tools (bool): When True, disables tool parsing for the agent.
+    
     Returns:
-        tuple[AsyncAgent, str, str]: A tuple of (agent, conversation_id, session_id).
-
+        tuple[AsyncAgent, str, str]: (agent, conversation_id, session_id).
+    
     Raises:
-        HTTPException: Raises HTTP 404 Not Found if an attempt to reuse a
-        conversation succeeds in retrieving the agent but no sessions are found
-        for that conversation.
-
-    Side effects:
-        - May delete an orphan agent when rebinding a newly created agent to an
-          existing conversation_id.
-        - Initializes the agent and may create a new session.
+        HTTPException: 404 Not Found if a provided conversation_id is reused but no sessions exist for that conversation.
     """
     existing_agent_id = None
     if conversation_id:
@@ -361,17 +362,20 @@ async def get_temp_agent(
     model_id: str,
     system_prompt: str,
 ) -> tuple[AsyncAgent, str, str]:
-    """Create a temporary agent with new agent_id and session_id.
-
-    This function creates a new agent without persistence, shields, or tools.
-    Useful for temporary operations or one-off queries, such as validating a
-    question or generating a summary.
-    Args:
-        client: The AsyncLlamaStackClient to use for the request.
-        model_id: The ID of the model to use.
-        system_prompt: The system prompt/instructions for the agent.
+    """
+    Create a temporary, non-persistent agent and a new session for one-off operations.
+    
+    This agent is initialized without session persistence, shields, or tools and is intended for short-lived tasks such as validation or summarization.
+    
+    Parameters:
+        model_id (str): Identifier of the model to instantiate the agent with.
+        system_prompt (str): System instructions to initialize the agent with.
+    
     Returns:
-        tuple[AsyncAgent, str]: A tuple containing the agent and session_id.
+        tuple: A tuple (agent, session_id, conversation_id):
+            - agent (AsyncAgent): The initialized temporary agent.
+            - session_id (str): The newly created session identifier.
+            - conversation_id (str | None): The conversation identifier (always `None` for temporary agents).
     """
     logger.debug("Creating temporary agent")
     # pylint: disable=unexpected-keyword-arg,no-member
@@ -395,13 +399,10 @@ async def get_temp_agent(
 
 def create_rag_chunks_dict(summary: TurnSummary) -> list[dict[str, Any]]:
     """
-    Create dictionary representation of RAG chunks for streaming response.
-
-    Args:
-        summary: TurnSummary containing RAG chunks
-
+    Convert a TurnSummary's RAG chunks into a list of dictionaries containing `content`, `source`, and `score`.
+    
     Returns:
-        List of dictionaries with content, source, and score
+        list[dict[str, Any]]: A list where each dict has keys `content`, `source`, and `score` extracted from the summary's RAG chunks.
     """
     return [
         {"content": chunk.content, "source": chunk.source, "score": chunk.score}
@@ -412,7 +413,19 @@ def create_rag_chunks_dict(summary: TurnSummary) -> list[dict[str, Any]]:
 def _process_http_source(
     src: str, doc_urls: set[str]
 ) -> tuple[AnyUrl | None, str] | None:
-    """Process HTTP source and return (doc_url, doc_title) tuple."""
+    """
+    Validate and deduplicate an HTTP source and produce a document title.
+    
+    Parameters:
+        src (str): The source URL string to process.
+        doc_urls (set[str]): Set of already-seen source strings; the function will add `src` to this set when it is new.
+    
+    Returns:
+        tuple[AnyUrl | None, str] | None: A tuple (validated_url, doc_title) when `src` was not previously seen:
+            - `validated_url`: an `AnyUrl` instance if `src` is a valid URL, or `None` if validation failed.
+            - `doc_title`: the last path segment of the URL or `src` if no path segment is present.
+        Returns `None` if `src` was already present in `doc_urls`.
+    """
     if src not in doc_urls:
         doc_urls.add(src)
         try:
@@ -433,7 +446,19 @@ def _process_document_id(
     metas_by_id: dict[str, dict[str, Any]],
     metadata_map: dict[str, Any] | None,
 ) -> tuple[AnyUrl | None, str] | None:
-    """Process document ID and return (doc_url, doc_title) tuple."""
+    """
+    Derives a validated document URL and a display title from a document identifier while deduplicating processed IDs and URLs.
+    
+    Parameters:
+        src (str): Document identifier to process.
+        doc_ids (set[str]): Set of already-seen document IDs; the function adds `src` to this set.
+        doc_urls (set[str]): Set of already-seen document URLs; the function adds discovered URLs to this set to avoid duplicates.
+        metas_by_id (dict[str, dict[str, Any]]): Mapping of document IDs to metadata dicts that may contain `docs_url` and `title`.
+        metadata_map (dict[str, Any] | None): If provided (truthy), indicates metadata is available and enables metadata lookup; when falsy, metadata lookup is skipped.
+    
+    Returns:
+        tuple[AnyUrl | None, str] | None: `(validated_url, doc_title)` where `validated_url` is a validated `AnyUrl` or `None` and `doc_title` is the chosen title string; returns `None` if the `src` or its URL was already processed.
+    """
     if src in doc_ids:
         return None
     doc_ids.add(src)
@@ -468,7 +493,25 @@ def _add_additional_metadata_docs(
     doc_urls: set[str],
     metas_by_id: dict[str, dict[str, Any]],
 ) -> list[tuple[AnyUrl | None, str]]:
-    """Add additional referenced documents from metadata_map."""
+    """
+    Collect additional referenced documents from a metadata mapping.
+    
+    Scans each metadata value in `metas_by_id` for a string `docs_url` and a string `title`. For entries
+    where `docs_url` is a string not already present in `doc_urls` and `title` is a string, the function
+    attempts to validate an HTTP(S) URL and adds the URL to `doc_urls` to prevent duplicates. Each
+    result is a tuple of the validated `AnyUrl` (or `None` if the URL is absent or invalid) and the
+    title string.
+    
+    Parameters:
+        doc_urls (set[str]): Mutable set of URLs already recorded; new valid `docs_url` values will be
+            added to this set to avoid duplicates.
+        metas_by_id (dict[str, dict[str, Any]]): Mapping of metadata IDs to metadata dictionaries. Each
+            metadata dictionary may contain `docs_url` and `title` keys.
+    
+    Returns:
+        list[tuple[AnyUrl | None, str]]: List of tuples where the first element is a validated `AnyUrl`
+        or `None` (if the docs URL is missing or invalid) and the second element is the document title.
+    """
     additional_entries: list[tuple[AnyUrl | None, str]] = []
     for meta in metas_by_id.values():
         doc_url = meta.get("docs_url")
@@ -497,9 +540,16 @@ def _process_rag_chunks_for_documents(
     metadata_map: dict[str, Any] | None = None,
 ) -> list[tuple[AnyUrl | None, str]]:
     """
-    Process RAG chunks and return a list of (doc_url, doc_title) tuples.
-
-    This is the core logic shared between both return formats.
+    Convert a list of RAG chunks into referenced document entries.
+    
+    Processes each chunk's source to produce a list of (doc_url, doc_title) pairs: it validates and deduplicates HTTP URLs, resolves document references by ID using optional metadata_map, skips empty or default sources, and includes additional referenced documents found in metadata_map.
+    
+    Parameters:
+        rag_chunks (list): Iterable of RAG chunk objects; each chunk must provide a `source` attribute (e.g., an HTTP URL or a document ID).
+        metadata_map (dict[str, Any] | None): Optional mapping of document IDs to metadata dictionaries used to resolve titles and document URLs.
+    
+    Returns:
+        list[tuple[AnyUrl | None, str]]: Ordered list of tuples where the first element is a validated URL object or `None` (if no URL is available) and the second element is the document title.
     """
     doc_urls: set[str] = set()
     doc_ids: set[str] = set()
@@ -541,20 +591,22 @@ def create_referenced_documents(
     return_dict_format: bool = False,
 ) -> list[ReferencedDocument] | list[dict[str, str | None]]:
     """
-    Create referenced documents from RAG chunks with optional metadata enrichment.
-
-    This unified function processes RAG chunks and creates referenced documents with
-    optional metadata enrichment, deduplication, and proper URL handling. It can return
-    either ReferencedDocument objects (for query endpoint) or dictionaries (for streaming).
-
-    Args:
-        rag_chunks: List of RAG chunks with source information
-        metadata_map: Optional mapping containing metadata about referenced documents
-        return_dict_format: If True, returns list of dicts; if False, returns list of
-            ReferencedDocument objects
-
+    Create referenced documents from RAG chunks, optionally enriching entries with provided metadata.
+    
+    Processes RAG chunks into a deduplicated list of document references and returns them either
+    as ReferencedDocument instances or as simple dictionaries suitable for serialization.
+    
+    Parameters:
+        rag_chunks (list): List of RAG chunk entries containing source information.
+        metadata_map (dict[str, Any] | None): Optional mapping of document IDs to metadata used
+            to enrich or resolve document URLs and titles.
+        return_dict_format (bool): If True, return a list of dictionaries with keys
+            `doc_url` and `doc_title`; if False, return a list of ReferencedDocument objects.
+    
     Returns:
-        List of ReferencedDocument objects or dictionaries with doc_url and doc_title
+        list[ReferencedDocument] | list[dict[str, str | None]]: Referenced documents as objects
+        when `return_dict_format` is False, otherwise a list of dictionaries with `doc_url`
+        (string or None) and `doc_title` (string or None).
     """
     document_entries = _process_rag_chunks_for_documents(rag_chunks, metadata_map)
 
@@ -577,9 +629,14 @@ def create_referenced_documents_with_metadata(
     summary: TurnSummary, metadata_map: dict[str, Any]
 ) -> list[ReferencedDocument]:
     """
-    Create referenced documents from RAG chunks with metadata enrichment for streaming.
-
-    This function now returns ReferencedDocument objects for consistency with the query endpoint.
+    Create ReferencedDocument objects from a TurnSummary's RAG chunks, using the provided metadata map to resolve or enrich document URLs and titles.
+    
+    Parameters:
+        summary (TurnSummary): Summary object containing `rag_chunks` to be processed.
+        metadata_map (dict[str, Any]): Metadata keyed by document id used to derive or enrich document `doc_url` and `doc_title`.
+    
+    Returns:
+        list[ReferencedDocument]: ReferencedDocument objects with `doc_url` and `doc_title` populated; `doc_url` may be `None` if no valid URL could be determined.
     """
     document_entries = _process_rag_chunks_for_documents(
         summary.rag_chunks, metadata_map
@@ -594,10 +651,13 @@ def create_referenced_documents_from_chunks(
     rag_chunks: list,
 ) -> list[ReferencedDocument]:
     """
-    Create referenced documents from RAG chunks for query endpoint.
-
-    This is a backward compatibility wrapper around the unified
-    create_referenced_documents function.
+    Construct ReferencedDocument objects from a list of RAG chunks for the query endpoint.
+    
+    Parameters:
+        rag_chunks (list): List of RAG chunk entries containing source and metadata information.
+    
+    Returns:
+        list[ReferencedDocument]: ReferencedDocument instances created from the chunks; each contains `doc_url` (validated URL or `None`) and `doc_title`.
     """
     document_entries = _process_rag_chunks_for_documents(rag_chunks)
     return [
@@ -627,30 +687,28 @@ async def cleanup_after_streaming(
     rag_chunks: list[dict[str, Any]] | None = None,
 ) -> None:
     """
-    Perform cleanup tasks after streaming is complete.
-
-    This function handles all database and cache operations after the streaming
-    response has been sent to the client. It is shared between Agent API and
-    Responses API streaming implementations.
-
-    Args:
-        user_id: ID of the user making the request
-        conversation_id: ID of the conversation
-        model_id: ID of the model used
-        provider_id: ID of the provider used
-        llama_stack_model_id: Full Llama Stack model ID (provider/model format)
-        query_request: The original query request
-        summary: Summary of the turn including LLM response and tool calls
-        metadata_map: Metadata about referenced documents
-        started_at: Timestamp when the request started
-        client: AsyncLlamaStackClient instance
-        config: Application configuration
-        skip_userid_check: Whether to skip user ID checks
-        get_topic_summary_func: Function to get topic summary (API-specific)
-        is_transcripts_enabled_func: Function to check if transcripts are enabled
-        store_transcript_func: Function to store transcript
-        persist_user_conversation_details_func: Function to persist conversation details
-        rag_chunks: Optional RAG chunks dict (for Agent API, None for Responses API)
+    Perform post-streaming persistence and cleanup for a completed turn.
+    
+    This stores an optional transcript, optionally generates an initial topic summary for new conversations, builds referenced documents and a cache entry from the turn summary, writes the cache entry if configured, and persists conversation metadata.
+    
+    Parameters:
+        user_id (str): ID of the user who made the request.
+        conversation_id (str): Conversation identifier.
+        model_id (str): Short model identifier used for logging/storage.
+        provider_id (str): Provider identifier used for logging/storage.
+        llama_stack_model_id (str): Full provider/model identifier used when invoking the Llama Stack client.
+        query_request (QueryRequest): Original query request object.
+        summary (TurnSummary): Turn summary containing LLM response, tool calls, and RAG chunks.
+        metadata_map (dict[str, Any]): Mapping of document metadata used to enrich referenced documents.
+        started_at (str): ISO timestamp when the request started.
+        client (AsyncLlamaStackClient): Llama Stack client instance.
+        config (AppConfig): Application configuration.
+        skip_userid_check (bool): If true, bypasses user-id checks when storing cache entries.
+        get_topic_summary_func (callable): Async function(query: str, client, llama_stack_model_id) -> str that generates a topic summary.
+        is_transcripts_enabled_func (callable): Function() -> bool that indicates whether transcript storage is enabled.
+        store_transcript_func (callable): Function(...) that persists a transcript; called with user_id, conversation_id, model_id, provider_id, query_is_valid, query, query_request, summary, rag_chunks, truncated, attachments.
+        persist_user_conversation_details_func (callable): Function(user_id, conversation_id, model, provider_id, topic_summary) that persists conversation metadata.
+        rag_chunks (list[dict[str, Any]] | None): Optional RAG chunks to include with the transcript; when None, no RAG chunks are attached (Agent API may supply this).
     """
     # Store transcript if enabled
     if not is_transcripts_enabled_func():

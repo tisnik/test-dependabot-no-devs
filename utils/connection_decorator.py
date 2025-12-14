@@ -5,41 +5,37 @@ from typing import Any, Callable
 
 def connection(f: Callable) -> Callable:
     """
-    Ensure a connectable object is connected before invoking the wrapped function.
-
-    The returned wrapper calls `connectable.connected()` and, if that returns
-    `False`, calls `connectable.connect()` prior to delegating to the original
-    function.
-
+    Decorator that ensures the first argument (a connectable) is connected before invoking the wrapped function.
+    
     Parameters:
-        f (Callable): The function to wrap. The wrapped function is
-        expected to accept a `connectable` first argument.
-
+        f (Callable): Function to wrap. The wrapped function is expected to accept a connectable as its first argument.
+    
     Returns:
-        Callable: A wrapper function with signature `(connectable,
-        *args, **kwargs)` that ensures `connectable` is connected
-        before calling `f`.
-
-    Example:
-    ```python
-    @connection
-    def list_history(self) -> list[str]:
-       pass
-    ```
+        Callable: A wrapper with signature `(connectable, *args, **kwargs)` that ensures `connectable` is connected before calling `f`.
+    """
+    """
+    Ensure the provided connectable is connected, then call the wrapped function with the same arguments.
+    
+    Parameters:
+        connectable (Any): Object that implements `connected() -> bool` and `connect() -> None`; will be connected if not already.
+        *args (Any): Positional arguments forwarded to the wrapped callable.
+        **kwargs (Any): Keyword arguments forwarded to the wrapped callable.
+    
+    Returns:
+        Any: The value returned by the wrapped callable.
     """
 
     def wrapper(connectable: Any, *args: Any, **kwargs: Any) -> Callable:
         """
-        Ensure the provided connectable is connected, then call the wrapped with the same arguments.
-
+        Ensure the provided `connectable` is connected before invoking the wrapped callable.
+        
         Parameters:
-            connectable (Any): Object that implements `connected()` -> bool and
-            `connect()` -> None; will be connected if not already.
-                *args (Any): Positional arguments forwarded to the wrapped callable.
-                **kwargs (Any): Keyword arguments forwarded to the wrapped callable.
-
+            connectable (Any): Object that implements `connected() -> bool` and `connect() -> None`; `connect()` will be called if `connected()` is False.
+            *args (Any): Positional arguments forwarded to the wrapped callable.
+            **kwargs (Any): Keyword arguments forwarded to the wrapped callable.
+        
         Returns:
-                Any: The value returned by the wrapped callable.
+            Any: The value returned by the wrapped callable.
         """
         if not connectable.connected():
             connectable.connect()
