@@ -17,7 +17,7 @@ class ClusterQuotaLimiter(RevokableQuotaLimiter):
         increase_by: int = 0,
     ) -> None:
         """
-        Create a cluster-scoped quota limiter and initialize its persistent storage.
+        Create a quota limiter and initialize its persistent storage.
         
         Parameters:
             configuration (QuotaHandlersConfiguration): Handlers and settings used by the limiter.

@@ -17,7 +17,7 @@ def connect_pg(config: PostgreSQLDatabaseConfiguration) -> Any:
         config (PostgreSQLDatabaseConfiguration): Configuration containing host, port, user, password (accessible via `get_secret_value()`), database name, and SSL/GSS options used to establish the connection.
     
     Returns:
-        connection: A psycopg2 database connection with `autocommit` set to True when the connection is successfully established.
+        connection: A psycopg2 database connection
     
     Raises:
         psycopg2.Error: If establishing the database connection fails.
