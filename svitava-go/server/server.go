@@ -136,6 +136,11 @@ func (s HTTPServer) fractalImageHandler(w http.ResponseWriter, r *http.Request) 
 		Height: uint(height),
 	}
 	fmt.Println(fractalName, paletteName, resolution)
+	// Validate palette name to prevent path traversal
+	if strings.Contains(paletteName, "..") || strings.ContainsAny(paletteName, "/\\") {
+		http.Error(w, "invalid 'palette' parameter provided", http.StatusBadRequest)
+		return
+	}
 	palette, _ := palettes.LoadTextRGBPalette("data/" + paletteName + ".map")
 	parametersMap, _ := params.LoadFractalParameters(ParameterFileName)
 
