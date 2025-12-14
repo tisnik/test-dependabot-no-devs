@@ -25,6 +25,7 @@ import (
 	"github.com/tisnik/svitava-go/renderer/textures"
 )
 
+// init logs package initialization for the renderer package.
 func init() {
 	log.Println("Renderer: init")
 }
@@ -36,12 +37,18 @@ type Renderer interface {
 type SingleGoroutineRenderer struct {
 }
 
+// NewSingleGoroutineRenderer creates a Renderer that performs fractal rendering on a single goroutine.
+// The returned value implements Renderer using a single-threaded implementation.
 func NewSingleGoroutineRenderer() Renderer {
 	return SingleGoroutineRenderer{}
 }
 
 type fractalFunction = func(params params.FractalParameter, deepImage deepimage.Image)
 
+// render allocates a deep image of the given width and height, invokes the provided
+// fractal function to populate it, applies the palette, and returns the resulting
+// RGBA image. If width or height is zero, the fractal function is nil, or the deep
+// image cannot be created, render returns nil.
 func render(width uint, height uint, params params.FractalParameter, palette palettes.Palette, function fractalFunction) image.Image {
 	if width == 0 || height == 0 {
 		// TODO: logging

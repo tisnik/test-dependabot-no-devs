@@ -17,6 +17,10 @@ import (
 	"github.com/tisnik/svitava-go/params"
 )
 
+// CalcCirclePattern populates the given image with a circle-pattern by filling its Z (complex) and I (intensity) planes.
+// 
+// It samples coordinates starting at params.Xmin and params.Ymin with step sizes from getSteps, and for each pixel
+// writes Z[y][x] = complex(x^2, y^2) and I[y][x] = int(x^2 + y^2) & 255.
 func CalcCirclePattern(
 	params params.FractalParameter,
 	image deepimage.Image) {

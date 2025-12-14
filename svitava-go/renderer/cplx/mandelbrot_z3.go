@@ -18,7 +18,9 @@ import (
 )
 
 // CalcMandelbrotZ3 calculates Mandelbrot set z=z^3+c into the provided ZPixels
-// Calculations use complex numbers
+// CalcMandelbrotZ3 computes the Mandelbrot fractal using the iteration z = z^3 + c for each pixel in the provided image.
+// For each pixel it initializes z to (Cx0, Cy0), iterates up to Maxiter stopping when |z|>2, stores the final complex value in image.Z
+// and writes the iteration-based index (via calcIndex) into image.I. Parameters from params (bounds, steps and Maxiter) determine the sampling.
 func CalcMandelbrotZ3(
 	params params.FractalParameter,
 	image deepimage.Image) {

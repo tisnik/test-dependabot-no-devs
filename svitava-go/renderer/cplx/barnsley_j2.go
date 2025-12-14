@@ -17,7 +17,11 @@ import (
 	"github.com/tisnik/svitava-go/params"
 )
 
-// CalcBarnsleyJuliaJ2 calculates Barnsley J2 Mandelbrot-like set
+// CalcBarnsleyJuliaJ2 computes the Barnsley–Julia J2 fractal and writes the results into the provided image.
+// 
+// It iterates over the image pixel grid using coordinate bounds, max iterations, and bailout from params.
+// For each pixel it performs the J2 iteration, stores the final complex value in image.Z[y][x] and stores an
+// iteration-derived color index in image.I[y][x].
 func CalcBarnsleyJuliaJ2(
 	params params.FractalParameter,
 	image deepimage.Image) {

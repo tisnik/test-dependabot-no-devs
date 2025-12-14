@@ -13,7 +13,7 @@
 // 2D attractors
 package attractors_2d
 
-// Helper function to compute sign of floating point number
+// sign returns 1 if x is greater than zero; otherwise it returns 0.
 func sign(x float64) float64 {
 	if x > 0 {
 		return 1

@@ -17,7 +17,14 @@ import (
 	"github.com/tisnik/svitava-go/params"
 )
 
-// CalcBarnsleyJuliaJ3 calculates Barnsley J3 Mandelbrot-like set
+// CalcBarnsleyJuliaJ3 computes the Barnsley–Julia J3 fractal over the complex plane
+// and populates the provided image's Z (final complex value) and I (iteration index)
+// grids for each pixel.
+//
+// The function maps image pixels to the square region [-2, 2]×[-2, 2] in the complex
+// plane, uses Cx0 and Cy0 from params to modulate the iteration, and applies the
+// configured Maxiter and Bailout to determine escape. For each pixel it stores the
+// final complex value reached and the iteration index produced by calcIndex.
 func CalcBarnsleyJuliaJ3(
 	params params.FractalParameter,
 	image deepimage.Image) {

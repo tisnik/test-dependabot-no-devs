@@ -18,6 +18,8 @@ import (
 	"strconv"
 )
 
+// parseStringQueryParameter retrieves the first value for the named query parameter from r.URL.RawQuery or returns defaultValue if the parameter is not present.
+// If the raw query cannot be parsed, it returns defaultValue and the parse error.
 func parseStringQueryParameter(
 	r *http.Request,
 	parameter string,
@@ -35,6 +37,10 @@ func parseStringQueryParameter(
 	return defaultValue, nil
 }
 
+// parseUintQueryParameter retrieves an unsigned integer from the request URL query.
+// It reads the value of parameterName from r.URL.Query(); if the parameter is absent
+// it returns defaultValue and no error. If the parameter is present but cannot be
+// parsed as a base-10 unsigned integer, it returns defaultValue and the parse error.
 func parseUintQueryParameter(
 	r *http.Request,
 	parameterName string,

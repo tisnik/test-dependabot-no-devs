@@ -18,7 +18,9 @@ import (
 )
 
 // CalcMandelbrotZ4 calculates Mandelbrot set z=z^4+c into the provided ZPixels
-// Calculations use complex numbers
+// CalcMandelbrotZ4 computes the Mandelbrot set for the iteration z = z^4 + c and writes resulting complex values and iteration indices into the provided image.
+// 
+// The image grid is sampled with both axes starting at -1.5 and advancing by 3.0/width (x) and 3.0/height (y). For each pixel the complex parameter c is the sampled coordinate and z is initialized to (params.Cx0, params.Cy0). Iteration proceeds up to params.Maxiter and stops early when |z| > 2.0. The final z is stored in image.Z as a ZPixel and the iteration-derived index (calcIndex(params, i)) is stored in image.I as an IPixel.
 func CalcMandelbrotZ4(
 	params params.FractalParameter,
 	image deepimage.Image) {

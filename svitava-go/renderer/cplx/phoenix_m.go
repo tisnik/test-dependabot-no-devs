@@ -17,7 +17,9 @@ import (
 	"github.com/tisnik/svitava-go/params"
 )
 
-// CalcPhoenixM calculates Phoenix Mandelbrot-like set
+// CalcPhoenixM computes the Phoenix variant of the Mandelbrot set for the given parameters and writes per-pixel results into the provided image buffers.
+// It iterates the Phoenix recurrence for each pixel's complex coordinate until the bailout threshold or Maxiter is reached.
+// The final complex value for a pixel is stored in image.Z[y][x] and the corresponding iteration-based index (mapped via calcIndex) is stored in image.I[y][x].
 func CalcPhoenixM(
 	params params.FractalParameter,
 	image deepimage.Image) {

@@ -14,6 +14,7 @@ package renderer
 
 import "log"
 
+// init logs "Compositor: init" to the standard logger when the package initializes.
 func init() {
 	log.Println("Compositor: init")
 }

@@ -17,7 +17,14 @@ import (
 	"github.com/tisnik/svitava-go/params"
 )
 
-// CalcManowarJ calculates Manowar Julia-like set
+// CalcManowarJ calculates the Manowar Julia-like fractal and writes results into the provided image.
+// 
+// It uses params for the computation domain, step sizes and iteration limit, and constructs the
+// constant c from params.Cx0 and params.Cy0. For each pixel the iteration starts at the corresponding
+// complex coordinate and applies the recurrence z_{n+1} = z_n^2 + z_{n-1} + c, stopping when |z| > 2
+// or when the iteration limit is reached. The iteration count is multiplied by 3 before mapping to a
+// color index. The final complex value is stored in image.Z and the computed index (via calcIndex)
+// is stored in image.I.
 func CalcManowarJ(
 	params params.FractalParameter,
 	image deepimage.Image) {

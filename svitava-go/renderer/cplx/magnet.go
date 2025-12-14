@@ -17,7 +17,10 @@ import (
 	"github.com/tisnik/svitava-go/params"
 )
 
-// CalcMagnet calculates Magnet Mandelbrot-like set
+// CalcMagnet computes a Magnet-style Mandelbrot set and writes the resulting complex values and iteration indices into the provided image.
+// The function maps the complex plane region [-2,2] × [-2,2] across the image resolution, iterates each pixel up to params.Maxiter using
+// params.Cx0 and params.Cy0 as the initial z, and stores the final complex value in image.Z and a corresponding index in image.I. The image
+// is modified in place.
 func CalcMagnet(
 	params params.FractalParameter,
 	image deepimage.Image) {

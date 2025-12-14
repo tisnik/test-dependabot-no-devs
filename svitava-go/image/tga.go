@@ -68,7 +68,8 @@ func (writer TGAImageWriter) WriteImage(filename string, img image.Image) error 
 	return nil
 }
 
-// NewTGAImageWriter is a constructor for TGA image writer
+// NewTGAImageWriter returns a new TGAImageWriter.
+// The returned writer implements writing 24-bit uncompressed TGA images.
 func NewTGAImageWriter() TGAImageWriter {
 	return TGAImageWriter{}
 }

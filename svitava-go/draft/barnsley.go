@@ -12,7 +12,9 @@
 
 package cplx
 
-// CalcBarnsleyM1 calculates one line of Barnsley M1 Mandelbrot-like set
+// CalcBarnsleyM1 computes a single horizontal row of the Barnsley M1 Mandelbrot-like fractal at imaginary coordinate cy and writes the result into zimageLine.
+// Each entry in zimageLine is set to a ZPixel containing the iteration count and final complex value for the corresponding column; when processing finishes the function sends true on done.
+// The caller must provide zimageLine with length at least width.
 func CalcBarnsleyM1(width uint, height uint, maxiter uint, zimageLine []ZPixel, cy float64, done chan bool) {
 	var cx float64 = -2.0
 	for x := uint(0); x < width; x++ {
@@ -44,7 +46,9 @@ func CalcBarnsleyM1(width uint, height uint, maxiter uint, zimageLine []ZPixel, 
 	done <- true
 }
 
-// CalcBarnsleyM2 calculates one line of Barnsley M2 Mandelbrot-like set
+// CalcBarnsleyM2 computes a single horizontal line of the Barnsley M2 fractal and stores per-pixel results in zimageLine.
+// The cy parameter is the imaginary coordinate for the line; zimageLine is populated with ZPixel values (Iter and Z) for each column.
+// When processing completes the function signals completion by sending true on the done channel.
 func CalcBarnsleyM2(width uint, height uint, maxiter uint, zimageLine []ZPixel, cy float64, done chan bool) {
 	var cx float64 = -2.0
 	for x := uint(0); x < width; x++ {
@@ -76,7 +80,13 @@ func CalcBarnsleyM2(width uint, height uint, maxiter uint, zimageLine []ZPixel, 
 	done <- true
 }
 
-// CalcBarnsleyM3 calculates one line of Barnsley M3 Mandelbrot-like set
+// CalcBarnsleyM3 calculates one horizontal line of a Barnsley M3 Mandelbrot-like fractal.
+// It computes values for each column at the given imaginary coordinate cy, writing a ZPixel
+// with the final complex value and the iteration count into zimageLine for each x, and signals
+// completion by sending true on done. Iteration for each pixel starts with zx=cx (cx begins
+// at -2.0 and increments by 4.0/width) and repeats until zx*zx+zy*zy > 4.0 or i reaches maxiter;
+// when zx > 0 the update is z' = (zx^2 - zy^2 - 1, 2*zx*zy), otherwise the update includes
+// additive cx*zx and cy*zx terms.
 func CalcBarnsleyM3(width uint, height uint, maxiter uint, zimageLine []ZPixel, cy float64, done chan bool) {
 	var cx float64 = -2.0
 	for x := uint(0); x < width; x++ {

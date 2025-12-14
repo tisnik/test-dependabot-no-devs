@@ -17,7 +17,13 @@ import (
 	"github.com/tisnik/svitava-go/params"
 )
 
-// CalcLambda calculates Julia variant of Lambda fractal
+// CalcLambda computes the Julia-style "Lambda" fractal into image.
+// It forms the complex parameter c from params.Cx0 and params.Cy0 and, for each
+// pixel initializes z on a grid with real start -1.0 and imag start -1.5 using
+// step sizes 3.0/Width and 3.0/Height. Each pixel is iterated up to params.Maxiter
+// using z = c*z*(1-z) and an escape test zx*zx+zy*zy > 4.0. The final complex
+// value is written to image.Z and the iteration-derived index (via calcIndex)
+// is written to image.I.
 func CalcLambda(
 	params params.FractalParameter,
 	image deepimage.Image) {

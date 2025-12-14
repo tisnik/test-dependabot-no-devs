@@ -17,6 +17,9 @@ import (
 	"github.com/tisnik/svitava-go/params"
 )
 
+// getSteps computes the horizontal and vertical step sizes that map image pixels to the fractal's coordinate ranges.
+// It returns stepX and stepY where stepX = (params.Xmax - params.Xmin) / image.Resolution.Width and
+// stepY = (params.Ymax - params.Ymin) / image.Resolution.Height.
 func getSteps(
 	params params.FractalParameter,
 	image deepimage.Image) (float64, float64) {

@@ -19,12 +19,20 @@ import (
 	"github.com/tisnik/svitava-go/params"
 )
 
+// jason_rampe_2 computes the next point of the Jason–Rampe II attractor for the given coordinates and parameters.
+// It returns (xn, yn) where xn = cos(b*y) + c*cos(b*x) and yn = cos(a*x) + d*cos(a*y).
 func jason_rampe_2(x, y, a, b, c, d float64) (float64, float64) {
 	xn := math.Cos(b*y) + c*math.Cos(b*x)
 	yn := math.Cos(a*x) + d*math.Cos(a*y)
 	return xn, yn
 }
 
+// CalcJasonRampe2Attractor generates the Jason–Rampe II attractor and accumulates hit counts into the provided image's R buffer.
+// 
+// It iterates the attractor using parameters A, B, C, D from params, mapping each point to pixel coordinates using params.Scale,
+// params.XOffset and params.YOffset. The first 100 iterations are used to settle and are not recorded; thereafter each pixel's hit
+// count in image.R is incremented up to a cap of 200. The iteration count is taken from params.Maxiter and the generator starts
+// from the initial point (0.1, 0.0). After accumulation the function calls image.RImage2IImage() to finalize the image.
 func CalcJasonRampe2Attractor(
 	params params.FractalParameter,
 	image deepimage.Image) {

@@ -11,7 +11,8 @@ import (
 // randomGauss returns an approximately Gaussian-distributed float32 in [0,1)
 // produced by averaging 50 independent uniform(0,1) samples (Central Limit
 // Theorem). The result has mean ~0.5 and reduced variance compared to a single
-// uniform sample.
+// randomGauss returns an approximately Gaussian-distributed float32 in the range [0,1).
+// The result is produced by averaging a fixed number of independent uniform samples.
 func randomGauss() float32 {
 	const N = 50
 	sum := float32(0)
@@ -37,7 +38,10 @@ func randomGauss() float32 {
 //
 // Notes:
 // - The function mutates image directly and does not return a value.
-// - n should be chosen so that n/2 matches the intended frequency resolution.
+// spectralSynthesis synthesizes a fractal/plasma-like field into the provided image using spectral synthesis.
+// It populates the image's R channel in-place by constructing a frequency-domain spectrum of size n and summing sinusoidal basis functions whose amplitudes follow a power-law slope (beta = 2*h + 1).
+// The parameter n controls the spectral grid size; choose n so that n/2 matches the intended frequency resolution.
+// The parameter h controls the spectral slope (larger h produces smoother fields).
 func spectralSynthesis(image deepimage.Image, n uint, h float32) {
 	width := image.Resolution.Width
 	height := image.Resolution.Height
@@ -74,6 +78,10 @@ func spectralSynthesis(image deepimage.Image, n uint, h float32) {
 	}
 }
 
+// CalcPlasmaPattern generates a plasma (fractal-like) texture in the provided image.
+// It populates the image using spectral synthesis with fixed parameters (n=6, h=0.6)
+// and then converts the internal floating-point R image to an integer image representation.
+// The supplied params.FractalParameter is currently ignored; the function mutates image in place.
 func CalcPlasmaPattern(
 	params params.FractalParameter,
 	image deepimage.Image) {

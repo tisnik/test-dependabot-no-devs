@@ -41,7 +41,8 @@ type HTTPServer struct {
 	renderer renderer.Renderer
 }
 
-// NewHTTPServer constructs new instance of HTTP server
+// NewHTTPServer creates an HTTP server configured to listen on the specified port and use the provided renderer.
+// The returned value implements the Server interface and delegates fractal rendering to the given renderer.
 func NewHTTPServer(port uint, renderer renderer.Renderer) Server {
 	return HTTPServer{
 		port:     port,

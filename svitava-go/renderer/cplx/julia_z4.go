@@ -17,7 +17,10 @@ import (
 	"github.com/tisnik/svitava-go/params"
 )
 
-// CalcJulia calculates Julia fractal for Z=Z^4+c
+// CalcJuliaZ4 calculates the Julia fractal for the iteration z → z^4 + c over the provided image grid.
+// It evaluates each pixel's orbit starting from the corresponding complex coordinate, stops when |z|^2 > 4 or when Maxiter is reached,
+// and writes the final complex value to image.Z and the iteration-derived index to image.I.
+// params supplies the coordinate bounds, the complex constant (Cx0,Cy0) and Maxiter; image is the destination buffer to populate.
 func CalcJuliaZ4(
 	params params.FractalParameter,
 	image deepimage.Image) {

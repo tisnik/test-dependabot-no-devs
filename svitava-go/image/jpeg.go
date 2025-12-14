@@ -31,7 +31,7 @@ func (writer JPEGImageWriter) WriteImage(filename string, img image.Image) error
 	return jpeg.Encode(outfile, img, nil)
 }
 
-// NewJPEGImageWriter is a constructor for JPEG image writer
+// NewJPEGImageWriter creates and returns a new JPEGImageWriter.
 func NewJPEGImageWriter() JPEGImageWriter {
 	return JPEGImageWriter{}
 }

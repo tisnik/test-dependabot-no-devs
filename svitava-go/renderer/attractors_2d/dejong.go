@@ -19,12 +19,22 @@ import (
 	"github.com/tisnik/svitava-go/params"
 )
 
+// de_jong computes the next coordinates of the De Jong attractor for a point (x, y) using parameters a, b, c, and d.
+// It returns xn and yn where xn = sin(a*y) - cos(b*x) and yn = sin(c*x) - cos(d*y).
 func de_jong(x, y, a, b, c, d float64) (float64, float64) {
 	xn := math.Sin(a*y) - math.Cos(b*x)
 	yn := math.Sin(c*x) - math.Cos(d*y)
 	return xn, yn
 }
 
+// CalcDeJongAttractor iterates the De Jong attractor using the parameters in params
+// and accumulates point hit counts into the provided image.
+//
+// It runs up to params.Maxiter starting from (0,0), maps attractor coordinates to
+// pixel indices using params.Scale, params.XOffset and params.YOffset, and increments
+// the image's red-channel hit counts for points that fall inside the image bounds
+// (after a brief settle-down phase). The function modifies the supplied image in place
+// and finalizes it by converting the accumulated red-channel data via image.RImage2IImage().
 func CalcDeJongAttractor(
 	params params.FractalParameter,
 	image deepimage.Image) {

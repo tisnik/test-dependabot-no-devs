@@ -19,7 +19,8 @@ import (
 	"github.com/tisnik/svitava-go/params"
 )
 
-// CalcMandelbrotFn calculates Mandelbrot set into the provided ZPixels
+// CalcMandelbrotFn computes a Mandelbrot-like fractal over the provided image and writes per-pixel complex results and iteration counts into image.Z and image.I.
+// For each pixel it maps (x,y) to the complex plane, iterates z = c * sin(z) until the squared magnitude exceeds params.Bailout or params.Maxiter is reached, then stores the final z and the iteration count.
 func CalcMandelbrotFn(
 	params params.FractalParameter,
 	image deepimage.Image) {

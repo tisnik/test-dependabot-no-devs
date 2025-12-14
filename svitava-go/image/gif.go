@@ -31,7 +31,7 @@ func (writer GIFImageWriter) WriteImage(filename string, img image.Image) error 
 	return gif.Encode(outfile, img, nil)
 }
 
-// NewGIFImageWriter is a constructor for GIF image writer
+// NewGIFImageWriter returns a GIFImageWriter configured for writing GIF images.
 func NewGIFImageWriter() GIFImageWriter {
 	return GIFImageWriter{}
 }
