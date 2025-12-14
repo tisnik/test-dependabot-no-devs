@@ -1,0 +1,9 @@
+svitava-go
+*.test
+*.png
+*.bmp
+*.tga
+*.gif
+*.jpeg
+*.jpg
+*.jar

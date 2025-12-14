@@ -1,0 +1,82 @@
+[[fractal]]
+name = "Mandelbrot"
+type = "mandelbrot"
+cx0 = 0.0
+cy0 = 0.0
+maxiter = 255
+bailout = 4
+xmin = -2.0
+xmax = 1.0
+ymin = -1.5
+ymax = 1.5
+palette.name = "xyz"
+palette.shift = 0
+palette.slope = 3
+
+[[fractal]]
+name = "Manowar"
+type = "manowar_j"
+cx0 = 0.0542
+cy0 = -0.045
+maxiter = 1000
+bailout = 4
+xmin = -1.5
+xmax = 0.5
+ymin = -1.0
+ymax = 1.0
+palette.shift = 20
+palette.slope = 0
+
+[[fractal]]
+name = "Plasma"
+type = "plasma_pattern"
+xmin = -100
+xmax = 100
+ymin = -100
+ymax = 100
+
+[[fractal]]
+name = "Bedhead"
+type = "bedhead"
+maxiter = 1000000
+A = 0.06
+B = 0.99
+scale = 40
+x_offset = 20
+y_offset = 5
+
+[[fractal]]
+name = "De Jong"
+type = "de_jong"
+maxiter = 1000000
+A = -2.7
+B = -0.09
+C = -0.86
+D = -2.20
+scale = 80
+x_offset = 80
+y_offset = -40
+
+[[fractal]]
+name = "Fractal Dream"
+type = "fractal_dream"
+maxiter = 1000000
+A = -0.97
+B = 2.88
+C = 0.77
+D = 0.74
+scale = 70
+x_offset = 0
+y_offset = 0
+
+[[fractal]]
+name = "Hopalong"
+type = "hopalong"
+maxiter = 1000000
+A = 7.16878197155893
+B = 8.43659746693447
+C = 2.55983412731439
+scale = 2
+x_offset = 0
+y_offset = 0
+

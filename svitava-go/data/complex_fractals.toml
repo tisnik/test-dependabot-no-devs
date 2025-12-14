@@ -1,0 +1,234 @@
+[[fractal]]
+name = "Classic Mandelbrot set"
+type = "mandelbrot"
+cx0 = 0.0
+cy0 = 0.0
+maxiter = 255
+bailout = 4
+xmin = -2.0
+xmax = 1.0
+ymin = -1.5
+ymax = 1.5
+palette.name = "xyz"
+palette.shift = 0
+palette.slope = 3
+
+[[fractal]]
+name = "Classic Julia set"
+type = "julia"
+cx0 = 0.0
+cy0 = 1.0
+maxiter = 1000
+bailout = 4
+xmin = -2.0
+xmax = 2.0
+ymin = -2.0
+ymax = 2.0
+
+[[fractal]]
+name = "Mandelbrot set z=z^3+c"
+type = "mandelbrot_z3"
+cx0 = 0.0
+cy0 = 0.0
+maxiter = 1000
+bailout = 4
+xmin = -1.5
+xmax = 1.5
+ymin = -1.5
+ymax = 1.5
+
+[[fractal]]
+name = "Julia set z=z^3+c"
+type = "julia_z3"
+cx0 = 0.131
+cy0 = 0.776
+maxiter = 1000
+bailout = 4
+xmin = -2.0
+xmax = 2.0
+ymin = -2.0
+ymax = 2.0
+
+[[fractal]]
+name = "Mandelbrot set z=z^4+c"
+type = "mandelbrot_z4"
+cx0 = 0.0
+cy0 = 0.0
+maxiter = 1000
+
+[[fractal]]
+name = "Julia set z=z^4+c"
+type = "julia_z4"
+cx0 = 0.375
+cy0 = -0.97265625
+maxiter = 1000
+bailout = 4
+xmin = -1.5
+xmax = 1.5
+ymin = -1.5
+ymax = 1.5
+
+[[fractal]]
+name = "Mandelbrot set z=z^2+z+c"
+type = "mandelbrot_z2pz"
+cx0 = 0.0
+cy0 = 0.0
+maxiter = 1000
+xmin = -3.0
+xmax = 1.0
+ymin = -2.0
+ymax = 2.0
+
+[[fractal]]
+name = "Mandelbrot set z=z^2-z+c"
+type = "mandelbrot_z2mz"
+cx0 = 0.0
+cy0 = 0.0
+maxiter = 1000
+xmin = -2.0
+xmax = 2.0
+ymin = -2.0
+ymax = 2.0
+ 
+[[fractal]]
+name = "Mandelbrot set z=sin(z)*c"
+type = "mandelbrot_fn"
+cx0 = 0.0
+cy0 = 0.0
+maxiter = 1000
+bailout = 64
+xmin = -3.0
+xmax = 3.0
+ymin = -3.0
+ymax = 3.0
+
+[[fractal]]
+name = "Mandelbrot, Z power"
+type = "mandelbrot_zpower"
+cx0 = 0.0
+cy0 = 0.0
+maxiter = 1000
+bailout = 4
+xmin = -2.0
+xmax = 1.0
+ymin = -1.5
+ymax = 1.5
+
+[[fractal]]
+name = "Julia set z=sin(z)*c"
+type = "julia_fn"
+cx0 = 0.8
+cy0 = 0.8
+maxiter = 1000
+bailout = 64
+xmin = -3.0
+xmax = 3.0
+ymin = -3.0
+ymax = 3.0
+
+[[fractal]]
+name = "Phoenix set, Mandelbrot variant"
+type = "phoenix_m"
+cx0 = 0.0
+cy0 = 0.0
+maxiter = 1000
+bailout = 4
+xmin = -2.0
+xmax = 2.0
+ymin = -2.0
+ymax = 2.0
+
+[[fractal]]
+name = "Phoenix set, Julia variant"
+type = "phoenix_j"
+cx0 = 0.0
+cy0 = 1.0
+maxiter = 1000
+bailout = 4
+xmin = -2.0
+xmax = 2.0
+ymin = -2.0
+ymax = 2.0
+
+[[fractal]]
+name = "Lambda, Mandelbrot variant"
+type = "lambda_m"
+cx0 = 0.5
+cy0 = 0.0
+maxiter = 1000
+bailout = 4
+xmin = -2.0
+xmax = 4.0
+ymin = -2.5
+ymax = 2.5
+
+[[fractal]]
+name = "Lambda, Julia variant"
+type = "lambda_j"
+cx0 = 0.85
+cy0 = 0.60
+maxiter = 1000
+
+[[fractal]]
+name = "Manowar, Mandelbrot variant"
+type = "manowar_m"
+cx0 = 0.0
+cy0 = 0.0
+maxiter = 1000
+bailout = 4
+xmin = -1.5
+xmax = 0.5
+ymin = -1.0
+ymax = 1.0
+
+[[fractal]]
+name = "Manowar, Julia variant"
+type = "manowar_j"
+cx0 = 0.0542
+cy0 = -0.045
+maxiter = 1000
+bailout = 4
+xmin = -1.5
+xmax = 0.5
+ymin = -1.0
+ymax = 1.0
+
+[[fractal]]
+name = "Barnsley set 1, Mandelbrot variant"
+type = "barnsley_m1"
+cx0 = 0.0
+cy0 = 0.0
+maxiter = 1000
+bailout = 4
+xmin = -2.0
+xmax = 2.0
+ymin = -2.0
+ymax = 2.0
+
+[[fractal]]
+name = "Barnsley set 1, Julia variant"
+type = "barnsley_j1"
+cx0 = 0.4
+cy0 = 1.5
+maxiter = 1000
+bailout = 4
+xmin = -2.0
+xmax = 2.0
+ymin = -2.0
+ymax = 2.0
+
+[[fractal]]
+name = "Newton fractal"
+type = "newton"
+cx0 = 0.0
+cy0 = 0.0
+maxiter = 1000
+bailout = 4
+xmin = -2.0
+xmax = 2.0
+ymin = -2.0
+ymax = 2.0
+palette.name = "xyz"
+palette.shift = 0
+palette.slope = 3
+
