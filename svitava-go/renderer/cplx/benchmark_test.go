@@ -31,9 +31,17 @@ func BenchmarkCalcMandelbrot(b *testing.B) {
 		Cy0:     0,
 		Maxiter: MAXITER,
 	}
-	zimage := cplx.NewZImage(WIDTH, HEIGHT)
+func BenchmarkCalcMandelbrot(b *testing.B) {
+	params := params.FractalParameter{
+		Cx0:     0,
+		Cy0:     0,
+		Maxiter: MAXITER,
+	}
+	image, _ := deepimage.New(WIDTH, HEIGHT)
 	for i := 0; i < b.N; i++ {
-		cplx.CalcMandelbrot(WIDTH, HEIGHT, params, zimage)
+		cplx.CalcMandelbrot(params, image)
+	}
+}
 	}
 }
 
