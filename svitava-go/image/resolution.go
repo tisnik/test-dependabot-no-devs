@@ -17,6 +17,7 @@ type Resolution struct {
 	Height uint
 }
 
+// NewResolution returns a Resolution with the specified width and height.
 func NewResolution(width, height uint) Resolution {
 	return Resolution{
 		Width:  width,

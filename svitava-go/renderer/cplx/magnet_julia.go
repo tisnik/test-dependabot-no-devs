@@ -17,7 +17,8 @@ import (
 	"github.com/tisnik/svitava-go/params"
 )
 
-// CalcMagnet calculates Magnet Julia-like set
+// CalcMagnetJulia computes a Magnet Julia–like fractal and writes the resulting complex values and iteration indices into the provided image.
+// The image grid is mapped to the complex plane (from -2 to 2 in both axes); each pixel is iterated up to params.Maxiter using the Magnet Julia update, and the final complex value is stored in image.Z while the iteration-derived index (via calcIndex) is stored in image.I.
 func CalcMagnetJulia(
 	params params.FractalParameter,
 	image deepimage.Image) {

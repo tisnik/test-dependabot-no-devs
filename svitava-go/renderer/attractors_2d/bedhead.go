@@ -19,12 +19,26 @@ import (
 	"github.com/tisnik/svitava-go/params"
 )
 
+// bedhead computes the next point of the Bedhead attractor for input coordinates x and y
+// using parameters a and b. It returns xn and yn where
+// xn = sin(x*y/b)*y + cos(a*x - y) and yn = x + sin(y)/b.
 func bedhead(x, y, a, b float64) (float64, float64) {
 	xn := math.Sin(x*y/b)*y + math.Cos(a*x-y)
 	yn := x + math.Sin(y)/b
 	return xn, yn
 }
 
+// CalcBedheadAttractor renders the "Bedhead" 2D attractor into the provided image buffer.
+// 
+// CalcBedheadAttractor iterates the bedhead map using parameters from params and accumulates
+// hit counts into image.R after an initial settling phase. The function starts from (0,0),
+// runs params.Maxiter iterations, maps each computed point (xn,yn) to pixel coordinates using
+// params.Scale, params.XOffset and params.YOffset, and—after 100 settling iterations—increments
+// the corresponding red-channel accumulator while capping increments at 200 hits per pixel.
+// At the end it converts the floating-point red-channel buffer to the image's integer form.
+//
+// params: fractal parameters supplying A, B, Scale, XOffset, YOffset and Maxiter.
+// image: deepimage.Image whose Resolution and R buffer are updated in-place.
 func CalcBedheadAttractor(
 	params params.FractalParameter,
 	image deepimage.Image) {

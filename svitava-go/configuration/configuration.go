@@ -43,7 +43,9 @@ type RenderingConfiguration struct {
 	BinaryPPM   bool   `toml:"binary_ppm"`
 }
 
-// LoadConfiguration function reads configuration stored in TOML format
+// LoadConfiguration reads a TOML configuration file and returns the parsed Configuration.
+// If the file does not exist it returns an empty Configuration and a non-nil error.
+// If decoding the file fails the function logs the decode error and terminates the program; a non-nil error is also returned in that case.
 func LoadConfiguration(configFileName string) (Configuration, error) {
 	var configuration Configuration
 

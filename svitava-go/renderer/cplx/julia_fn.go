@@ -19,7 +19,10 @@ import (
 	"github.com/tisnik/svitava-go/params"
 )
 
-// CalcJuliaFn calculates Julia set into the provided ZPixels
+// CalcJuliaFn computes a Julia set for the given fractal parameters and writes pixel data into image.
+// It maps each image pixel to the complex plane, iterates z_{n+1} = c * sin(z_n) with c = complex(params.Cx0, params.Cy0)
+// until reaching params.Maxiter or when |z|^2 exceeds params.Bailout, and stores the final complex value in image.Z
+// and the iteration-derived intensity index (calcIndex(params, i)) in image.I.
 func CalcJuliaFn(
 	params params.FractalParameter,
 	image deepimage.Image) {

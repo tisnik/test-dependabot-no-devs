@@ -33,6 +33,8 @@ const (
 	CONFIG_FILE_NAME = "config.toml"
 )
 
+// runInDemoMode renders a predefined set of complex fractals to BMP files for demonstration.
+// It loads the "data/blues.map" palette and "data/complex_fractals.toml" parameters, creates a 512×512 single-goroutine renderer, and writes each fractal to a "<name>.bmp" file while logging start, completion and duration. If loading the palette or parameters fails the program exits with a fatal log.
 func runInDemoMode() {
 	log.Println("Starting demo mode: render all fractals available")
 
@@ -82,6 +84,9 @@ func runInDemoMode() {
 	}
 }
 
+// runInServerMode starts an HTTP server listening on the provided port using a single-goroutine renderer.
+// The call blocks while the server is running.
+// port is the TCP port to listen on.
 func runInServerMode(port uint) {
 	log.Println("Starting server")
 	r := renderer.NewSingleGoroutineRenderer()
@@ -89,6 +94,8 @@ func runInServerMode(port uint) {
 	server.Serve()
 }
 
+// listAllFractals prints the names of all fractals defined in the parameters file, sorted alphabetically.
+// It reads fractal definitions from data/complex_fractals.toml and writes each name as a separate line to standard output.
 func listAllFractals() {
 	parameters, _ := params.LoadFractalParameters("data/complex_fractals.toml")
 
@@ -104,6 +111,12 @@ func listAllFractals() {
 	}
 }
 
+// main parses command-line flags, loads the application configuration, and dispatches to server, demo, or fractal-listing modes.
+// It exits if the configuration cannot be loaded. Supported modes:
+//  - server: start an HTTP server on the specified port
+//  - demo: render a predefined set of fractals to BMP files
+//  - list: print the names of available fractals
+// Command-line flags also control image dimensions, antialiasing, TUI startup, fractal selection, and script execution.
 func main() {
 	var width uint
 	var height uint

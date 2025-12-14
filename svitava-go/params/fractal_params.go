@@ -57,7 +57,9 @@ type FractalParameters struct {
 	Parameters []FractalParameter `toml:"fractal"`
 }
 
-// LoadFractalParameters function reads fractal parameters from external text file
+// LoadFractalParameters reads fractal parameters from the TOML file at filename and returns a map keyed by each parameter's Name.
+// It returns an error if the file does not exist, the TOML cannot be decoded, or a duplicate parameter Name is encountered.
+// For any parameter whose Palette.Name is empty, Palette.Slope is set to 1 before insertion into the resulting map.
 func LoadFractalParameters(filename string) (map[string]FractalParameter, error) {
 	var parameters FractalParameters
 	asMap := map[string]FractalParameter{}

@@ -19,7 +19,9 @@ import (
 // RImage is representation of raster image consisting of RPixels
 type RImage [][]RPixel
 
-// NewRImage constructs new instance of RImage
+// NewRImage creates a new RImage sized to the given resolution.
+// The returned RImage has resolution.Height rows and resolution.Width columns,
+// with each pixel set to the zero value of RPixel.
 func NewRImage(resolution Resolution) RImage {
 	rimage := make([][]RPixel, resolution.Height)
 	for y := uint(0); y < resolution.Height; y++ {

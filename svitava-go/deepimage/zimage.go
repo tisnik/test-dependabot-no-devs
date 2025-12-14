@@ -15,7 +15,8 @@ package deepimage
 // ZImage is representation of raster image consisting of ZPixels
 type ZImage [][]ZPixel
 
-// NewZImage constructs new instance of ZImage
+// NewZImage creates a ZImage with the given resolution.
+// The returned ZImage has height equal to resolution.Height and each row has length resolution.Width; pixels are the zero value of ZPixel.
 func NewZImage(resolution Resolution) ZImage {
 	zimage := make([][]ZPixel, resolution.Height)
 	for y := uint(0); y < resolution.Height; y++ {

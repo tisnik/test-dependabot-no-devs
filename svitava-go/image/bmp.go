@@ -76,7 +76,7 @@ func (writer BMPImageWriter) WriteImage(filename string, img image.Image) error 
 	return nil
 }
 
-// NewBMPImageWriter is a constructor for BMP image writer
+// NewBMPImageWriter returns a BMPImageWriter value for writing BMP format images.
 func NewBMPImageWriter() BMPImageWriter {
 	return BMPImageWriter{}
 }

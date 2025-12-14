@@ -26,6 +26,9 @@ type Image struct {
 	RGBA       *image.NRGBA
 }
 
+// New creates a new Image for the provided width and height.
+// The returned Image has Resolution set and its Z, R, and I images initialized; RGBA remains nil until ApplyPalette is called.
+// If resolution creation fails, an error is returned and a zero Image is returned.
 func New(width uint, height uint) (Image, error) {
 	resolution, err := NewResolution(width, height)
 

@@ -15,7 +15,9 @@ package deepimage
 // IImage is representation of raster image consisting of IPixels
 type IImage [][]IPixel
 
-// NewIImage constructs new instance of IImage
+// NewIImage constructs a new IImage with the given resolution.
+// The resulting image has resolution.Height rows and resolution.Width columns,
+// each element initialized to the zero value of IPixel.
 func NewIImage(resolution Resolution) IImage {
 	h := int(resolution.Height)
 	w := int(resolution.Width)

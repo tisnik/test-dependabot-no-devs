@@ -19,12 +19,15 @@ import (
 	"github.com/tisnik/svitava-go/params"
 )
 
+// fractal_dream computes the next coordinates of the fractal-dream map for the given point and parameters.
+// It returns xn = sin(b*y) - c*sin(b*x) and yn = sin(a*x) - d*sin(a*y).
 func fractal_dream(x, y, a, b, c, d float64) (float64, float64) {
 	xn := math.Sin(b*y) - c*math.Sin(b*x)
 	yn := math.Sin(a*x) - d*math.Sin(a*y)
 	return xn, yn
 }
 
+// image by calling image.RImage2IImage().
 func CalcFractalDreamAttractor(
 	params params.FractalParameter,
 	image deepimage.Image) {

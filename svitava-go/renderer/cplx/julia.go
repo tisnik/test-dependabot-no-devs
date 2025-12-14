@@ -17,7 +17,9 @@ import (
 	"github.com/tisnik/svitava-go/params"
 )
 
-// CalcJulia calculates classic Julia fractal
+// CalcJulia computes the classic Julia fractal for the given parameters and writes the results into image.
+// Each image pixel is mapped into the complex plane described by params; the final complex value is written to image.Z
+// and the iteration-based index (escape iteration mapped by calcIndex) is written to image.I.
 func CalcJulia(
 	params params.FractalParameter,
 	image deepimage.Image) {

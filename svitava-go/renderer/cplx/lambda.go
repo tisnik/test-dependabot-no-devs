@@ -17,7 +17,9 @@ import (
 	"github.com/tisnik/svitava-go/params"
 )
 
-// CalcMandelLambda calculates Mandelbrot variant of Lambda fractal
+// CalcMandelLambda computes a lambda-family Mandelbrot fractal over the image grid and writes per-pixel complex values and iteration indices into the provided image.
+// For each pixel, the complex constant c is formed from the pixel coordinates; iteration starts at (Cx0, Cy0) and applies z = c*z*(1-z) until reaching Maxiter or |z|^2 > 4.
+// The final complex value is stored in image.Z and the iteration-based index (via calcIndex) is stored in image.I.
 func CalcMandelLambda(
 	params params.FractalParameter,
 	image deepimage.Image) {

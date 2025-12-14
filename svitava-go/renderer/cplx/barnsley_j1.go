@@ -17,7 +17,10 @@ import (
 	"github.com/tisnik/svitava-go/params"
 )
 
-// CalcBarnsleyJuliaJ1 calculates Barnsley J1 Mandelbrot-like set
+// CalcBarnsleyJuliaJ1 computes the Barnsley Julia J1 fractal over the provided image.
+// It writes each pixel's final complex value into image.Z and the iteration-based index into image.I.
+// Pixel coordinates start at params.Xmin and params.Ymin and advance by step sizes derived from the image and params;
+// the iteration uses params.Cx0 and params.Cy0 and respects params.Maxiter and params.Bailout.
 func CalcBarnsleyJuliaJ1(
 	params params.FractalParameter,
 	image deepimage.Image) {

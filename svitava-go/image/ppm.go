@@ -47,7 +47,7 @@ func (writer PPMImageWriter) WriteImage(filename string, img image.Image) error 
 	return nil
 }
 
-// NewPPMImageWriter is a constructor for PPM image writer
+// NewPPMImageWriter returns a new PPMImageWriter for writing images in the PPM (P3) text format.
 func NewPPMImageWriter() PPMImageWriter {
 	return PPMImageWriter{}
 }

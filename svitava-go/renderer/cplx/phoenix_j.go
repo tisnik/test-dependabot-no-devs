@@ -17,7 +17,10 @@ import (
 	"github.com/tisnik/svitava-go/params"
 )
 
-// CalcPhoenixJ calculates Phoenix Julia-like set
+// CalcPhoenixJ computes a Phoenix Julia–like fractal and writes per-pixel complex coordinates and intensity indices to the provided image.
+// 
+// It iterates every pixel in row-major order, performing an escape-time iteration using params (including Cx0, Cy0, Xmin, Ymin, Maxiter and Bailout).
+// For each pixel it stores the final complex value in image.Z and the computed color/index (via calcIndex) in image.I. Iteration stops when the magnitude exceeds Bailout or when Maxiter is reached.
 func CalcPhoenixJ(
 	params params.FractalParameter,
 	image deepimage.Image) {

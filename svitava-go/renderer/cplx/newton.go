@@ -19,7 +19,15 @@ import (
 	"github.com/tisnik/svitava-go/params"
 )
 
-// CalcNewton calculates Newton fractal
+// CalcNewton computes the Newton fractal over the region defined by params and writes
+// the resulting complex values and index values into image.Z and image.I.
+//
+// The iteration applies a Newton-like update that converges toward three fixed roots
+// located at (1, 0), (-0.5, sqrt(3)/2) and (-0.5, -sqrt(3)/2). Convergence is
+// determined using a fixed tolerance of 0.001; when a pixel's iterate converges to
+// the second or third root the iteration counter is offset by 128 or 192
+// respectively to encode the root in the resulting index. The image is traversed
+// using step sizes returned by getSteps and up to params.Maxiter iterations per pixel.
 func CalcNewton(
 	params params.FractalParameter,
 	image deepimage.Image) {

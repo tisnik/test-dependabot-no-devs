@@ -17,7 +17,12 @@ import (
 	"github.com/tisnik/svitava-go/params"
 )
 
-// CalcManowarM calculates Manowar Mandelbrot-like set
+// CalcManowarM renders a Manowar Mandelbrot-like fractal into the provided image buffers.
+// 
+// For each pixel the function maps the pixel to a complex point c, iterates the recurrence
+// z_{n+1} = z_n^2 + z_{n-1} + c starting from z_0 = z_1 = c, and stops when |z|^2 > 4 or when
+// the iteration limit is reached. The final complex value is written into image.Z and the
+// iteration-derived index from calcIndex is written into image.I.
 func CalcManowarM(
 	params params.FractalParameter,
 	image deepimage.Image) {

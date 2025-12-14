@@ -14,6 +14,7 @@ package renderer
 
 import "log"
 
+// init logs that the renderer colorizer package has been initialized.
 func init() {
 	log.Println("Colorizer: init")
 }

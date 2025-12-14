@@ -20,7 +20,13 @@ type ZPixel struct {
 	Z    complex128
 }
 
-// CalcMandelbrotOneLine calculate one line of Mandelbrot set into the provided scanline of ZPixels
+// CalcMandelbrotOneLine computes the Mandelbrot iteration results for a single horizontal scanline
+// and writes a ZPixel for each column into zimageLine.
+//
+// pcx and pcy specify the initial real and imaginary parts of z for each pixel; cy is the imaginary
+// part of the complex constant c used for the entire scanline while the real part of c is stepped
+// across the line. maxiter bounds the iteration count. zimageLine is modified in place and must have
+// length at least width. The height parameter is unused. Completion is signaled by sending true on done.
 func CalcMandelbrotOneLine(width uint, height uint, pcx float64, pcy float64, maxiter uint, zimageLine []ZPixel, cy float64, done chan bool) {
 	var cx float64 = -2.0
 	for x := uint(0); x < width; x++ {
@@ -43,6 +49,9 @@ func CalcMandelbrotOneLine(width uint, height uint, pcx float64, pcy float64, ma
 	done <- true
 }
 
+// calcMandelbrotComplex computes Mandelbrot iterations for a single horizontal line at imaginary coordinate cy,
+// maps iteration counts to RGB using palette, writes the resulting 3*width bytes into image, and signals completion on done.
+// The image slice must have length at least 3*width and palette must provide a color for each possible iteration value up to maxiter.
 func calcMandelbrotComplex(width uint, height uint, maxiter uint, palette [][3]byte, image []byte, cy float64, done chan bool) {
 	var c complex128 = complex(-2.0, cy)
 	var dc complex128 = complex(3.0/float64(width), 0.0)

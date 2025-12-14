@@ -20,7 +20,12 @@ import (
 )
 
 // CalcZPowerMandelbrot calculates Mandelbrot set into the provided ZPixels
-// Calculations use complex numbers
+// CalcZPowerMandelbrot computes a Mandelbrot-like fractal over the image using a z^z + z*z + c iteration.
+// 
+// For each pixel the function maps the pixel to the complex plane using params' bounds and the image resolution,
+// initializes z and c to that complex coordinate, iterates z = z^z + z*z + c up to params.Maxiter or until the
+// bailout condition is met, and writes the final complex value into image.Z and the iteration-based index
+// (via calcIndex) into image.I.
 func CalcZPowerMandelbrot(
 	params params.FractalParameter,
 	image deepimage.Image) {

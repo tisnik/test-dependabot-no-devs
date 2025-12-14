@@ -19,14 +19,16 @@ import (
 	"os"
 )
 
-// LoadBinaryRGBPalette method loads RGB palette from binary file.
+// LoadBinaryRGBPalette loads an RGB palette from the binary file specified by filename.
+// It returns the parsed Palette or a non-nil error if the file cannot be read or the data is invalid.
 func LoadBinaryRGBPalette(filename string) (Palette, error) {
 	// TODO: implementation is missing
 	p := Palette{}
 	return p, nil
 }
 
-// LoadBinaryRGBPalette method loads RGBA palette from binary file.
+// LoadBinaryRGBAPalette loads an RGBA palette from the specified binary file.
+// It returns the parsed Palette and any error encountered while opening or parsing the file.
 func LoadBinaryRGBAPalette(filename string) (Palette, error) {
 	// TODO: implementation is missing
 	p := Palette{}
@@ -34,7 +36,11 @@ func LoadBinaryRGBAPalette(filename string) (Palette, error) {
 }
 
 // LoadTextRGBPalette method loads RGB palette from a text file compatible with
-// Fractint.
+// LoadTextRGBPalette loads a Fractint-style text RGB palette from the named file.
+// Each non-empty line is expected to contain three integers (red green blue); values
+// are converted to bytes (truncated to 0–255) and appended in that order. Lines that
+// do not contain exactly three integers are ignored. It returns the parsed Palette
+// and any error encountered while reading the file.
 func LoadTextRGBPalette(filename string) (Palette, error) {
 	file, err := os.Open(filename)
 	if err != nil {
@@ -66,7 +72,8 @@ func LoadTextRGBPalette(filename string) (Palette, error) {
 }
 
 // LoadTextRGBAPalette method loads RGBA palette from a text file that is
-// semi-compatible with Fractint.
+// LoadTextRGBAPalette loads an RGBA palette from a Fractint-semi-compatible text file.
+// Currently unimplemented: it returns an empty Palette and a nil error.
 func LoadTextRGBAPalette(filename string) (Palette, error) {
 	p := Palette{}
 	return p, nil

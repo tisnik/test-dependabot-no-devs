@@ -17,7 +17,9 @@ import (
 	"github.com/tisnik/svitava-go/params"
 )
 
-// CalcJulia calculates Julia fractal for Z=Z^3+c
+// CalcJuliaZ3 computes the Julia set for the polynomial z^3 + c over the region defined by params
+// and writes per-pixel complex values into image.Z and iteration indices (color indices) into image.I.
+// Iteration for each pixel proceeds up to params.Maxiter and stops early when the magnitude squared of z exceeds 4.0.
 func CalcJuliaZ3(
 	params params.FractalParameter,
 	image deepimage.Image) {

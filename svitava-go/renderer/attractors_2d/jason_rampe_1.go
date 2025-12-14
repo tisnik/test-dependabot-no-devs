@@ -19,12 +19,16 @@ import (
 	"github.com/tisnik/svitava-go/params"
 )
 
+// jason_rampe_1 computes the next point of the Jason–Rampe 1 attractor for the given coordinates and parameters a, b, c, d.
+// It returns the next x and y coordinates.
 func jason_rampe_1(x, y, a, b, c, d float64) (float64, float64) {
 	xn := math.Cos(b*y) + c*math.Sin(b*x)
 	yn := math.Cos(a*x) + d*math.Sin(a*y)
 	return xn, yn
 }
 
+// CalcJasonRampe1Attractor renders the Jason–Rampe 1 attractor into the provided image by iterating the map and accumulating per-pixel visit counts.
+// It skips an initial settling period, maps computed coordinates to image pixels using params.Scale, params.XOffset and params.YOffset, and caps per-pixel counts to avoid unbounded accumulation before finalizing the image.
 func CalcJasonRampe1Attractor(
 	params params.FractalParameter,
 	image deepimage.Image) {

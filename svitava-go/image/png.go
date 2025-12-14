@@ -31,7 +31,7 @@ func (writer PNGImageWriter) WriteImage(filename string, img image.Image) error 
 	return png.Encode(outfile, img)
 }
 
-// NewPNGImageWriter is a constructor for PNG image writer
+// NewPNGImageWriter creates a PNGImageWriter value usable to write images in PNG format.
 func NewPNGImageWriter() PNGImageWriter {
 	return PNGImageWriter{}
 }

@@ -24,7 +24,13 @@ import (
 // - xmin, ymin, xmax, ymax: bounds of the sampled coordinate region.
 //
 // The function does not return a value; it mutates zimage parameter in place
-// instead.
+// CalcFMSynth fills image with an FM-style sinusoidal pattern by computing and storing
+// per-pixel complex coordinates and an associated 0–255 palette index.
+// 
+// For each pixel the function samples coordinates starting at params.Xmin and params.Ymin
+// with steps from getSteps(params, image), stores the complex coordinate in image.Z and
+// stores an integer index derived from a nested sine formula (constrained to 0–255) in image.I.
+// The image is mutated in place; no value is returned.
 func CalcFMSynth(
 	params params.FractalParameter,
 	image deepimage.Image) {

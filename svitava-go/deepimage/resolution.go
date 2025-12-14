@@ -24,7 +24,8 @@ type Resolution struct {
 }
 
 // NewResolution constructs a Resolution with the given width and height.
-// Width and height are expected to be positive numbers.
+// NewResolution constructs a Resolution with the given width and height.
+// It returns an error if width or height is zero or greater than 65535; on success it returns the Resolution and a nil error.
 func NewResolution(width, height uint) (Resolution, error) {
 	// Check for zero dimensions
 	if width == 0 {

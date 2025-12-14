@@ -17,7 +17,8 @@ import (
 	"github.com/tisnik/svitava-go/params"
 )
 
-// CalcBarnsleyMandelbrotM1 calculates Barnsley M1 Mandelbrot-like set
+// CalcBarnsleyMandelbrotM1 computes the Barnsley M1 Mandelbrot-like fractal and writes per-pixel complex values and iteration indices into the provided image.
+// For each pixel mapped from params.Xmin..Xmax and params.Ymin..Ymax the function initializes z = (cx,cy), iterates the piecewise complex recurrence up to params.Maxiter (stopping early if zx^2+zy^2 > params.Bailout), and stores the final complex value in image.Z and the color/index from calcIndex(params,i) in image.I.
 func CalcBarnsleyMandelbrotM1(
 	params params.FractalParameter,
 	image deepimage.Image) {

@@ -17,7 +17,12 @@ import (
 	"github.com/tisnik/svitava-go/params"
 )
 
-// CalcBarnsleyMandelbrotM3 calculates Barnsley M3 Mandelbrot-like set
+// CalcBarnsleyMandelbrotM3 calculates the Barnsley M3 Mandelbrot-like fractal and fills the provided image buffers.
+// The image pixel grid is mapped to the complex plane with real (x) and imaginary (y) coordinates spanning from -2 to +2.
+// For each pixel the function iterates a piecewise complex recurrence (branch chosen by the sign of the current zx)
+// until the iteration count reaches params.Maxiter or zx^2+zy^2 exceeds params.Bailout. The resulting complex value
+// is written to image.Z and the iteration-based index (via calcIndex) is written to image.I.
+// params supplies fractal parameters such as Maxiter and Bailout; image is the destination deepimage.Image to populate.
 func CalcBarnsleyMandelbrotM3(
 	params params.FractalParameter,
 	image deepimage.Image) {

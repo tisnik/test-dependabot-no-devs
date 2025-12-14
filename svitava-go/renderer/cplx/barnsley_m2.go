@@ -17,7 +17,10 @@ import (
 	"github.com/tisnik/svitava-go/params"
 )
 
-// CalcBarnsleyMandelbrotM2 calculates Barnsley M2 Mandelbrot-like set
+// CalcBarnsleyMandelbrotM2 computes a Barnsley M2 Mandelbrot-like set and writes results into image.Z and image.I.
+// It traverses the image grid, maps each pixel to the complex plane using params and step sizes from getSteps,
+// then applies the Barnsley M2 iterative transform until params.Maxiter is reached or |z|^2 exceeds params.Bailout.
+// For each pixel the final complex value is stored in image.Z and the iteration-derived color/index from calcIndex is stored in image.I.
 func CalcBarnsleyMandelbrotM2(
 	params params.FractalParameter,
 	image deepimage.Image) {
