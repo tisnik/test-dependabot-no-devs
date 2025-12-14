@@ -4,26 +4,16 @@ from typing import Any
 
 
 def extract_text_from_response_output_item(output_item: Any) -> str:
-    """Extract assistant message text from a Responses API output item.
-
-    This function parses output items from the OpenAI-compatible Responses API
-    and extracts text content from assistant messages. It handles multiple content
-    formats including string content, content arrays with text parts, and refusal
-    messages.
-
-    Args:
-        output_item: A Responses API output item (typically from response.output array).
-            Expected to have attributes like type, role, and content.
-
+    """
+    Extract text content from an assistant message output item.
+    
+    Parses a Responses API output item and returns concatenated text from assistant messages. If the item is not a message with role "assistant" or contains no text, returns an empty string.
+    
+    Parameters:
+        output_item (Any): Output item expected to have attributes `type`, `role`, and `content`. `content` may be a string or a list of parts where parts can be strings, objects with a `text` attribute, objects with a `refusal` attribute, or dicts containing `text`/`refusal`.
+    
     Returns:
-        str: The extracted text content from the assistant message. Returns an empty
-            string if the output_item is not an assistant message or contains no text.
-
-    Example:
-        >>> for output_item in response.output:
-        ...     text = extract_text_from_response_output_item(output_item)
-        ...     if text:
-        ...         print(text)
+        str: Concatenated text extracted from the assistant message, or an empty string if none is found.
     """
     if getattr(output_item, "type", None) != "message":
         return ""

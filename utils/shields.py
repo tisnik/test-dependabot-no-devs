@@ -12,13 +12,13 @@ logger = logging.getLogger(__name__)
 
 async def get_available_shields(client: AsyncLlamaStackClient) -> list[str]:
     """
-    Discover and return available shield identifiers.
-
-    Args:
-        client: The Llama Stack client to query for available shields.
-
+    Return the identifiers of shields available from the given Llama Stack client.
+    
+    Parameters:
+        client (AsyncLlamaStackClient): Llama Stack client used to query available shields.
+    
     Returns:
-        List of shield identifiers that are available.
+        list[str]: List of available shield identifiers; empty if no shields are available.
     """
     available_shields = [shield.identifier for shield in await client.shields.list()]
     if not available_shields:
@@ -30,17 +30,15 @@ async def get_available_shields(client: AsyncLlamaStackClient) -> list[str]:
 
 def detect_shield_violations(output_items: list[Any]) -> bool:
     """
-    Check output items for shield violations and update metrics.
-
-    Iterates through output items looking for message items with refusal
-    attributes. If a refusal is found, increments the validation error
-    metric and logs a warning.
-
-    Args:
-        output_items: List of output items from the LLM response to check.
-
+    Detect whether any item in `output_items` contains a shield refusal.
+    
+    Scans each item (expected to be objects or dict-like with a `type` attribute) and, for items where `type == "message"`, checks for a non-empty `refusal` attribute. If a refusal is found, increments the `metrics.llm_calls_validation_errors_total` counter and logs a warning.
+    
+    Parameters:
+        output_items (list[Any]): Sequence of LLM output items to inspect; items are expected to expose `type` and optionally `refusal`.
+    
     Returns:
-        True if a shield violation was detected, False otherwise.
+        bool: `true` if a shield (refusal) violation was detected, `false` otherwise.
     """
     for output_item in output_items:
         item_type = getattr(output_item, "type", None)

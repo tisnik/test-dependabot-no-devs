@@ -31,7 +31,12 @@ class TokenCounter:
     llm_calls: int = 0
 
     def __str__(self) -> str:
-        """Textual representation of TokenCounter instance."""
+        """
+        Return a human-readable summary of the token usage stored in this TokenCounter.
+        
+        Returns:
+            summary (str): A formatted string containing `input_tokens`, `output_tokens`, `input_tokens_counted`, and `llm_calls`.
+        """
         return (
             f"{self.__class__.__name__}: "
             + f"input_tokens: {self.input_tokens} "
@@ -42,17 +47,17 @@ class TokenCounter:
 
 
 def extract_token_usage_from_turn(turn: Turn, system_prompt: str = "") -> TokenCounter:
-    """Extract token usage information from a turn.
-
-    This function uses the same tokenizer and logic as the metrics system
-    to ensure consistency between API responses and Prometheus metrics.
-
-    Args:
-        turn: The turn object containing token usage information
-        system_prompt: The system prompt used for the turn
-
+    """
+    Compute token usage for a Turn using the same tokenizer and formatting as the metrics system.
+    
+    Counts input and output tokens, sets `llm_calls` to 1, and falls back to conservative default estimates if counting fails.
+    
+    Parameters:
+        turn (Turn): The conversation turn to analyze for token usage.
+        system_prompt (str): Optional system prompt to prepend to the turn's input messages before counting.
+    
     Returns:
-        TokenCounter: Token usage information
+        TokenCounter: Token usage totals (`input_tokens`, `output_tokens`, `input_tokens_counted`, and `llm_calls`).
     """
     token_counter = TokenCounter()
 
@@ -97,19 +102,17 @@ def extract_token_usage_from_turn(turn: Turn, system_prompt: str = "") -> TokenC
 def extract_and_update_token_metrics(
     turn: Turn, model: str, provider: str, system_prompt: str = ""
 ) -> TokenCounter:
-    """Extract token usage and update Prometheus metrics in one call.
-
-    This function combines the token counting logic with the metrics system
-    to ensure both API responses and Prometheus metrics are updated consistently.
-
-    Args:
-        turn: The turn object containing token usage information
-        model: The model identifier for metrics labeling
-        provider: The provider identifier for metrics labeling
-        system_prompt: The system prompt used for the turn
-
+    """
+    Extract token usage from a Turn and increment the corresponding Prometheus metrics.
+    
+    Parameters:
+        turn (Turn): The turn object containing input and output messages to analyze.
+        model (str): Model identifier used as a Prometheus label.
+        provider (str): Provider identifier used as a Prometheus label.
+        system_prompt (str): Optional system prompt prepended to the input messages before counting.
+    
     Returns:
-        TokenCounter: Token usage information
+        TokenCounter: Token usage counts (input_tokens, output_tokens, input_tokens_counted, llm_calls).
     """
     token_counter = extract_token_usage_from_turn(turn, system_prompt)
 

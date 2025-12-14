@@ -18,29 +18,15 @@ def get_suid() -> str:
 
 def check_suid(suid: str) -> bool:
     """
-    Check if given string is a proper session ID.
-
-    Returns True if the string is a valid UUID or a llama-stack conversation ID.
-
+    Validate whether a value is a supported session ID.
+    
+    Checks the input for three supported formats: a llama-stack conversation ID with the "conv_" prefix (accepts "conv_" followed by at least 32 hex characters), a plain hexadecimal database ID with 32 or more hex characters (first 32 treated as the UUID part), or a standard RFC 4122 UUID string.
+    
     Parameters:
-        suid (str | bytes): UUID value to validate — accepts a UUID string,
-        its byte representation, or a llama-stack conversation ID (conv_xxx),
-        or a plain hex string (database format).
-
-    Notes:
-        Validation is performed by:
-        1. For llama-stack conversation IDs starting with 'conv_':
-           - Strips the 'conv_' prefix
-           - Validates at least 32 hex characters follow (may have additional suffix)
-           - Extracts first 32 hex chars as the UUID part
-           - Converts to UUID format by inserting hyphens at standard positions
-           - Validates the resulting UUID structure
-        2. For plain hex strings (database format, 32+ chars without conv_ prefix):
-           - Validates it's a valid hex string
-           - Extracts first 32 chars as UUID part
-           - Converts to UUID format and validates
-        3. For standard UUIDs: attempts to construct uuid.UUID(suid)
-        Invalid formats or types result in False.
+        suid (str): Session ID to validate. Expected forms: "conv_<hex...>", a plain hex string (32+ hex chars), or a standard UUID string.
+    
+    Returns:
+        bool: `True` if `suid` is a valid session ID in one of the supported formats, `False` otherwise.
     """
     try:
         # Accept llama-stack conversation IDs (conv_<hex> format)

@@ -13,30 +13,24 @@ logger = logging.getLogger("app.endpoints.dependencies")
 
 
 async def mcp_headers_dependency(request: Request) -> dict[str, dict[str, str]]:
-    """Get the MCP headers dependency to passed to mcp servers.
-
-    mcp headers is a json dictionary or mcp url paths and their respective headers
-
-    Args:
-        request (Request): The FastAPI request object.
-
+    """
+    Provide MCP headers extracted from the request for use with MCP servers.
+    
     Returns:
-        The mcp headers dictionary, or empty dictionary if not found or on json decoding error
+        dict[str, dict[str, str]]: Mapping of MCP server URL (or toolgroup-converted URL) to its header dictionary,
+        or an empty dict if the `MCP-HEADERS` header is missing or invalid.
     """
     return extract_mcp_headers(request)
 
 
 def extract_mcp_headers(request: Request) -> dict[str, dict[str, str]]:
-    """Extract mcp headers from MCP-HEADERS header.
-
-    If the header is missing, contains invalid JSON, or the decoded
-    value is not a dictionary, an empty dictionary is returned.
-
-    Args:
-        request: The FastAPI request object
-
+    """
+    Extract MCP headers from the "MCP-HEADERS" request header.
+    
+    Parses the header value as JSON and returns it if it is a mapping of strings to header dictionaries; if the header is missing, invalid JSON, or the parsed value is not a dictionary, returns an empty dictionary.
+    
     Returns:
-        The mcp headers dictionary, or empty dictionary if not found or on json decoding error
+        dict[str, dict[str, str]]: Mapping of MCP server URL or toolgroup name to its headers, or an empty dict on error or when the header is absent.
     """
     mcp_headers_string = request.headers.get("MCP-HEADERS", "")
     mcp_headers = {}

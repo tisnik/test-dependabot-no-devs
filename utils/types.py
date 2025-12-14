@@ -18,13 +18,16 @@ from constants import DEFAULT_RAG_TOOL
 
 
 def content_to_str(content: Any) -> str:
-    """Convert content (str, TextContentItem, ImageContentItem, or list) to string.
-
-    Args:
-        content: Content to convert to string.
-
+    """
+    Convert various content representations to a plain string.
+    
+    None becomes an empty string; TextContentItem yields its .text; ImageContentItem becomes "<image>"; lists are flattened by converting each item and joining with spaces; other values are converted via str().
+    
+    Parameters:
+        content: Value to normalize into a string (may be None, str, content item, list, or any other object).
+    
     Returns:
-        str: String representation of the content.
+        The normalized string representation of content.
     """
     if content is None:
         return ""
@@ -46,8 +49,8 @@ class Singleton(type):
 
     def __call__(cls, *args, **kwargs):  # type: ignore
         """
-        Return the single cached instance of the class, creating and caching it on first call.
-
+        Provide a single shared instance of the class, creating and caching it on first instantiation.
+        
         Returns:
             object: The singleton instance for this class.
         """
@@ -64,15 +67,10 @@ class GraniteToolParser(ToolParser):
         self, output_message: AgentCompletionMessage
     ) -> list[AgentToolCall]:
         """
-        Return the `tool_calls` list from a CompletionMessage, or an empty list if none are present.
-
-        Parameters:
-            output_message (AgentCompletionMessage | None): Completion
-            message potentially containing `tool_calls`.
-
+        Get the tool call entries from an AgentCompletionMessage.
+        
         Returns:
-            list[AgentToolCall]: The list of tool call entries
-            extracted from `output_message`, or an empty list.
+            The message's list of AgentToolCall entries, or an empty list if none are present.
         """
         if output_message and output_message.tool_calls:
             return output_message.tool_calls
@@ -81,18 +79,13 @@ class GraniteToolParser(ToolParser):
     @staticmethod
     def get_parser(model_id: str) -> Optional[ToolParser]:
         """
-        Return a GraniteToolParser when the model identifier denotes a Granite model.
-
-        Returns None otherwise.
-
+        Return a GraniteToolParser when the model identifier indicates a Granite model.
+        
         Parameters:
-            model_id (str): Model identifier string checked case-insensitively.
-            If it starts with "granite", a GraniteToolParser instance is
-            returned.
-
+            model_id (str): Model identifier to check; matching is case-insensitive and uses a prefix check.
+        
         Returns:
-            Optional[ToolParser]: GraniteToolParser for Granite models, or None
-            if `model_id` is falsy or does not start with "granite".
+            Optional[ToolParser]: A GraniteToolParser instance if `model_id` is truthy and starts with "granite" (case-insensitive), `None` otherwise.
         """
         if model_id and model_id.lower().startswith("granite"):
             return GraniteToolParser()
@@ -141,7 +134,14 @@ class TurnSummary(BaseModel):
     rag_chunks: list[RAGChunk]
 
     def append_tool_calls_from_llama(self, tec: ToolExecutionStep) -> None:
-        """Append the tool calls from a llama tool execution step."""
+        """
+        Populate this TurnSummary with tool call and result summaries derived from a llama ToolExecutionStep.
+        
+        For each tool call in `tec.tool_calls` the method appends a ToolCallSummary to `self.tool_calls` and a corresponding ToolResultSummary to `self.tool_results`. Arguments are preserved if already a dict; otherwise they are converted to {"args": str(arguments)}. A result's `status` is "success" when a matching response (by call_id) exists in `tec.tool_responses`, and "failure" when no response is found. If a call's tool name equals DEFAULT_RAG_TOOL and its response has content, the method extracts and appends RAG chunks to `self.rag_chunks` by calling _extract_rag_chunks_from_response.
+        
+        Parameters:
+            tec (ToolExecutionStep): The execution step containing tool_calls and tool_responses to summarize.
+        """
         calls_by_id = {tc.call_id: tc for tc in tec.tool_calls}
         responses_by_id = {tc.call_id: tc for tc in tec.tool_responses}
         for call_id, tc in calls_by_id.items():
