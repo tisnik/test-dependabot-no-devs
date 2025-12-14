@@ -21,7 +21,7 @@ Before you submit your pull request consider the following guidelines:
   * open the following URL in your browser: https://github.com/tisnik/svitava-go
   * click on the 'Fork' button (near the top right corner)
   * select the account for fork
-  * open your forked repository in browser: https://github.com/YOUR_NAME/insights-operator-ldapauth
+  * open your forked repository in browser: https://github.com/YOUR_NAME/svitava-go
   * click on the 'Clone or download' button to get a command that can be used to clone the repository
 
 * Make your changes in a new git branch:
