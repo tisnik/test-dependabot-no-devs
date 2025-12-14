@@ -66,7 +66,13 @@ func (s HTTPServer) settingsPageHandler(w http.ResponseWriter, r *http.Request) 
 func (s HTTPServer) staticImageHandler(w http.ResponseWriter, r *http.Request) {
 	imageName := r.URL.String()
 	fileName := strings.TrimPrefix(imageName, "/image/")
-	fullPath := "web-content/images/" + fileName
+
+	cleanPath := path.Clean(fileName)
+	if strings.HasPrefix(cleanPath, "..") || cleanPath == "." {
+		http.Error(w, "invalid path", http.StatusBadRequest)
+		return
+	}
+	fullPath := filepath.Join("web-content/images", cleanPath)
 	http.ServeFile(w, r, fullPath)
 }
 
