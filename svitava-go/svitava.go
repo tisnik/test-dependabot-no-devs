@@ -37,8 +37,10 @@ func runInDemoMode() {
 	log.Println("Starting demo mode: render all fractals available")
 
 	palette, err := palettes.LoadTextRGBPalette("data/blues.map")
+	if err != nil {
+		log.Fatalf("Failed to load palette: %v", err)
+	}
 	log.Println("Color palette loaded")
-
 	resolution := image.Resolution{
 		Width:  512,
 		Height: 512,
