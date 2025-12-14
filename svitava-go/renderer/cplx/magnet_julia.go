@@ -21,7 +21,7 @@ import (
 func CalcMagnetJulia(
 	params params.FractalParameter,
 	image deepimage.Image) {
-	const MIN_VALUE = 1.0 - 100
+	const MIN_DIV = 1.0e-12 // (or smaller if you really need it)
 
 	cx := params.Cx0
 	cy := params.Cy0
@@ -48,7 +48,7 @@ func CalcMagnetJulia(
 				bzx := 2.0*zx + cx - 2
 				bzy := 2.0*zy + cy
 				div := bzx*bzx + bzy*bzy
-				if div < MIN_VALUE {
+				if div < MIN_DIV {
 					break
 				}
 				zxn = (tzx*bzx + tzy*bzy) / div
