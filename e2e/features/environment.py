@@ -24,10 +24,13 @@ from tests.e2e.utils.utils import (
 
 
 def _fetch_models_from_service() -> dict:
-    """Query /v1/models endpoint and return first LLM model.
-
+    """
+    Locate the first model with "api_model_type" equal to "llm" from the service's /v1/models endpoint.
+    
+    Queries http://{E2E_LSC_HOSTNAME}:{E2E_LSC_PORT}/v1/models (defaults to localhost:8080) and inspects the returned JSON for a model entry with api_model_type == "llm".
+    
     Returns:
-        Dict with model_id and provider_id, or empty dict if unavailable
+        dict: `{'model_id': <provider_resource_id>, 'provider_id': <provider_id>}` for the first matching model, or an empty dict if no matching model is found or if the request/response is unavailable or invalid.
     """
     try:
         host_env = os.getenv("E2E_LSC_HOSTNAME", "localhost")
@@ -50,7 +53,18 @@ def _fetch_models_from_service() -> dict:
 
 
 def before_all(context: Context) -> None:
-    """Run before and after the whole shooting match."""
+    """
+    Initialize global test environment before the test suite runs.
+    
+    Sets context.deployment_mode from the E2E_DEPLOYMENT_MODE environment variable (default "server") and context.is_library_mode accordingly. Attempts to detect a default LLM model and provider via _fetch_models_from_service() and stores results in context.default_model and context.default_provider; if detection fails, falls back to "gpt-4-turbo" and "openai".
+    
+    Parameters:
+        context (Context): Behave context into which this function writes:
+            - deployment_mode (str): "server" or "library".
+            - is_library_mode (bool): True when deployment_mode is "library".
+            - default_model (str): Detected model id or fallback model.
+            - default_provider (str): Detected provider id or fallback provider.
+    """
     # Detect deployment mode from environment variable
     context.deployment_mode = os.getenv("E2E_DEPLOYMENT_MODE", "server").lower()
     context.is_library_mode = context.deployment_mode == "library"
@@ -74,7 +88,11 @@ def before_all(context: Context) -> None:
 
 
 def before_scenario(context: Context, scenario: Scenario) -> None:
-    """Run before each scenario is run."""
+    """
+    Prepare scenario execution by skipping scenarios based on tags and selecting a scenario-specific configuration.
+    
+    Skips the scenario if it has the `skip` tag, if it has the `local` tag while the test run is not in local mode, or if it has `skip-in-library-mode` when running in library mode. When the scenario is tagged with `InvalidFeedbackStorageConfig` or `NoCacheConfig`, sets `context.scenario_config` to the appropriate configuration file path for the current deployment mode (library-mode or server-mode).
+    """
     if "skip" in scenario.effective_tags:
         scenario.skip("Marked with @skip")
         return
@@ -98,7 +116,19 @@ def before_scenario(context: Context, scenario: Scenario) -> None:
 
 
 def after_scenario(context: Context, scenario: Scenario) -> None:
-    """Run after each scenario is run."""
+    """
+    Perform per-scenario teardown: restore scenario-specific configuration and, in server mode, attempt to restart and verify the Llama Stack container if it was previously running.
+    
+    If the scenario used an alternate feedback storage or no-cache configuration, the original feature configuration is restored and the lightspeed-stack container is restarted. When not running in library mode and the context indicates the Llama Stack was running before the scenario, this function attempts to start the llama-stack container and polls its health endpoint until it becomes healthy or a timeout is reached.
+    
+    Parameters:
+        context (Context): Behave test context. Expected attributes used here include:
+            - feature_config: path to the feature-level configuration to restore.
+            - is_library_mode (bool): whether tests run in library mode.
+            - llama_stack_was_running (bool, optional): whether llama-stack was running before the scenario.
+            - hostname_llama, port_llama (str/int, optional): host and port used for the llama-stack health check.
+        scenario (Scenario): Behave scenario whose tags determine which scenario-specific teardown actions to run (e.g., "InvalidFeedbackStorageConfig", "NoCacheConfig").
+    """
     if "InvalidFeedbackStorageConfig" in scenario.effective_tags:
         switch_config(context.feature_config)
         restart_container("lightspeed-stack")
@@ -159,7 +189,17 @@ def after_scenario(context: Context, scenario: Scenario) -> None:
 
 
 def before_feature(context: Context, feature: Feature) -> None:
-    """Run before each feature file is exercised."""
+    """
+    Prepare per-feature test environment and apply feature-specific configuration.
+    
+    If the feature is tagged "Authorized", choose the mode-specific configuration
+    ("library-mode" or "server-mode"), back up the current lightspeed-stack.yaml,
+    apply the feature configuration, and restart the lightspeed-stack container.
+    
+    If the feature is tagged "Feedback", set context.hostname and context.port from
+    environment variables (E2E_LSC_HOSTNAME defaults to "localhost", E2E_LSC_PORT
+    defaults to "8080") and initialize context.feedback_conversations as an empty list.
+    """
     if "Authorized" in feature.tags:
         mode_dir = "library-mode" if context.is_library_mode else "server-mode"
         context.feature_config = (
@@ -176,7 +216,13 @@ def before_feature(context: Context, feature: Feature) -> None:
 
 
 def after_feature(context: Context, feature: Feature) -> None:
-    """Run after each feature file is exercised."""
+    """
+    Perform feature-level teardown: restore any modified configuration and clean up feedback conversations.
+    
+    If the feature is tagged `Authorized`, restores the original Lightspeed Stack configuration from the backup, restarts the `lightspeed-stack` container, and removes the configuration backup.
+    
+    If the feature is tagged `Feedback`, deletes each conversation recorded in `context.feedback_conversations` by sending DELETE requests to the service; each delete must return HTTP 200 (an assertion is raised on other statuses).
+    """
     if "Authorized" in feature.tags:
         switch_config(context.default_config_backup)
         restart_container("lightspeed-stack")

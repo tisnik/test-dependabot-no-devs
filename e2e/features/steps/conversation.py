@@ -19,7 +19,11 @@ DEFAULT_TIMEOUT = 10
     "I use REST API conversation endpoint with conversation_id from above using HTTP GET method"
 )
 def access_conversation_endpoint_get(context: Context) -> None:
-    """Send GET HTTP request to tested service for conversation/{conversation_id}."""
+    """
+    Request the conversation identified by the previously stored `conversation_id` and store the HTTP response on `context.response`.
+    
+    Asserts that `context.response_data["conversation_id"]` is present, constructs the conversation GET URL using `context.hostname`, `context.port`, and `context.api_prefix`, and performs the request using optional `context.auth_headers`.
+    """
     assert (
         context.response_data["conversation_id"] is not None
     ), "conversation id not stored"
@@ -43,7 +47,12 @@ def access_conversation_endpoint_get(context: Context) -> None:
 def access_conversation_endpoint_get_specific(
     context: Context, conversation_id: str
 ) -> None:
-    """Send GET HTTP request to tested service for conversation/{conversation_id}."""
+    """
+    Fetch a conversation by its conversation_id from the API.
+    
+    Parameters:
+        conversation_id (str): The identifier of the conversation to retrieve.
+    """
     endpoint = "conversations"
     base = f"http://{context.hostname}:{context.port}"
     path = f"{context.api_prefix}/{endpoint}/{conversation_id}".replace("//", "/")
@@ -60,7 +69,14 @@ def access_conversation_endpoint_get_specific(
     "I use REST API conversation endpoint with conversation_id from above using HTTP DELETE method"
 )
 def access_conversation_endpoint_delete(context: Context) -> None:
-    """Send DELETE HTTP request to tested service for conversation/{conversation_id}."""
+    """
+    Delete the conversation identified by context.response_data['conversation_id'] using the service's REST API.
+    
+    Sends an HTTP DELETE to the conversations endpoint constructed from context.hostname, context.port and context.api_prefix, using context.auth_headers if present. The HTTP response object is stored on context.response for later assertions.
+    
+    Raises:
+        AssertionError: if context.response_data['conversation_id'] is not present.
+    """
     assert (
         context.response_data["conversation_id"] is not None
     ), "conversation id not stored"
@@ -84,7 +100,14 @@ def access_conversation_endpoint_delete(context: Context) -> None:
 def access_conversation_endpoint_delete_specific(
     context: Context, conversation_id: str
 ) -> None:
-    """Send DELETE HTTP request to tested service for conversation/{conversation_id}."""
+    """
+    Send an HTTP DELETE to the conversation endpoint for the given conversation ID and store the response on the context.
+    
+    Uses hostname, port, and api_prefix from the provided context to construct the URL, and includes context.auth_headers if present. The HTTP response is assigned to context.response.
+    
+    Parameters:
+        conversation_id (str): The conversation identifier to delete.
+    """
     endpoint = "conversations"
     base = f"http://{context.hostname}:{context.port}"
     path = f"{context.api_prefix}/{endpoint}/{conversation_id}".replace("//", "/")
@@ -101,7 +124,14 @@ def access_conversation_endpoint_delete_specific(
     'I use REST API conversation endpoint with conversation_id from above and topic_summary "{topic_summary}" using HTTP PUT method'
 )
 def access_conversation_endpoint_put(context: Context, topic_summary: str) -> None:
-    """Send PUT HTTP request to tested service for conversation/{conversation_id} with topic_summary."""
+    """
+    Update a conversation's topic_summary via the conversation PUT endpoint.
+    
+    Requires that context.response_data contains a valid "conversation_id". The function sends a PUT request to the conversation resource and stores the HTTP response on context.response. If `topic_summary` equals "<EMPTY>", it is converted to an empty string before sending.
+    
+    Parameters:
+        topic_summary (str): The new topic summary to set for the conversation; use "<EMPTY>" to send an empty string.
+    """
     assert hasattr(context, "response_data"), "response_data not found in context"
     assert context.response_data.get("conversation_id"), "conversation id not stored"
 
@@ -130,7 +160,13 @@ def access_conversation_endpoint_put(context: Context, topic_summary: str) -> No
 def access_conversation_endpoint_put_specific(
     context: Context, conversation_id: str, topic_summary: str
 ) -> None:
-    """Send PUT HTTP request to tested service for conversation/{conversation_id} with topic_summary."""
+    """
+    Update a specific conversation's topic summary via the conversation REST endpoint.
+    
+    Parameters:
+        conversation_id (str): Identifier of the conversation to update.
+        topic_summary (str): Topic summary to apply to the conversation.
+    """
     endpoint = "conversations"
     base = f"http://{context.hostname}:{context.port}"
     path = f"{context.api_prefix}/{endpoint}/{conversation_id}".replace("//", "/")
@@ -149,7 +185,11 @@ def access_conversation_endpoint_put_specific(
     "I use REST API conversation endpoint with conversation_id from above and empty topic_summary using HTTP PUT method"
 )
 def access_conversation_endpoint_put_empty(context: Context) -> None:
-    """Send PUT HTTP request with empty topic_summary to test validation."""
+    """
+    Send a PUT request that updates the conversation's `topic_summary` to an empty string to exercise validation.
+    
+    The conversation to update is taken from `context.response_data['conversation_id']`; the HTTP response is stored in `context.response`.
+    """
     assert hasattr(context, "response_data"), "response_data not found in context"
     assert context.response_data.get("conversation_id"), "conversation id not stored"
 
@@ -171,7 +211,11 @@ def access_conversation_endpoint_put_empty(context: Context) -> None:
 
 @then("The conversation with conversation_id from above is returned")
 def check_returned_conversation_id(context: Context) -> None:
-    """Check the conversation id in response."""
+    """
+    Finds and stores the conversation object from the response that matches the expected conversation_id.
+    
+    Sets context.found_conversation to the matching conversation dictionary. Raises an AssertionError if no conversation with context.response_data["conversation_id"] is present in response_json["conversations"].
+    """
     response_json = context.response.json()
     found_conversation = None
     for conversation in response_json["conversations"]:
@@ -186,7 +230,11 @@ def check_returned_conversation_id(context: Context) -> None:
 
 @then("The conversation has topic_summary and last_message_timestamp")
 def check_conversation_metadata_not_empty(context: Context) -> None:
-    """Check that conversation has non-empty metadata fields."""
+    """
+    Verify the found conversation contains required metadata fields.
+    
+    Checks that a conversation is present on the context and that it includes a numeric `last_message_timestamp` value greater than zero and a `topic_summary` field that is not None.
+    """
     found_conversation = context.found_conversation
 
     assert found_conversation is not None, "conversation not found in context"
@@ -207,7 +255,16 @@ def check_conversation_metadata_not_empty(context: Context) -> None:
 
 @then('The conversation topic_summary is "{expected_summary}"')
 def check_conversation_topic_summary(context: Context, expected_summary: str) -> None:
-    """Check that the conversation has the expected topic summary."""
+    """
+    Assert that the located conversation's topic_summary equals the expected value.
+    
+    Checks that a conversation has been found on the context and that its "topic_summary"
+    field exactly matches `expected_summary`. Raises an AssertionError if the conversation
+    is missing, the field is absent, or the values differ.
+    
+    Parameters:
+        expected_summary (str): The expected topic summary to compare against.
+    """
     found_conversation = context.found_conversation
 
     assert found_conversation is not None, "conversation not found in context"
@@ -221,7 +278,11 @@ def check_conversation_topic_summary(context: Context, expected_summary: str) ->
 
 @then("The conversation details are following")
 def check_returned_conversation_content(context: Context) -> None:
-    """Check the conversation content in response."""
+    """
+    Validate that the located conversation's `last_used_model`, `last_used_provider`, and `message_count` match the expected values provided in the step text.
+    
+    The expected values are read from JSON in `context.text` after placeholder replacement. Raises `AssertionError` if any field does not match.
+    """
     json_str = replace_placeholders(context, context.text or "{}")
 
     expected_data = json.loads(json_str)
@@ -240,7 +301,12 @@ def check_returned_conversation_content(context: Context) -> None:
 
 @then("The returned conversation details have expected conversation_id")
 def check_found_conversation_id(context: Context) -> None:
-    """Check whether the conversation details have expected conversation_id."""
+    """
+    Verify that the response contains the expected conversation_id.
+    
+    Raises:
+        AssertionError: If the conversation_id in the response does not match the expected value in context.response_data.
+    """
     response_json = context.response.json()
 
     assert (
@@ -250,7 +316,16 @@ def check_found_conversation_id(context: Context) -> None:
 
 @then("The body of the response has following messages")
 def check_found_conversation_content(context: Context) -> None:
-    """Check whether the conversation details have expected data."""
+    """
+    Validate that the first two messages in the conversation match expected content and types.
+    
+    Parses expected values from the step text (JSON) and asserts:
+    - the first message's `content` equals `content` and its `type` equals `type`;
+    - the second message's `content` contains `content_response` and its `type` equals `type_response`.
+    
+    Raises:
+        AssertionError: if any of the assertions fail.
+    """
     expected_data = json.loads(context.text)
     response_json = context.response.json()
     chat_messages = response_json["chat_history"][0]["messages"]
@@ -271,7 +346,15 @@ def check_deleted_conversation(context: Context) -> None:
 
 @then("The conversation history contains {count:d} messages")
 def check_conversation_message_count(context: Context, count: int) -> None:
-    """Check that the conversation history has expected number of messages."""
+    """
+    Ensure the conversation's `chat_history` contains exactly the given number of entries.
+    
+    Parameters:
+        count (int): Expected number of entries in the response's `chat_history`.
+    
+    Raises:
+        AssertionError: If `chat_history` is missing or its length does not equal `count`.
+    """
     response_json = context.response.json()
 
     assert "chat_history" in response_json, "chat_history not found in response"
@@ -285,7 +368,11 @@ def check_conversation_message_count(context: Context, count: int) -> None:
 
 @then("The conversation history has correct metadata")
 def check_conversation_metadata(context: Context) -> None:
-    """Check that conversation history has correct model and provider info."""
+    """
+    Validate that the conversation's chat_history contains required metadata and correctly structured messages.
+    
+    Asserts that `chat_history` exists and is not empty. For each turn, asserts presence of `provider`, `model`, `messages`, `started_at`, and `completed_at`, that `provider` and `model` are not empty, that `messages` contains exactly two entries, and that the first message is a user message and the second is an assistant message with a `content` field.
+    """
     response_json = context.response.json()
 
     assert "chat_history" in response_json, "chat_history not found in response"
@@ -325,7 +412,15 @@ def check_conversation_metadata(context: Context) -> None:
 def check_conversation_model_provider(
     context: Context, model: str, provider: str
 ) -> None:
-    """Check that conversation used specific model and provider."""
+    """
+    Verify every turn in the response's `chat_history` uses the expected model and provider.
+    
+    Replaces placeholders in the provided `model` and `provider` using the test context, then checks each turn's `model` and `provider` fields match the resolved expectations. Raises AssertionError if `chat_history` is missing or empty, or if any turn's model/provider differs from the expected values.
+    
+    Parameters:
+        model (str): Expected model name (placeholders will be replaced from `context`).
+        provider (str): Expected provider name (placeholders will be replaced from `context`).
+    """
     response_json = context.response.json()
 
     assert "chat_history" in response_json, "chat_history not found in response"
