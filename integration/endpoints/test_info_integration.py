@@ -18,10 +18,16 @@ from version import __version__
 def mock_llama_stack_client_fixture(
     mocker: MockerFixture,
 ) -> Generator[Any, None, None]:
-    """Mock only the external Llama Stack client.
-
-    This is the only external dependency we mock for integration tests,
-    as it represents an external service call.
+    """
+    Patch AsyncLlamaStackClientHolder and yield a mocked Llama Stack client for integration tests.
+    
+    The yielded mock client is an AsyncMock whose `inspect.version` returns VersionInfo(version="0.2.22"), and the patched holder's `get_client` returns this mock.
+    
+    Parameters:
+        mocker (pytest_mock.MockerFixture): The pytest-mock fixture used to apply the patch.
+    
+    Yields:
+        AsyncMock: A mocked Llama Stack client configured for tests.
     """
     mock_holder_class = mocker.patch("app.endpoints.info.AsyncLlamaStackClientHolder")
 
@@ -43,20 +49,20 @@ async def test_info_endpoint_returns_service_information(
     test_request: Request,
     test_auth: AuthTuple,
 ) -> None:
-    """Test that info endpoint returns correct service information.
-
-    This integration test verifies:
-    - Endpoint handler integrates with configuration system
-    - Configuration values are correctly accessed
-    - Llama Stack client is properly called
-    - Real noop authentication is used
-    - Response structure matches expected format
-
-    Args:
-        test_config: Loads real configuration (required for endpoint to access config)
-        mock_llama_stack_client: Mocked Llama Stack client
-        test_request: FastAPI request
-        test_auth: noop authentication tuple
+    """
+    Verify the /info endpoint returns the configured service name, the package service version, and the Llama Stack client version, and that the Llama Stack client is queried.
+    
+    Asserts that:
+    - response.name equals "foo bar baz" (from test configuration)
+    - response.service_version equals __version__
+    - response.llama_stack_version equals "0.2.22"
+    - the mocked Llama Stack client's inspect.version was called exactly once
+    
+    Parameters:
+        test_config: Fixture that loads the real application configuration.
+        mock_llama_stack_client: Mocked Async Llama Stack client used by the endpoint.
+        test_request: FastAPI Request fixture.
+        test_auth: Authentication tuple used by the endpoint.
     """
     # Fixtures with side effects (needed but not directly used)
     _ = test_config

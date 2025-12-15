@@ -14,18 +14,13 @@ async def test_config_endpoint_returns_config(
     test_request: Request,
     test_auth: AuthTuple,
 ) -> None:
-    """Test that config endpoint returns test configuration.
-
-    This integration test verifies:
-    - Endpoint handler integrates with configuration system
-    - Configuration values are correctly accessed
-    - Real noop authentication is used
-    - Response structure matches expected format
-
-    Args:
-        test_config: Loads test configuration
-        test_request: FastAPI request
-        test_auth: noop authentication tuple
+    """
+    Verify the /config endpoint returns the provided test configuration.
+    
+    Parameters:
+        test_config (AppConfig): Fixture providing the expected configuration to be returned.
+        test_request (Request): FastAPI request object used to call the endpoint.
+        test_auth (AuthTuple): Authentication fixture used for the request.
     """
     response = await config_endpoint_handler(auth=test_auth, request=test_request)
 
@@ -39,18 +34,10 @@ async def test_config_endpoint_returns_current_config(
     test_request: Request,
     test_auth: AuthTuple,
 ) -> None:
-    """Test that config endpoint returns current configuration (from root).
-
-    This integration test verifies:
-    - Endpoint handler integrates with configuration system
-    - Configuration values are correctly accessed
-    - Real noop authentication is used
-    - Response structure matches expected format
-
-    Args:
-        current_config: Loads root configuration
-        test_request: FastAPI request
-        test_auth: noop authentication tuple
+    """
+    Verify the /config endpoint returns the application's current (root) configuration.
+    
+    Calls the config endpoint handler with the provided request and authentication and asserts the returned configuration equals current_config.configuration.
     """
     response = await config_endpoint_handler(auth=test_auth, request=test_request)
 
@@ -63,15 +50,14 @@ async def test_config_endpoint_fails_without_configuration(
     test_request: Request,
     test_auth: AuthTuple,
 ) -> None:
-    """Test that authorization fails when configuration is not loaded.
-
-    This integration test verifies:
-    - HTTPException is raised when configuration is not loaded
-    - Error message indicates configuration is not loaded
-
-    Args:
-        test_request: FastAPI request
-        test_auth: noop authentication tuple
+    """
+    Verify the /config endpoint raises an HTTP 500 error when no configuration is loaded.
+    
+    Asserts that calling the endpoint raises an HTTPException with status code 500 and that the exception detail's "response" contains the phrase "configuration is not loaded" (case-insensitive).
+    
+    Parameters:
+    	test_request (Request): FastAPI request fixture
+    	test_auth (AuthTuple): noop authentication fixture
     """
 
     # Verify that HTTPException is raised when configuration is not loaded

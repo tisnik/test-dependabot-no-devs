@@ -36,10 +36,22 @@ EXISTING_CONV_ID = "22222222-2222-2222-2222-222222222222"
 def mock_llama_stack_client_fixture(
     mocker: MockerFixture,
 ) -> Generator[Any, None, None]:
-    """Mock only the external Llama Stack client.
-
-    This is the only external dependency we mock for integration tests,
-    as it represents an external service call.
+    """
+    Provide a preconfigured mocked Llama Stack client for integration tests.
+    
+    The fixture yields a mock client whose observable behavior is set up to match expected Llama Stack interactions used by the /query v2 endpoint:
+    - responses.create returns an OpenAI-like response with a single assistant message ("This is a test response about Ansible."), no refusal, stop_reason "end_turn", and an empty tool_calls list.
+    - models.list returns a single model with identifier "test-provider/test-model" and model_type "llm".
+    - shields.list returns an empty list.
+    - vector_stores.list returns an object with an empty .data list.
+    - conversations.create returns a conversation object with an id in the Llama Stack format (conv_ followed by 48 hex chars).
+    - inspect.version returns VersionInfo(version="0.2.22").
+    
+    Parameters:
+        mocker (MockerFixture): pytest-mock fixture used to create and patch mocks.
+    
+    Returns:
+        mock_client: The mocked Llama Stack client instance configured as described above.
     """
     # Patch in app.endpoints.query where it's actually used by query_endpoint_handler_base
     mock_holder_class = mocker.patch("app.endpoints.query.AsyncLlamaStackClientHolder")
@@ -102,11 +114,13 @@ def patch_db_session_fixture(
     test_db_session: Session,
     test_db_engine: Engine,
 ) -> Generator[Session, None, None]:
-    """Initialize database session for integration tests.
-
-    This sets up the global session_local in app.database to use the test database.
-    Uses an in-memory SQLite database, isolating tests from production data.
-    This fixture is autouse=True, so it applies to all tests in this module automatically.
+    """
+    Configure the application's global database session to use the provided test engine for the duration of a test.
+    
+    Temporarily replaces app.database.engine and app.database.session_local with the provided test_db_engine and a sessionmaker bound to it, yields test_db_session to the caller, and restores the original engine and session_local after the test completes.
+    
+    Returns:
+        The test database Session instance to be used by the test.
     """
     # Store original values to restore later
     original_engine = app.database.engine
@@ -181,19 +195,10 @@ async def test_query_v2_endpoint_handles_connection_error(
     test_auth: AuthTuple,
     mocker: MockerFixture,
 ) -> None:
-    """Test that query v2 endpoint properly handles Llama Stack connection errors.
-
-    This integration test verifies:
-    - Error handling when external service is unavailable
-    - HTTPException is raised with correct status code
-    - Error response includes proper error details
-
-    Args:
-        test_config: Test configuration
-        mock_llama_stack_client: Mocked Llama Stack client
-        test_request: FastAPI request
-        test_auth: noop authentication tuple
-        mocker: pytest-mock fixture
+    """
+    Verify the /query v2 endpoint returns an HTTP 503 with a structured error detail when the Llama Stack client cannot connect.
+    
+    This test configures the mocked Llama Stack client to raise an APIConnectionError and asserts the endpoint raises an HTTPException with status 503 and a detail dict containing "response": "Unable to connect to Llama Stack" and a "cause" entry.
     """
     _ = test_config
 
@@ -225,18 +230,10 @@ async def test_query_v2_endpoint_empty_query(
     test_request: Request,
     test_auth: AuthTuple,
 ) -> None:
-    """Test query v2 endpoint with empty query string.
-
-    This integration test verifies:
-    - Empty queries are handled appropriately
-    - Validation works correctly
-    - Error response is returned if needed
-
-    Args:
-        test_config: Test configuration
-        mock_llama_stack_client: Mocked Llama Stack client
-        test_request: FastAPI request
-        test_auth: noop authentication tuple
+    """
+    Integration test that verifies the v2 /query endpoint accepts an empty query string and produces a response.
+    
+    Asserts that submitting a QueryRequest with an empty `query` yields a non-None response (i.e., the endpoint handles empty queries without crashing and returns a valid response object).
     """
     _ = test_config
     _ = mock_llama_stack_client
@@ -519,21 +516,10 @@ async def test_query_v2_endpoint_bypasses_tools_when_no_tools_true(
     patch_db_session: Session,
     mocker: MockerFixture,
 ) -> None:
-    """Test that tools are NOT used when no_tools=True.
-
-    This integration test verifies:
-    - no_tools=True bypasses tool preparation
-    - No tools are passed to Llama Stack even when vector stores are available
-    - Response succeeds without tools
-    - Integration between query handler and tool preparation
-
-    Args:
-        test_config: Test configuration
-        mock_llama_stack_client: Mocked Llama Stack client
-        test_request: FastAPI request
-        test_auth: noop authentication tuple
-        patch_db_session: Test database session
-        mocker: pytest-mock fixture
+    """
+    Verify that when `no_tools=True` the v2 query endpoint does not pass any tools to the Llama Stack client even if vector stores are available.
+    
+    Checks that a valid response and conversation_id are produced and that the Llama Stack `responses.create` call receives no `tools` argument.
     """
     _ = test_config
     _ = patch_db_session
@@ -572,21 +558,10 @@ async def test_query_v2_endpoint_uses_tools_when_available(
     patch_db_session: Session,
     mocker: MockerFixture,
 ) -> None:
-    """Test that tools are used when no_tools=False and vector stores are available.
-
-    This integration test verifies:
-    - Tool preparation logic retrieves available tools
-    - Tools are passed to Llama Stack when available
-    - Response succeeds with tools enabled
-    - Integration between query handler, vector stores, and tool preparation
-
-    Args:
-        test_config: Test configuration
-        mock_llama_stack_client: Mocked Llama Stack client
-        test_request: FastAPI request
-        test_auth: noop authentication tuple
-        patch_db_session: Test database session
-        mocker: pytest-mock fixture
+    """
+    Verifies the query endpoint uses available vector-store-backed tools when tools are enabled.
+    
+    Mocks an available vector store, invokes the v2 query handler with tools enabled (no_tools=False), and asserts that the Llama Stack client received a non-empty tools list containing at least one file_search tool and that a response with a conversation_id was produced.
     """
     _ = test_config
     _ = patch_db_session
@@ -795,23 +770,10 @@ async def test_query_v2_endpoint_creates_valid_cache_entry(
     patch_db_session: Session,
     mocker: MockerFixture,
 ) -> None:
-    """Test that cache entry is created with correct structure.
-
-    This integration test verifies:
-    - Cache storage function is called during request flow
-    - CacheEntry object has all required fields populated
-    - Query, response, model, provider, and timestamps are included
-    - Integration between query processing and cache storage
-
-    Note: We spy on cache storage to verify integration, not to mock it.
-
-    Args:
-        test_config: Test configuration
-        mock_llama_stack_client: Mocked Llama Stack client
-        test_request: FastAPI request
-        test_auth: noop authentication tuple
-        patch_db_session: Test database session
-        mocker: pytest-mock fixture
+    """
+    Verify that a CacheEntry is created and populated correctly during a /query v2 request.
+    
+    Asserts that store_conversation_into_cache is invoked once and that the captured CacheEntry includes the original query, a non-null response, model, provider, and both started_at and completed_at timestamps; also verifies a conversation_id is returned in the handler response.
     """
     _ = test_config
     _ = mock_llama_stack_client
@@ -1143,21 +1105,10 @@ async def test_query_v2_endpoint_rejects_query_when_quota_exceeded(
     patch_db_session: Session,
     mocker: MockerFixture,
 ) -> None:
-    """Test that query is rejected when user quota is exceeded.
-
-    This integration test verifies:
-    - Query is rejected when quota is exceeded (429 error)
-    - No conversation is created in database when quota check fails
-    - Error response contains appropriate message
-    - LLM is not called when quota is exceeded
-
-    Args:
-        test_config: Test configuration
-        mock_llama_stack_client: Mocked Llama Stack client
-        test_request: FastAPI request
-        test_auth: noop authentication tuple
-        patch_db_session: Test database session
-        mocker: pytest-mock fixture (to simulate quota exceeded)
+    """
+    Verifies that queries are rejected when the user's token quota is exceeded.
+    
+    Raises an HTTP 429 with a detail indicating quota exhaustion, ensures no conversation is created in the database, and confirms the request is rejected before any LLM call is made.
     """
     _ = test_config
     _ = mock_llama_stack_client
