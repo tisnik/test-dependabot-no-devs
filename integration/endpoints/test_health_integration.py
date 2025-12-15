@@ -20,10 +20,13 @@ from app.endpoints.health import (
 def mock_llama_stack_client_fixture(
     mocker: MockerFixture,
 ) -> Generator[Any, None, None]:
-    """Mock only the external Llama Stack client.
-
-    This is the only external dependency we mock for integration tests,
-    as it represents an external service call.
+    """
+    Provide a pytest fixture that patches AsyncLlamaStackClientHolder and yields a mock Llama Stack async client.
+    
+    Patches the AsyncLlamaStackClientHolder used by the health endpoints so its get_client() returns a test AsyncMock. The mock client's `inspect.version` is configured to return an empty list to represent a known version response.
+    
+    Returns:
+        mock_client: An AsyncMock representing the Llama Stack client whose `inspect.version` returns an empty list.
     """
     mock_holder_class = mocker.patch("app.endpoints.health.AsyncLlamaStackClientHolder")
 
@@ -43,16 +46,10 @@ async def test_health_liveness(
     test_config: AppConfig,
     test_auth: AuthTuple,
 ) -> None:
-    """Test that liveness probe endpoint is alive
-
-    This integration test verifies:
-    - Endpoint handler integrates with configuration system
-    - Real noop authentication is used
-    - Response structure matches expected format
-
-    Args:
-        test_config: Loads test configuration
-        test_auth: noop authentication tuple
+    """
+    Verify the liveness endpoint reports the service as alive.
+    
+    Calls the liveness probe handler with noop authentication and asserts the returned object has alive == True.
     """
     _ = test_config
 
@@ -149,18 +146,16 @@ async def test_health_readiness(
     test_response: Response,
     test_auth: AuthTuple,
 ) -> None:
-    """Test that readiness probe endpoint returns readiness status.
-
-    This integration test verifies:
-    - Endpoint handler integrates with configuration system
-    - Configuration values are correctly accessed
-    - Real noop authentication is used
-    - Response structure matches expected format
-
-    Args:
-        mock_llama_stack_client_health: Mocked Llama Stack client
-        test_response: FastAPI response object
-        test_auth: noop authentication tuple
+    """
+    Verify the readiness probe endpoint reports ready when all providers are healthy.
+    
+    Parameters:
+        mock_llama_stack_client_health: Mocked Async Llama Stack client whose providers list is configured for the test.
+        test_response (Response): FastAPI response object passed to the endpoint.
+        test_auth (AuthTuple): Authentication tuple used by the endpoint.
+    
+    Returns:
+        None
     """
     _ = mock_llama_stack_client_health
 
