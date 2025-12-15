@@ -1,0 +1,167 @@
+"""Integration tests for the /health endpoint."""
+
+from typing import Generator, Any
+import pytest
+from pytest_mock import MockerFixture, AsyncMockType
+from llama_stack.providers.datatypes import HealthStatus
+
+from fastapi import Response
+from authentication.interface import AuthTuple
+
+from configuration import AppConfig
+from app.endpoints.health import (
+    liveness_probe_get_method,
+    readiness_probe_get_method,
+    get_providers_health_statuses,
+)
+
+
+@pytest.fixture(name="mock_llama_stack_client_health")
+def mock_llama_stack_client_fixture(
+    mocker: MockerFixture,
+) -> Generator[Any, None, None]:
+    """
+    Provide a pytest fixture that patches AsyncLlamaStackClientHolder and yields a mock Llama Stack async client.
+    
+    Patches the AsyncLlamaStackClientHolder used by the health endpoints so its get_client() returns a test AsyncMock. The mock client's `inspect.version` is configured to return an empty list to represent a known version response.
+    
+    Returns:
+        mock_client: An AsyncMock representing the Llama Stack client whose `inspect.version` returns an empty list.
+    """
+    mock_holder_class = mocker.patch("app.endpoints.health.AsyncLlamaStackClientHolder")
+
+    mock_client = mocker.AsyncMock()
+    # Mock the version endpoint to return a known version
+    mock_client.inspect.version.return_value = []
+
+    # Create a mock holder instance
+    mock_holder_instance = mock_holder_class.return_value
+    mock_holder_instance.get_client.return_value = mock_client
+
+    yield mock_client
+
+
+@pytest.mark.asyncio
+async def test_health_liveness(
+    test_config: AppConfig,
+    test_auth: AuthTuple,
+) -> None:
+    """
+    Verify the liveness endpoint reports the service as alive.
+    
+    Calls the liveness probe handler with noop authentication and asserts the returned object has alive == True.
+    """
+    _ = test_config
+
+    response = await liveness_probe_get_method(auth=test_auth)
+
+    # Verify that service is alive
+    assert response.alive is True
+
+
+@pytest.mark.asyncio
+async def test_health_readiness_provider_statuses(
+    mock_llama_stack_client_health: AsyncMockType,
+    mocker: MockerFixture,
+) -> None:
+    """Test that get_providers_health_statuses correctly retrieves and returns
+       provider health statuses.
+
+    This integration test verifies:
+    - Function correctly retrieves provider list from Llama Stack client
+    - Both healthy and unhealthy providers are properly processed
+    - Provider health status, ID, and error messages are correctly mapped
+    - Multiple providers with different health states are handled correctly
+
+    Args:
+        mock_llama_stack_client_health: Mocked Llama Stack client
+        mocker: pytest-mock fixture for creating mock objects
+    """
+    # Arrange: Set up mock provider list with mixed health statuses
+    mock_llama_stack_client_health.providers.list.return_value = [
+        mocker.Mock(
+            provider_id="unhealthy-provider-1",
+            health={
+                "status": HealthStatus.ERROR.value,
+                "message": "Database connection failed",
+            },
+        ),
+        mocker.Mock(
+            provider_id="unhealthy-provider-2",
+            health={
+                "status": HealthStatus.ERROR.value,
+                "message": "Service unavailable",
+            },
+        ),
+        mocker.Mock(
+            provider_id="healthy-provider", health={"status": "ok", "message": ""}
+        ),
+    ]
+
+    # Call the function to retrieve provider health statuses
+    result = await get_providers_health_statuses()
+
+    # Verify providers
+    assert result[0].provider_id == "unhealthy-provider-1"
+    assert result[0].status == "Error"
+    assert result[0].message == "Database connection failed"
+
+    assert result[1].provider_id == "unhealthy-provider-2"
+    assert result[1].status == "Error"
+    assert result[1].message == "Service unavailable"
+
+    assert result[2].provider_id == "healthy-provider"
+    assert result[2].status == "ok"
+    assert result[2].message == ""
+
+
+@pytest.mark.asyncio
+async def test_health_readiness_client_error(
+    test_response: Response,
+    test_auth: AuthTuple,
+) -> None:
+    """Test that readiness probe endpoint handles uninitialized client gracefully.
+
+    This integration test verifies:
+    - RuntimeError from uninitialized client is NOT caught by the endpoint
+    - Error propagates from the endpoint handler (desired behavior)
+    - The endpoint does not catch RuntimeError, only APIConnectionError
+
+    Args:
+        test_response: FastAPI response object
+        test_auth: noop authentication tuple
+    """
+
+    # Verify that RuntimeError propagates from the endpoint (not caught)
+    with pytest.raises(RuntimeError) as exc_info:
+        await readiness_probe_get_method(auth=test_auth, response=test_response)
+
+    assert "AsyncLlamaStackClient has not been initialised" in str(exc_info.value)
+    assert "Ensure 'load(..)' has been called" in str(exc_info.value)
+
+
+@pytest.mark.asyncio
+async def test_health_readiness(
+    mock_llama_stack_client_health: AsyncMockType,
+    test_response: Response,
+    test_auth: AuthTuple,
+) -> None:
+    """
+    Verify the readiness probe endpoint reports ready when all providers are healthy.
+    
+    Parameters:
+        mock_llama_stack_client_health: Mocked Async Llama Stack client whose providers list is configured for the test.
+        test_response (Response): FastAPI response object passed to the endpoint.
+        test_auth (AuthTuple): Authentication tuple used by the endpoint.
+    
+    Returns:
+        None
+    """
+    _ = mock_llama_stack_client_health
+
+    result = await readiness_probe_get_method(auth=test_auth, response=test_response)
+
+    # Verify that service returns readiness response
+    assert result.ready is True
+    assert result.reason == "All providers are healthy"
+    assert result.providers is not None
