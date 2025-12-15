@@ -22,7 +22,11 @@ DEFAULT_TIMEOUT = 10
 def request_endpoint_with_body(
     context: Context, endpoint: str, hostname: str, port: int, body: str
 ) -> None:
-    """Perform a request to the local server with a given body in the request."""
+    """
+    Send an HTTP GET to the specified local endpoint using the provided raw body and save the response on the context.
+    
+    Sets context.response to the received requests.Response object.
+    """
     # initial value
     context.response = None
 
@@ -38,11 +42,13 @@ def request_endpoint_with_body(
 def request_endpoint_with_json(
     context: Context, endpoint: str, hostname: str, port: int
 ) -> None:
-    """Perform a request to the local server with a given JSON in the request.
-
-    The JSON payload is parsed from `context.text`, which must not
-    be None in order for this step to succeed. The response is
-    saved to `context.response` attribute.
+    """
+    Send an HTTP GET to a local server endpoint using JSON parsed from context.text.
+    
+    Parses JSON from context.text and sends it as the request payload; stores the resulting Response on context.response.
+    
+    Raises:
+        AssertionError: if context.text is None (payload must be provided).
     """
     # initial value
     context.response = None
@@ -63,11 +69,10 @@ def request_endpoint_with_json(
 def request_endpoint_with_url_params(
     context: Context, endpoint: str, hostname: str, port: int
 ) -> None:
-    """Perform a request to the server defined by URL to a given endpoint.
-
-    The function asserts that `context.table` is provided and uses
-    its rows to build the query parameters for the request. The
-    HTTP response is stored in `context.response` attribute.
+    """
+    Send an HTTP GET to the specified endpoint using query parameters built from context.table.
+    
+    Expects context.table to be present with rows containing 'param' and 'value' keys; those rows are converted into URL query parameters. The HTTP response is stored on context.response.
     """
     params = {}
 
@@ -93,7 +98,16 @@ def request_endpoint_with_url_params(
 def request_endpoint_with_url_path(
     context: Context, endpoint: str, hostname: str, port: int, path: str
 ) -> None:
-    """Perform a request to the server defined by URL to a given endpoint."""
+    """
+    Send an HTTP GET to the specified host and port, targeting the given endpoint with an additional path segment.
+    
+    Parameters:
+        context (Context): Behave context used to store the response in `context.response`.
+        endpoint (str): Endpoint path segment appended after the host and port (e.g., "api/v1/resource").
+        hostname (str): Hostname of the target service.
+        port (int): Port of the target service.
+        path (str): Additional path segment appended after the endpoint.
+    """
     # initial value
     context.response = None
 
@@ -106,7 +120,11 @@ def request_endpoint_with_url_path(
 
 @when("I request the {endpoint} endpoint in {hostname:w}:{port:d}")
 def request_endpoint(context: Context, endpoint: str, hostname: str, port: int) -> None:
-    """Perform a request to the local server to the given endpoint."""
+    """
+    Perform an HTTP GET to the constructed URL and store the response on the Behave context.
+    
+    Performs a GET request to "http://{hostname}:{port}/{endpoint}" using DEFAULT_TIMEOUT seconds and assigns the resulting requests.Response to `context.response`.
+    """
     # initial value
     context.response = None
 
@@ -118,7 +136,14 @@ def request_endpoint(context: Context, endpoint: str, hostname: str, port: int) 
 
 @step("The status code of the response is {status:d}")
 def check_status_code(context: Context, status: int) -> None:
-    """Check the HTTP status code for latest response from tested service."""
+    """
+    Assert that the last HTTP response has the given status code.
+    
+    If no request has been performed, the step fails. On mismatch, the failure message includes the response body (parsed as JSON when possible, otherwise raw text) to aid debugging.
+    
+    Parameters:
+        status (int): Expected HTTP status code.
+    """
     assert context.response is not None, "Request needs to be performed first"
     if context.response.status_code != status:
         # Include response body in error message for debugging
@@ -134,7 +159,12 @@ def check_status_code(context: Context, status: int) -> None:
 
 @then('Content type of response should be set to "{content_type}"')
 def check_content_type(context: Context, content_type: str) -> None:
-    """Check the HTTP content type for latest response from tested service."""
+    """
+    Validate that the most recent HTTP response's Content-Type header begins with the given value.
+    
+    Parameters:
+        content_type (str): Expected Content-Type prefix (e.g., "application/json"); the response header must start with this value.
+    """
     assert context.response is not None, "Request needs to be performed first"
     headers = context.response.headers
     assert "content-type" in headers, "Content type is not specified"
@@ -144,11 +174,10 @@ def check_content_type(context: Context, content_type: str) -> None:
 
 @then("The body of the response has the following schema")
 def check_response_body_schema(context: Context) -> None:
-    """Check that response body is compliant with a given schema.
-
-    Asserts that a response has been received and that a schema is
-    present in `context.text` attribute. Loads the schema from
-    `context.text` attribute and validates the response body.
+    """
+    Validate the JSON response body against a JSON schema provided in context.text.
+    
+    Asserts that a response exists and that context.text contains a schema, then parses the schema and the response body and validates them using validate_json.
     """
     assert context.response is not None, "Request needs to be performed first"
     assert context.text is not None, "Response does not contain any payload"
@@ -169,11 +198,10 @@ def check_response_body_contains(context: Context, substring: str) -> None:
 
 @then("The body of the response is the following")
 def check_prediction_result(context: Context) -> None:
-    """Check the content of the response to be exactly the same.
-
-    Raises an assertion error if the response is missing, the
-    expected payload is not provided, or if the actual and expected
-    JSON objects differ.
+    """
+    Assert that the HTTP response JSON exactly matches the expected JSON payload after placeholder replacement.
+    
+    Parses the expected JSON from context.text, applies placeholder replacement via replace_placeholders(context, ...), and compares it to context.response.json(). Raises an AssertionError if a response is missing, if no expected payload is provided, or if the actual and expected JSON objects differ; on mismatch the assertion message includes the actual and expected values.
     """
     assert context.response is not None, "Request needs to be performed first"
     assert context.text is not None, "Response does not contain any payload"
@@ -190,13 +218,11 @@ def check_prediction_result(context: Context) -> None:
 
 @then('The body of the response, ignoring the "{field}" field, is the following')
 def check_prediction_result_ignoring_field(context: Context, field: str) -> None:
-    """Check the content of the response to be exactly the same.
-
-    Asserts that the JSON response body matches the expected JSON
-    payload, ignoring a specified field.
-
+    """
+    Assert that the JSON response body equals the expected JSON payload provided in the step text, after removing a specified field from both.
+    
     Parameters:
-        field (str): The name of the field to exclude from both the actual and expected JSON objects during comparison.
+        field (str): The key name to remove from both the expected JSON (from `context.text`) and the actual response JSON before comparison.
     """
     assert context.response is not None, "Request needs to be performed first"
     assert context.text is not None, "Response does not contain any payload"
@@ -224,13 +250,22 @@ def set_service_port(context: Context, port: int) -> None:
 
 @step("REST API service prefix is {prefix}")
 def set_rest_api_prefix(context: Context, prefix: str) -> None:
-    """Set REST API prefix to be used in following steps."""
+    """
+    Set the REST API path prefix used by subsequent HTTP step implementations.
+    
+    Parameters:
+        prefix (str): The API prefix to apply to REST endpoints (stored on the test context as `api_prefix`, e.g. "api/v1" or "/api").
+    """
     context.api_prefix = prefix
 
 
 @when("I access endpoint {endpoint} using HTTP GET method")
 def access_non_rest_api_endpoint_get(context: Context, endpoint: str) -> None:
-    """Send GET HTTP request to tested service."""
+    """
+    Send an HTTP GET request to a non-REST endpoint on the configured host and port and store the response in the test context.
+    
+    The endpoint is normalized and combined with context.hostname and context.port to form the URL; the response is assigned to `context.response`. The request uses the module `DEFAULT_TIMEOUT`.
+    """
     endpoint = normalize_endpoint(endpoint)
     base = f"http://{context.hostname}:{context.port}"
     path = f"{endpoint}".replace("//", "/")
@@ -245,7 +280,14 @@ def access_non_rest_api_endpoint_get(context: Context, endpoint: str) -> None:
 
 @when("I access REST API endpoint {endpoint} using HTTP GET method")
 def access_rest_api_endpoint_get(context: Context, endpoint: str) -> None:
-    """Send GET HTTP request to tested service."""
+    """
+    Perform a GET request against the REST API endpoint using the hostname, port and api_prefix stored in the context and include any optional auth headers from context.
+    
+    The HTTP response is saved to context.response.
+    
+    Parameters:
+        endpoint (str): REST endpoint path relative to the configured api_prefix (leading/trailing slashes are normalized).
+    """
     endpoint = normalize_endpoint(endpoint)
     base = f"http://{context.hostname}:{context.port}"
     path = f"{context.api_prefix}/{endpoint}".replace("//", "/")
@@ -260,11 +302,10 @@ def access_rest_api_endpoint_get(context: Context, endpoint: str) -> None:
 
 @when("I access endpoint {endpoint} using HTTP POST method")
 def access_non_rest_api_endpoint_post(context: Context, endpoint: str) -> None:
-    """Send POST HTTP request with JSON payload to tested service.
-
-    The JSON payload is retrieved from `context.text` attribute,
-    which must not be None. The response is stored in
-    `context.response` attribute.
+    """
+    Send a POST request with a JSON payload taken from context.text to the configured non-REST endpoint.
+    
+    The payload is parsed from context.text (must be present). The request is sent to http://{context.hostname}:{context.port}{endpoint} and any headers in context.auth_headers are used if available. The HTTP response is stored on context.response.
     """
     endpoint = normalize_endpoint(endpoint)
     base = f"http://{context.hostname}:{context.port}"
@@ -285,11 +326,15 @@ def access_non_rest_api_endpoint_post(context: Context, endpoint: str) -> None:
 
 @when("I access REST API endpoint {endpoint} using HTTP POST method")
 def access_rest_api_endpoint_post(context: Context, endpoint: str) -> None:
-    """Send POST HTTP request with JSON payload to tested service.
-
-    The JSON payload is retrieved from `context.text` attribute,
-    which must not be None. The response is stored in
-    `context.response` attribute.
+    """
+    Send a POST request with a JSON body to the REST API endpoint.
+    
+    The JSON payload is read from `context.text` and parsed with `json.loads`; `context.text` must not be None.
+    If `context` has `auth_headers`, they are used as the request headers. The received response is stored in
+    `context.response`.
+    
+    Raises:
+        AssertionError: If `context.text` is None.
     """
     endpoint = normalize_endpoint(endpoint)
     base = f"http://{context.hostname}:{context.port}"
@@ -310,11 +355,10 @@ def access_rest_api_endpoint_post(context: Context, endpoint: str) -> None:
 
 @when("I access REST API endpoint {endpoint} using HTTP PUT method")
 def access_rest_api_endpoint_put(context: Context, endpoint: str) -> None:
-    """Send PUT HTTP request with JSON payload to tested service.
-
-    The JSON payload is retrieved from `context.text` attribute,
-    which must not be None. The response is stored in
-    `context.response` attribute.
+    """
+    Send a PUT request with a JSON payload taken from context.text to the REST API endpoint constructed from context.hostname, context.port and context.api_prefix, and store the HTTP response in context.response.
+    
+    Asserts that context.text is provided; parses it as JSON for the request body. If present, uses context.auth_headers for request headers.
     """
     endpoint = normalize_endpoint(endpoint)
     base = f"http://{context.hostname}:{context.port}"
@@ -335,7 +379,17 @@ def access_rest_api_endpoint_put(context: Context, endpoint: str) -> None:
 
 @then('The status message of the response is "{expected_message}"')
 def check_status_of_response(context: Context, expected_message: str) -> None:
-    """Check the actual message/value in status attribute."""
+    """
+    Validate that the JSON response contains a "status" field equal to the expected message.
+    
+    Checks that a response is present, that its body parses as JSON and contains a "status" key, and asserts the value equals expected_message.
+    
+    Parameters:
+        expected_message (str): The expected value of the response's "status" field.
+    
+    Raises:
+        AssertionError: If no response has been recorded, the body is not valid JSON, the "status" key is missing, or its value does not match expected_message.
+    """
     assert context.response is not None, "Send request to service first"
 
     # try to parse response body as JSON
@@ -352,7 +406,15 @@ def check_status_of_response(context: Context, expected_message: str) -> None:
 
 @then("I should see attribute named {attribute:w} in response")
 def check_attribute_presence(context: Context, attribute: str) -> None:
-    """Check if given attribute is returned in HTTP response."""
+    """
+    Assert that the given key is present in the JSON body of the last HTTP response.
+    
+    Parameters:
+        attribute (str): The JSON key expected to be present in the response body.
+    
+    Raises:
+        AssertionError: If no request has been performed, if the response body is not valid JSON, or if `attribute` is not present in the JSON.
+    """
     assert context.response is not None, "Request needs to be performed first"
     json = context.response.json()
     assert json is not None
@@ -362,7 +424,15 @@ def check_attribute_presence(context: Context, attribute: str) -> None:
 
 @then("Attribute {attribute:w} should be null")
 def check_for_null_attribute(context: Context, attribute: str) -> None:
-    """Check if given attribute returned in HTTP response is null."""
+    """
+    Verify that the specified attribute in the JSON response has a null value.
+    
+    Parameters:
+        attribute (str): Name of the JSON attribute to check.
+    
+    Raises:
+        AssertionError: If no prior response exists, the response body is not JSON, the attribute is missing, or the attribute's value is not null.
+    """
     assert context.response is not None, "Request needs to be performed first"
     json = context.response.json()
     assert json is not None

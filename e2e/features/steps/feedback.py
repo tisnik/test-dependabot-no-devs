@@ -13,7 +13,11 @@ DEFAULT_TIMEOUT = 10
 
 @step("The feedback is enabled")  # type: ignore
 def enable_feedback(context: Context) -> None:
-    """Enable the feedback endpoint and assert success."""
+    """
+    Enable the feedback endpoint.
+    
+    Sends a PUT request with payload {"status": True} to set feedback status to enabled and stores the HTTP response on the `context`.
+    """
     assert context is not None
     payload = {"status": True}
     access_feedback_put_endpoint(context, payload)
@@ -29,14 +33,28 @@ def disable_feedback(context: Context) -> None:
 
 @when("I update feedback status with")  # type: ignore
 def set_feedback(context: Context) -> None:
-    """Enable or disable feedback via PUT request."""
+    """
+    Update the feedback status using a JSON payload taken from the step context.
+    
+    Parses JSON from `context.text` and sends it to the feedback PUT endpoint.
+    
+    Raises:
+        AssertionError: If `context.text` is not provided.
+    """
     assert context.text is not None, "Payload needs to be specified"
     payload = json.loads(context.text or "{}")
     access_feedback_put_endpoint(context, payload)
 
 
 def access_feedback_put_endpoint(context: Context, payload: dict) -> None:
-    """Update feedback using a JSON payload."""
+    """
+    Send a PUT request to update the feedback status.
+    
+    Sends the given dictionary as a JSON body to the feedback status endpoint and stores the HTTP response on context.response.
+    
+    Parameters:
+        payload (dict): JSON-serializable payload to send in the PUT request (e.g., {"status": True}).
+    """
     assert context is not None
     endpoint = "feedback/status"
     base = f"http://{context.hostname}:{context.port}"
@@ -49,7 +67,12 @@ def access_feedback_put_endpoint(context: Context, payload: dict) -> None:
 
 @when("I submit the following feedback for the conversation created before")  # type: ignore
 def submit_feedback_valid_conversation(context: Context) -> None:
-    """Submit feedback for previousl created conversation."""
+    """
+    Submit feedback for the conversation previously created and stored on the Behave context.
+    
+    Raises:
+        AssertionError: If the context has no `conversation_id` or it is None.
+    """
     assert (
         hasattr(context, "conversation_id") and context.conversation_id is not None
     ), "Conversation for feedback submission is not created"
@@ -60,20 +83,37 @@ def submit_feedback_valid_conversation(context: Context) -> None:
 def submit_feedback_nonexisting_conversation(
     context: Context, conversation_id: str
 ) -> None:
-    """Submit feedback for a non-existing conversation ID."""
+    """
+    Submit feedback using the given conversation ID that is expected not to exist.
+    
+    Parameters:
+        context (Context): Behave context carrying request configuration and where the response will be stored.
+        conversation_id (str): Conversation ID to include in the feedback payload; intended to reference a non-existing conversation.
+    """
     access_feedback_post_endpoint(context, conversation_id)
 
 
 @when("I submit the following feedback without specifying conversation ID")  # type: ignore
 def submit_feedback_without_conversation(context: Context) -> None:
-    """Submit feedback with no conversation ID."""
+    """
+    Submit feedback without including a conversation identifier.
+    
+    Uses the step's text as the JSON payload and posts it to the feedback endpoint with no `conversation_id`; the HTTP response is stored on `context.response`.
+    """
     access_feedback_post_endpoint(context, None)
 
 
 def access_feedback_post_endpoint(
     context: Context, conversation_id: str | None
 ) -> None:
-    """Send POST HTTP request with JSON payload to tested service."""
+    """
+    Submit the JSON payload from the step context to the server's feedback endpoint.
+    
+    Loads JSON from context.text (defaults to {}), injects the provided conversation_id into the payload when not None, sends the payload to the "feedback" endpoint using context.auth_headers if present, and stores the HTTP response on context.response.
+    
+    Parameters:
+        conversation_id (str | None): Optional conversation identifier to include in the payload.
+    """
     endpoint = "feedback"
     base = f"http://{context.hostname}:{context.port}"
     path = f"{context.api_prefix}/{endpoint}".replace("//", "/")
@@ -93,7 +133,17 @@ def access_feedback_get_endpoint(context: Context) -> None:
 
 @given("A new conversation is initialized")  # type: ignore
 def initialize_conversation(context: Context) -> None:
-    """Create a conversation for submitting feedback."""
+    """
+    Initialize a new conversation and record its ID on the test context.
+    
+    Sends a request to the API to create a conversation, stores the returned `conversation_id` on
+    `context.conversation_id`, appends it to `context.feedback_conversations`, and saves the HTTP
+    response on `context.response`.
+    
+    Raises:
+        AssertionError: If the API response status is not 200 or the response does not contain a
+        `conversation_id`.
+    """
     endpoint = "query"
     base = f"http://{context.hostname}:{context.port}"
     path = f"{context.api_prefix}/{endpoint}".replace("//", "/")
@@ -115,6 +165,11 @@ def initialize_conversation(context: Context) -> None:
 
 @given("An invalid feedback storage path is configured")  # type: ignore
 def configure_invalid_feedback_storage_path(context: Context) -> None:
-    """Set an invalid feedback storage path and restart the container."""
+    """
+    Apply the scenario's configuration to set an invalid feedback storage path and restart the test container.
+    
+    Parameters:
+        context (Context): Behave context containing `scenario_config`; the config is applied via `switch_config` and the container named "lightspeed-stack" is restarted.
+    """
     switch_config(context.scenario_config)
     restart_container("lightspeed-stack")

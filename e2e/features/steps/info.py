@@ -8,7 +8,15 @@ from behave.runner import Context
 
 @then("The body of the response has proper name {service_name} and version {version}")
 def check_name_version(context: Context, service_name: str, version: str) -> None:
-    """Check proper service name and version number."""
+    """
+    Verify the response JSON contains the expected service name and version.
+    
+    Asserts that the parsed response JSON exists and that its "name" equals service_name and its "service_version" equals version; assertion failures include the actual values.
+    
+    Parameters:
+        service_name (str): Expected value for the response "name" field.
+        version (str): Expected value for the response "service_version" field.
+    """
     response_json = context.response.json()
     assert response_json is not None, "Response is not valid JSON"
 
@@ -20,7 +28,17 @@ def check_name_version(context: Context, service_name: str, version: str) -> Non
 
 @then("The body of the response has llama-stack version {llama_version}")
 def check_llama_version(context: Context, llama_version: str) -> None:
-    """Check proper llama-stack version number."""
+    """
+    Verify that the response's llama-stack version matches the expected semantic version.
+    
+    Checks the response JSON's "llama_stack_version" for a semantic version substring (major.minor.patch) and asserts it equals the provided `llama_version`.
+    
+    Parameters:
+        llama_version (str): Expected semantic version string in the form "X.Y.Z" (e.g., "1.2.3").
+    
+    Raises:
+        AssertionError: If the response is not valid JSON, a semantic version cannot be extracted, or the extracted version does not equal `llama_version`.
+    """
     response_json = context.response.json()
     assert response_json is not None, "Response is not valid JSON"
 
@@ -37,7 +55,11 @@ def check_llama_version(context: Context, llama_version: str) -> None:
 
 @then("The body of the response has proper model structure")
 def check_model_structure(context: Context) -> None:
-    """Check that the expected LLM model has the correct structure and required fields."""
+    """
+    Validate that the response contains an LLM model matching the expected provider and model, and that the model's required fields have the correct values.
+    
+    This step expects the HTTP response JSON to include a non-empty "models" list and uses context.default_model and context.default_provider to identify the target model. It asserts the presence of a model with api_model_type "llm" and matching provider_id/provider_resource_id, and verifies the model's fields: "type" equals "model", "api_model_type" and "model_type" equal "llm", "provider_id" and "provider_resource_id" match the expected values, and "identifier" equals "{provider}/{model}".
+    """
     response_json = context.response.json()
     assert response_json is not None, "Response is not valid JSON"
 
@@ -88,7 +110,14 @@ def check_model_structure(context: Context) -> None:
 
 @then("The body of the response has proper shield structure")
 def check_shield_structure(context: Context) -> None:
-    """Check that the first shield has the correct structure and required fields."""
+    """
+    Validate the first shield entry in the response has the required structure and expected values.
+    
+    Checks that the response JSON contains a non-empty "shields" list, locates the first entry with "type" equal to "shield", and verifies that its "type" is "shield", "provider_id" is "llama-guard", "provider_resource_id" equals context.default_model, and "identifier" is "llama-guard-shield".
+    
+    Parameters:
+        context (behave.runner.Context): Test context containing `response` (with .json()), and `default_model`.
+    """
     response_json = context.response.json()
     assert response_json is not None, "Response is not valid JSON"
 
@@ -122,7 +151,14 @@ def check_shield_structure(context: Context) -> None:
 
 @then("The response contains {count:d} tools listed for provider {provider_name}")
 def check_tool_count(context: Context, count: int, provider_name: str) -> None:
-    """Check that the number of tools for defined provider is correct."""
+    """
+    Verify the response contains exactly the expected number of tools for the specified provider.
+    
+    Parameters:
+    	context (Context): Behave context whose `response.json()` contains the payload with a "tools" list.
+    	count (int): Expected number of tools for the provider.
+    	provider_name (str): The provider_id to filter tools by.
+    """
     response_json = context.response.json()
     assert response_json is not None, "Response is not valid JSON"
 
@@ -141,7 +177,14 @@ def check_tool_count(context: Context, count: int, provider_name: str) -> None:
 
 @then("The body of the response has proper structure for provider {provider_name}")
 def check_tool_structure(context: Context, provider_name: str) -> None:
-    """Check that the first listed tool for defined provider has the correct structure."""
+    """
+    Validate that the first tool for the given provider matches the expected tool JSON provided in the step context.
+    
+    Loads expected JSON from context.text and compares it to the first tool in response.json()["tools"] whose "provider_id" equals provider_name. The comparison verifies the fields: identifier, description, provider_id, toolgroup_id, server_source, and type.
+    
+    Parameters:
+        provider_name (str): Provider identifier used to select which tool to validate.
+    """
     response_json = context.response.json()
     assert response_json is not None, "Response is not valid JSON"
 
