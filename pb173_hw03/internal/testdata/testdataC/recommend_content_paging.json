@@ -1,0 +1,55 @@
+{
+  "request": {
+    "contentId": "00000000-0000-0000-0000-111111111111",
+    "query": {
+      "offset": 1,
+      "limit": 2
+    }
+  },
+  "preload": [
+    { "contentId": "00000000-0000-0000-0000-111111111111", 
+      "userId": "00000000-0000-0000-1111-111111111111", 
+      "review": "Good", 
+      "title": "Requested content.",
+      "score": 50,
+      "genres": ["drama", "fantasy"]
+    },
+    { "contentId": "00000000-0000-0000-0000-222222222222", 
+      "userId": "00000000-0000-0000-2222-111111111111", 
+      "review": "Nice", 
+      "title": "Recommended on genres content 1.",
+      "score": 10,
+      "genres": ["drama", "fantasy"]
+    },
+    { "contentId": "00000000-0000-0000-0000-333333333333", 
+      "userId": "00000000-0000-0000-2222-111111111111", 
+      "review": "Nice", 
+      "title": "Recommended on genres content 2.",
+      "score": 60,
+      "genres": ["drama", "sport"]
+    },
+    { "contentId": "00000000-0000-0000-0000-444444444444", 
+      "userId": "00000000-0000-0000-2222-111111111111", 
+      "review": "Nice", 
+      "title": "Recommended on genres content 3.",
+      "score": 70,
+      "genres": ["historical", "fantasy"]
+    }
+
+  ],
+  "expectedResponse": {
+    "status": "success",
+    "data": {
+      "recommendations": [
+        {
+          "id": "00000000-0000-0000-0000-333333333333",
+          "title": "Recommended on genres content 2."
+        },
+        {
+          "id": "00000000-0000-0000-0000-444444444444",
+          "title": "Recommended on genres content 3."
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,55 @@
+{
+  "request": {
+    "userId": "00000000-0000-0000-0000-111111111111",
+    "query": {
+      "offset": 1,
+      "limit": 2
+    }
+  },
+  "preload": [
+    {
+      "userId": "00000000-0000-0000-0000-222222222222",
+      "contentId": "11111111-2222-3333-4444-111111111111",
+      "score": 100,
+      "title": "First",
+      "review": "Great sci-fi movie!"
+    },
+    {
+      "userId": "00000000-0000-0000-0000-333333333333",
+      "contentId": "11111111-2222-3333-4444-222222222222",
+      "score": 10,
+      "title": "Second",
+      "review": "Great sci-fi movie!"
+    },
+    {
+      "userId": "00000000-0000-0000-0000-333333333333",
+      "contentId": "11111111-2222-3333-4444-333333333333",
+      "score": 50,
+      "title": "Third",
+      "review": "Great sci-fi movie!"
+    },
+    {
+      "userId": "00000000-0000-0000-0000-111111111111",
+      "contentId": "11111111-2222-3333-4444-666666666666",
+      "score": 50,
+      "title": "HarryPotter",
+      "review": "Great fantasy movie!"
+    }
+  ],
+  "expectedResponse": {
+    "status": "success",
+    "data": {
+      "recommendations": [
+        {
+          "id": "11111111-2222-3333-4444-333333333333",
+          "title": "Third"
+        },
+        {
+          "id": "11111111-2222-3333-4444-222222222222",
+          "title": "Second"
+        }
+      ]
+    }
+  }
+}
+

@@ -1,0 +1,21 @@
+{
+  "request": {
+    "data": {
+      "reviews": [
+        {
+          "userId": "00000000-0000-0000-0000-111111111111",
+          "contentId": "00000000-0000-0000-1111-111111111111",
+          "review": "Nice movie",
+          "score": 50,
+          "origins": [""] 
+        }
+      ]
+    }
+  },
+  "expectedResponse": {
+    "status": "fail",
+    "data": {
+        "origins": "Cannot contain empty strings."
+    }
+  }
+}

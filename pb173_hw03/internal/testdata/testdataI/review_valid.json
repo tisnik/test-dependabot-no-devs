@@ -1,0 +1,46 @@
+{
+  "request": {
+    "data": {
+      "reviews": [
+        {
+          "userId": "00000000-0000-0000-0000-111111111111",
+          "contentId": "00000000-0000-0000-1111-111111111111",
+          "review": "Nice movie",
+          "score": 50,
+          "actors": ["Tim Robbins"],
+          "title": "Some Movie",
+          "genres": ["drama"],
+          "tags": ["tag1"],
+          "description": "Movie description",
+          "director": "Director Name",
+          "origins": ["USA"],
+          "duration": 7200,
+          "released": "2022-01-01"
+        }
+      ]
+    }
+  },
+  "expectedResponse": {
+    "status": "success",
+    "data": {
+      "reviews": [
+        {
+          "userId": "00000000-0000-0000-0000-111111111111",
+          "contentId": "00000000-0000-0000-1111-111111111111",
+          "review": "Nice movie",
+          "score": 50,
+          "actors": ["Tim Robbins"],
+          "title": "Some Movie",
+          "genres": ["drama"],
+          "tags": ["tag1"],
+          "description": "Movie description",
+          "director": "Director Name",
+          "origins": ["USA"],
+          "duration": 7200,
+          "released": "2022-01-01",
+          "id": "any-uuid"  
+        }
+      ]
+    }
+  }
+}

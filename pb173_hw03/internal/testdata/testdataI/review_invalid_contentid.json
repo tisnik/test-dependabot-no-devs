@@ -1,0 +1,21 @@
+  {
+  "request": {
+    "data": {
+      "reviews": [
+        {
+          "userId": "00000000-0000-0000-0000-111111111111",
+          "contentId": "not-a-uuid",
+          "review": "Nice movie",
+          "score": 50
+        }
+      ]
+    }
+  },
+  "expectedResponse": {
+    "status": "fail",
+    "data": {
+        "contentId": "ID is not a valid UUID."
+    }
+  }
+}
+  

@@ -1,0 +1,12 @@
+{
+  "request": {
+    "contentId": "00000000-0000-0000-0000-111111111111",
+    "query": {}
+  },
+  "expectedResponse": {
+    "status": "fail",
+    "data": {
+      "contentId": "Content with such ID not found."
+    }
+  }
+}

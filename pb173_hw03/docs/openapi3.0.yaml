@@ -1,0 +1,361 @@
+openapi: 3.0.3
+info:
+  title: ReelGoofy API
+  version: '1.0.0'
+  description: |
+    ### The recommendation service can:
+    * Ingest and delete review data
+    * Recommend content to content
+    * Recommend content to users
+
+    The response types comply with the simple [JSend](https://github.com/omniti-labs/jsend) standard.
+  license:
+    name: CC BY-SA 4.0 DEED
+    url: https://creativecommons.org/licenses/by-sa/4.0/deed.en
+servers:
+  - url: http://localhost:{port}/{basePath}
+    description: Localhost development server
+    variables:
+      port:
+        default: '8080'
+      basePath:
+        default: api/v1
+tags:
+  - name: reviews
+    description: Content review endpoints
+  - name: recommendations
+    description: Content recommendation endpoints
+paths:
+  /reviews:
+    post:
+      tags:
+        - reviews
+      summary: Ingest review data
+      description: Ingest new review data. Recommendations are then made using this review data.
+      operationId: ingestReviews
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/rawReviewsRequest'
+      responses:
+        '201':
+          description: Successfully ingested reviews
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/reviewsSuccessResponse'
+        '400':
+          description: Supplied data format or review values are invalid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/reviewsFailResponse'
+        '500':
+          description: Internal server error occurred
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/reviewsErrorResponse'
+  /reviews/{reviewId}:
+    delete:
+      tags:
+        - reviews
+      summary: Delete review data
+      description: Deletes review data related to the given ID.
+      operationId: deleteReview
+      parameters:
+        - name: reviewId
+          in: path
+          description: ID of review that will be deleted.
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successfully deleted review
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/reviewsSuccessResponse'
+        '400':
+          description: Supplied data is invalid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/reviewsFailResponse'
+        '404':
+          description: No such review found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/reviewsFailResponse'
+        '500':
+          description: Internal server error occurred
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/reviewsErrorResponse'
+  /recommendations/content/{contentId}/content:
+    get:
+      tags:
+        - recommendations
+      summary: Recommend content to content
+      description: Recommends content to a content specified by the contentId based on available review data.
+      operationId: recommendContentToContent
+      parameters:
+        - name: contentId
+          in: path
+          description: ID of content from which the recommendations are made.
+          required: true
+          schema:
+            type: string
+        - name: limit
+          in: query
+          description: Pagination limit
+          required: false
+          schema:
+            type: integer
+        - name: offset
+          in: query
+          description: Pagination offset
+          required: false
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Successfully recommended content
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/recommendationsSuccessResponse'
+        '400':
+          description: Supplied data format is invalid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/recommendationsFailResponse'
+        '404':
+          description: No such content found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/recommendationsFailResponse'
+        '500':
+          description: Internal server error occurred
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/recommendationsErrorResponse'
+  /recommendations/users/{userId}/content:
+    get:
+      tags:
+        - recommendations
+      summary: Recommend content to user
+      description: Recommends content to a user specified by the userId based on available review data.
+      operationId: recommendContentToUser
+      parameters:
+        - name: userId
+          in: path
+          description: ID of user for which the recommendations are made.
+          required: true
+          schema:
+            type: string
+        - name: limit
+          in: query
+          description: Pagination limit
+          required: false
+          schema:
+            type: integer
+        - name: offset
+          in: query
+          description: Pagination offset
+          required: false
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Successfully recommended content
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/recommendationsSuccessResponse'
+        '400':
+          description: Supplied data format is invalid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/recommendationsFailResponse'
+        '404':
+          description: No such user found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/recommendationsFailResponse'
+        '500':
+          description: Internal server error occurred
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/recommendationsErrorResponse'
+components:
+  schemas:
+    rawReview:
+      type: object
+      required:
+        - contentId
+        - userId
+        - review
+        - score
+      properties:
+        contentId:
+          type: string
+        userId:
+          type: string
+        title:
+          type: string
+        genres:
+          type: array
+          items:
+            type: string
+        tags:
+          type: array
+          items:
+            type: string
+        description:
+          type: string
+        director:
+          type: string
+        actors:
+          type: array
+          items:
+            type: string
+        origins:
+          type: array
+          items:
+            type: string
+        duration:
+          type: integer
+        released:
+          type: string
+        review:
+          type: string
+        score:
+          type: integer
+          nullable: true
+    review:
+      allOf:
+        - type: object
+          required:
+            - id
+          properties:
+            id:
+              type: string
+        - $ref: '#/components/schemas/rawReview'
+    rawReviews:
+      type: object
+      properties:
+        reviews:
+          type: array
+          items:
+            $ref: '#/components/schemas/rawReview'
+    reviews:
+      type: object
+      properties:
+        reviews:
+          type: array
+          items:
+            $ref: '#/components/schemas/review'
+    recommendation:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+    recommendations:
+      type: object
+      properties:
+        recommendations:
+          type: array
+          items:
+            $ref: '#/components/schemas/recommendation'
+    status:
+      type: string
+      enum: [success, fail, error]
+    rawReviewsRequest:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/rawReviews'
+    reviewsSuccessResponse:
+      type: object
+      required:
+        - status
+        - data
+      properties:
+        status:
+          $ref: '#/components/schemas/status'
+        data:
+          $ref: '#/components/schemas/reviews'
+    reviewsFailResponse:
+      type: object
+      required:
+        - status
+        - data
+      properties:
+        status:
+          $ref: '#/components/schemas/status'
+        data:
+          type: object
+    reviewsErrorResponse:
+      type: object
+      required:
+        - status
+        - message
+      properties:
+        status:
+          $ref: '#/components/schemas/status'
+        message:
+          type: string
+        code:
+          type: integer
+        data:
+          type: object
+    recommendationsSuccessResponse:
+      type: object
+      required:
+        - status
+        - data
+      properties:
+        status:
+          $ref: '#/components/schemas/status'
+        data:
+          $ref: '#/components/schemas/recommendations'
+    recommendationsFailResponse:
+      type: object
+      required:
+        - status
+        - data
+      properties:
+        status:
+          $ref: '#/components/schemas/status'
+        data:
+          type: object
+    recommendationsErrorResponse:
+      type: object
+      required:
+        - status
+        - message
+      properties:
+        status:
+          $ref: '#/components/schemas/status'
+        message:
+          type: string
+        code:
+          type: integer
+        data:
+          type: object

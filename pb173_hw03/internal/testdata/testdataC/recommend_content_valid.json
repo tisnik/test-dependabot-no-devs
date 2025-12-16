@@ -1,0 +1,33 @@
+{
+  "request": {
+    "contentId": "00000000-0000-0000-0000-111111111111",
+    "query": {}
+  },
+  "preload": [
+    { "contentId": "00000000-0000-0000-0000-111111111111", 
+      "userId": "00000000-0000-0000-1111-111111111111", 
+      "review": "Good", 
+      "title": "Requested content.",
+      "score": 50,
+      "genres": ["drama", "fantasy"]
+    },
+    { "contentId": "00000000-0000-0000-0000-222222222222", 
+      "userId": "00000000-0000-0000-2222-111111111111", 
+      "review": "Nice", 
+      "title": "Recommended on genres content.",
+      "score": 70,
+      "genres": ["drama", "fantasy"]
+    }
+  ],
+  "expectedResponse": {
+    "status": "success",
+    "data": {
+      "recommendations": [
+        {
+          "id": "00000000-0000-0000-0000-222222222222",
+          "title": "Recommended on genres content."
+        }
+      ]
+    }
+  }
+}

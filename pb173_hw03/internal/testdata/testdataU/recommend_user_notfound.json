@@ -1,0 +1,12 @@
+{
+  "request": {
+    "userId": "00000000-0000-0000-0000-111111111111",
+    "query": {}
+  },
+  "expectedResponse": {
+    "status": "fail",
+    "data": {
+      "userId": "User with such ID not found."
+    }
+  }
+}

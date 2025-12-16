@@ -1,0 +1,19 @@
+{
+  "request": {
+    "data": {
+      "reviews": [
+        {
+          "userId": "00000000-0000-0000-0000-111111111111",
+          "contentId": "00000000-0000-0000-1111-111111111111",
+          "score": 50
+        }
+      ]
+    }
+  },
+  "expectedResponse": {
+    "status": "fail",
+    "data": {
+        "review": "Review is required."
+    }
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "request": {
+    "userId": "00000000-0000-0000-0000-111111111111",
+    "query": {}
+  },
+  "preload": [
+    {
+      "userId": "00000000-0000-0000-0000-222222222222",
+      "contentId": "11111111-2222-3333-4444-555555555555",
+      "score": 100,
+      "title": "StarWars",
+      "review": "Great sci-fi movie!"
+    },
+    {
+      "userId": "00000000-0000-0000-0000-333333333333",
+      "contentId": "11111111-2222-3333-4444-555555555555",
+      "score": 0,
+      "title": "StarWars",
+      "review": "Great sci-fi movie!"
+    },
+    {
+      "userId": "00000000-0000-0000-0000-111111111111",
+      "contentId": "11111111-2222-3333-4444-666666666666",
+      "score": 50,
+      "title": "HarryPotter",
+      "review": "Great fantasy movie!"
+    }
+  ],
+  "expectedResponse": {
+    "status": "success",
+    "data": {
+      "recommendations": [
+        {
+          "id": "11111111-2222-3333-4444-555555555555",
+          "title": "StarWars"
+        }
+      ]
+    }
+  }
+}
