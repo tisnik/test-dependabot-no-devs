@@ -1,0 +1,51 @@
+{
+  "data": {
+    "reviews": [
+      {
+        "contentId": "22222222-0000-0000-0000-000000000001",
+        "userId": "88888888-0000-0000-0000-000000000001",
+        "title": "Interstellar",
+        "genres": ["Sci-Fi", "Adventure", "Drama"],
+        "tags": ["space", "time", "relativity"],
+        "description": "A team of explorers travel through a wormhole in space in an attempt to ensure humanity's survival.",
+        "director": "Christopher Nolan",
+        "actors": ["Matthew McConaughey", "Anne Hathaway", "Jessica Chastain"],
+        "origins": ["USA", "UK"],
+        "duration": 10140,
+        "released": "2014-11-07",
+        "review": "A visual spectacle.",
+        "score": 95
+      },
+      {
+        "contentId": "22222222-0000-0000-0000-000000000002",
+        "userId": "88888888-0000-0000-0000-000000000002",
+        "title": "Arrival",
+        "genres": ["Sci-Fi", "Drama", "Mystery"],
+        "tags": ["aliens", "language", "time"],
+        "description": "A linguist works with the military to communicate with alien lifeforms after twelve spacecraft appear around the world.",
+        "director": "Denis Villeneuve",
+        "actors": ["Amy Adams", "Jeremy Renner", "Forest Whitaker"],
+        "origins": ["USA"],
+        "duration": 6960,
+        "released": "2016-11-11",
+        "review": "Intelligent sci-fi.",
+        "score": 92
+      },
+      {
+        "contentId": "22222222-0000-0000-0000-000000000003",
+        "userId": "88888888-0000-0000-0000-000000000002",
+        "title": "La La Land",
+        "genres": ["Comedy", "Drama", "Music"],
+        "tags": ["musical", "jazz", "hollywood"],
+        "description": "While navigating their careers in Los Angeles, a pianist and an actress fall in love while attempting to reconcile their aspirations for the future.",
+        "director": "Damien Chazelle",
+        "actors": ["Ryan Gosling", "Emma Stone", "John Legend"],
+        "origins": ["USA"],
+        "duration": 7680,
+        "released": "2016-12-09",
+        "review": "Great music.",
+        "score": 88
+      }
+    ]
+  }
+}
