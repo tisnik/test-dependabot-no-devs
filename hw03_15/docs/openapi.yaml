@@ -1,0 +1,482 @@
+---
+openapi: 3.0.3
+info:
+  title: ReelGoofy API
+  version: '1.0.0'
+  description: |
+    ### The recommendation service can:
+    * Ingest and delete review data
+    * Recommend content to content
+    * Recommend content to users
+
+    The response types comply with the simple [JSend](https://github.com/omniti-labs/jsend) standard.
+  license:
+    name: CC BY-SA 4.0 DEED
+    url: https://creativecommons.org/licenses/by-sa/4.0/deed.en
+servers:
+  - url: http://localhost:{port}/{basePath}
+    description: Localhost development server
+    variables:
+      port:
+        default: '8080'
+      basePath:
+        default: api/v1
+tags:
+  - name: reviews
+    description: Content review endpoints
+  - name: recommendations
+    description: Content recommendation endpoints
+paths:
+  /reviews:
+    post:
+      tags:
+        - reviews
+      summary: Ingest review data
+      description: Ingest new review data. Recommendations are then made using this review data.
+      operationId: ingestReviews
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/rawReviewsRequest'
+      responses:
+        '201':
+          description: Successfully ingested reviews
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/reviewsSuccessResponse'
+        '400':
+          description: Supplied data format or review values are invalid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/reviewsFailResponse'
+                examples:
+                  - status: "fail"
+                    data:
+                      contentId: ID is not a valid UUID.
+                      userId: ID is not a valid UUID.
+                      released: Invalid date formats.
+        '500':
+          description: Internal server error occurred
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/reviewsErrorResponse'
+  /reviews/{reviewId}:
+    delete:
+      tags:
+        - reviews
+      summary: Delete review data
+      description: Deletes review data related to the given ID.
+      operationId: deleteReview
+      parameters:
+        - name: reviewId
+          in: path
+          description: ID of review that will be deleted.
+          required: true
+          schema:
+            type: string
+            examples:
+              - 733b9f08-710d-4abf-93f9-7353ed2b4e08
+      responses:
+        '200':
+          description: Successfully deleted review
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/reviewsSuccessResponse'
+                examples:
+                  - status: success
+                    data: null
+        '400':
+          description: Supplied data is invalid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/reviewsFailResponse'
+                examples:
+                  - status: "fail"
+                    data:
+                      reviewId: ID is not a valid UUID.
+        '404':
+          description: No such review found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/reviewsFailResponse'
+                examples:
+                  - status: "fail"
+                    data:
+                      reviewId: Review with such ID not found.
+        '500':
+          description: Internal server error occurred
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/reviewsErrorResponse'
+  /recommendations/content/{contentId}/content:
+    get:
+      tags:
+        - recommendations
+      summary: Recommend content to content
+      description: Recommends content to a content specified by the contentId based on available review data.
+      operationId: recommendContentToContent
+      parameters:
+        - name: contentId
+          in: path
+          description: ID of content from which the recommendations are made.
+          required: true
+          schema:
+            type: string
+            examples:
+              - 4dd103ad-54d5-4bd2-a90e-57ac52e0259a
+        - name: limit
+          in: query
+          description: Pagination limit
+          required: false
+          schema:
+            type: integer
+            examples:
+              - 20
+        - name: offset
+          in: query
+          description: Pagination offset
+          required: false
+          schema:
+            type: integer
+            examples:
+              - 100
+      responses:
+        '200':
+          description: Successfully recommended content
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/recommendationsSuccessResponse'
+        '400':
+          description: Supplied data format is invalid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/recommendationsFailResponse'
+                examples:
+                  - status: "fail"
+                    data:
+                      contentID: ID is not a valid UUID.
+        '404':
+          description: No such content found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/recommendationsFailResponse'
+                examples:
+                  - status: "fail"
+                    data:
+                      contentId: Content with such ID not found.
+        '500':
+          description: Internal server error occurred
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/recommendationsErrorResponse'
+  /recommendations/users/{userId}/content:
+    get:
+      tags:
+        - recommendations
+      summary: Recommend content to user
+      description: Recommends content to a user specified by the userId based on available review data.
+      operationId: recommendContentToUser
+      parameters:
+        - name: userId
+          in: path
+          description: ID of user for which the recommendations are made.
+          required: true
+          schema:
+            type: string
+            examples:
+              - 4dd103ad-54d5-4bd2-a90e-57ac52e0259a
+        - name: limit
+          in: query
+          description: Pagination limit
+          required: false
+          schema:
+            type: integer
+            examples:
+              - 20
+        - name: offset
+          in: query
+          description: Pagination offset
+          required: false
+          schema:
+            type: integer
+            examples:
+              - 100
+      responses:
+        '200':
+          description: Successfully recommended content
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/recommendationsSuccessResponse'
+        '400':
+          description: Supplied data format is invalid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/recommendationsFailResponse'
+                examples:
+                  - status: "fail"
+                    data:
+                      limit: Limit must be non-negative integer.
+        '404':
+          description: No such user found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/recommendationsFailResponse'
+                examples:
+                  - status: "fail"
+                    data:
+                      userId: User with such ID not found.
+        '500':
+          description: Internal server error occurred
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/recommendationsErrorResponse'
+components:
+  schemas:
+    rawReview:
+      type: object
+      required:
+        - contentId
+        - userId
+        - review
+        - score
+      properties:
+        contentId:
+          type: string
+          examples:
+            - 937b33bf-066a-44f7-9a9b-d65071d27270
+            - 75fe91a7-9ebc-4029-97f7-9d99a059348d
+        userId:
+          type: string
+          examples:
+            - 2f99df7d-751c-40c9-aeea-8be8cd7bfa9a
+            - 1668d2a8-6344-4389-9797-c381c55b080b
+        title:
+          type: string
+          examples:
+            - One Flew over the Cuckoo's Nest
+        genres:
+          type: array
+          items:
+            type: string
+            examples:
+              - drama
+              - erotic
+              - thriller
+        tags:
+          type: array
+          items:
+            type: string
+            examples:
+              - suicide
+              - deception
+              - friends
+        description:
+          type: string
+          examples:
+            - A movie about gangsters.
+        director:
+          type: string
+          examples:
+            - Christopher Nolan
+            - Frank Darabont
+        actors:
+          type: array
+          items:
+            type: string
+            examples:
+              - Tim Robbins
+              - Morgan Freeman
+        origins:
+          type: array
+          items:
+            type: string
+            examples:
+              - USA
+              - CZ
+        duration:
+          type: integer
+          examples:
+            - 8520
+            - 9180
+        released:
+          type: string
+          examples:
+            - 2022-09-13
+            - 1999-01-15
+        review:
+          type: string
+          examples:
+            - I really enjoyed this one.
+        score:
+          type: integer
+          examples:
+            - 75
+            - 21
+    review:
+      allOf:
+        - type: object
+          required:
+            - id
+          properties:
+            id:
+              type: string
+              examples:
+                - 55a01151-d41f-430c-bc94-a728be36a2e0
+                - efa36036-c3cc-4498-9011-78b6afd83502
+        - $ref: '#/components/schemas/rawReview'
+    rawReviews:
+      type: object
+      properties:
+        reviews:
+          type: array
+          items:
+            $ref: '#/components/schemas/rawReview'
+    reviews:
+      type: object
+      properties:
+        reviews:
+          type: array
+          items:
+            $ref: '#/components/schemas/review'
+    recommendation:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: string
+          examples:
+            - f54bde2a-b1a4-4ff0-a703-cefd0978febb
+            - 055f5160-65d3-40e1-a54f-33838dd436ca
+            - 59ea7ce4-1355-45a6-9df1-b5346e429b58
+        title:
+          type: string
+          examples:
+            - Inglourious Basterds
+            - The Godfather
+            - Pulp Fiction
+    recommendations:
+      type: object
+      properties:
+        recommendations:
+          type: array
+          items:
+            $ref: '#/components/schemas/recommendation'
+    status:
+      type: string
+      enum: [success, fail, error]
+    rawReviewsRequest:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/rawReviews'
+    reviewsSuccessResponse:
+      type: object
+      required:
+        - status
+        - data
+      properties:
+        status:
+          $ref: '#/components/schemas/status'
+          examples:
+            - "success"
+        data:
+          $ref: '#/components/schemas/reviews'
+    reviewsFailResponse:
+      type: object
+      required:
+        - status
+        - data
+      properties:
+        status:
+          $ref: '#/components/schemas/status'
+          examples:
+            - "fail"
+        data:
+          type: object
+          examples:
+            - id: ID is not valid UUID.
+    reviewsErrorResponse:
+      type: object
+      required:
+        - status
+        - message
+      properties:
+        status:
+          $ref: '#/components/schemas/status'
+          examples:
+            - "error"
+        message:
+          type: string
+          examples:
+            - "Unable to communicate with database"
+            - "Could not contact an external service"
+        code:
+          type: integer
+          examples:
+            - 500
+        data:
+          type: object
+    recommendationsSuccessResponse:
+      type: object
+      required:
+        - status
+        - data
+      properties:
+        status:
+          $ref: '#/components/schemas/status'
+          examples:
+            - "success"
+        data:
+          $ref: '#/components/schemas/recommendations'
+    recommendationsFailResponse:
+      type: object
+      required:
+        - status
+        - data
+      properties:
+        status:
+          $ref: '#/components/schemas/status'
+          examples:
+            - "fail"
+        data:
+          type: object
+          examples:
+            - id: ID is not valid UUID.
+    recommendationsErrorResponse:
+      type: object
+      required:
+        - status
+        - message
+      properties:
+        status:
+          $ref: '#/components/schemas/status'
+          examples:
+            - "error"
+        message:
+          type: string
+          examples:
+            - "Unable to communicate with database"
+            - "Could not contact an external service"
+        code:
+          type: integer
+          examples:
+            - 500
+        data:
+          type: object

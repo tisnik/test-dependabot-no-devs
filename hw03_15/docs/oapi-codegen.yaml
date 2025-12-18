@@ -1,0 +1,6 @@
+package: api
+generate:
+  chi-server: true
+  models: true
+  strict-server: true
+output: /home/peto_priv/GO_homeworks/reelgoofy_GO_HW3/internal/api/gen.go
