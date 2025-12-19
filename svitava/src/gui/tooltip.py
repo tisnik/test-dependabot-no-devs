@@ -18,7 +18,13 @@ class Tooltip:
         self.widget.bind("<Enter>", self.enter)
         self.widget.bind("<Leave>", self.leave)
         self.widget.bind("<ButtonPress>", self.leave)
-        self.id: Optional[str] = None
+"""Create a tooltip for a given widget."""
+
+# taken from:
+# https://stackoverflow.com/questions/3221956/how-do-i-display-tooltips-in-tkinter#36221216
+
+import tkinter
+from typing import Optional
         self.tw = None
 
     def enter(self, event: tkinter.Event | None = None) -> None:
