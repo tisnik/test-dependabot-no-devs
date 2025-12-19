@@ -7,6 +7,7 @@ provider, model). This triple is also used as a primary key to this table.
 
 from log import get_logger
 import logging
+import sqlite3
 from datetime import datetime
 from typing import Optional
 
