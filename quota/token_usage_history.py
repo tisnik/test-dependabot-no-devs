@@ -73,7 +73,10 @@ class TokenUsageHistory:
     ) -> None:
         """Consume tokens by given user."""
         logger.info(
-            "Token usage for user %s, provider %s and mode %s changed by %d, %d tokens",
+            "Token usage for user %s, provider %s and model %s changed by %d, %d tokens",
+            user_id,
+            provider,
+            model,
             user_id,
             provider,
             model,
