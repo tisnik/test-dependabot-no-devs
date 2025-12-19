@@ -9,7 +9,14 @@ class Toolbar(tkinter.LabelFrame):
     """Toolbar displayed on the main window."""
 
     def __init__(self, parent: tkinter.Tk, main_window) -> None:
-        """Initialize the toolbar."""
+        """
+        Create and configure the toolbar frame and its widgets for the given main window.
+        
+        Initializes the LabelFrame labeled "Tools", creates the project load button with its icon and tooltip, adds a spacer, and arranges these widgets using the grid geometry manager.
+        
+        Parameters:
+            main_window: The application main window object that provides UI resources (for example, icon references) used by toolbar widgets.
+        """
         super().__init__(parent, text="Tools", padx=5, pady=5)
 
         self.parent = parent
@@ -33,10 +40,20 @@ class Toolbar(tkinter.LabelFrame):
 
     @staticmethod
     def disable_button(button) -> None:
-        """Disable specified button on toolbar."""
+        """
+        Disable a Tkinter button widget by setting its state to "disabled".
+        
+        Parameters:
+            button (tkinter.Button): The button widget to disable.
+        """
         button["state"] = "disabled"
 
     @staticmethod
     def enable_button(button: tkinter.Button) -> None:
-        """Enable specified button on toolbar."""
+        """
+        Enable the given Tkinter button widget.
+        
+        Parameters:
+            button (tkinter.Button): The button widget to enable; its state will be set to "normal".
+        """
         button["state"] = "normal"

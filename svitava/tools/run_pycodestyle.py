@@ -20,6 +20,11 @@ import pycodestyle
 
 
 def main():
+    """
+    Run pycodestyle on all Python files under the current directory and report the results.
+    
+    Scans the repository for "*.py" files, runs pycodestyle configured via "setup.cfg", prints the total number of style errors, and exits the process with status code 1 if any errors are found.
+    """
     files = list(Path(".").rglob("*.py"))
 
     style = pycodestyle.StyleGuide(quiet=False, config_file='setup.cfg')

@@ -24,6 +24,14 @@ from gui.dialogs.l_system_fractal_type_dialog import LSystemFractalTypeDialog
 class FractalTypeDialog(tkinter.Toplevel):
 
     def __init__(self, parent):
+        """
+        Initialize the fractal type selection dialog as a modal top-level window.
+        
+        Creates a labeled frame titled "Fractal type", adds four selectable fractal-type buttons (complex plane, dynamic system, IFS, L-system) each with color and grayscale icons and hover behavior, and a Cancel button. Registers window close handling (window manager close and Escape key) and grabs focus to make the dialog modal.
+        
+        Parameters:
+            parent: The parent widget for this dialog (typically a tkinter root or window).
+        """
         tkinter.Toplevel.__init__(self, parent)
         top_part = tkinter.LabelFrame(self, text="Fractal type", padx=5, pady=5)
         top_part.grid(row=1, column=1, sticky="NWSE")
@@ -46,6 +54,21 @@ class FractalTypeDialog(tkinter.Toplevel):
         self.grab_set()
 
     def fractal_button(self, placement, text, icon_name, row, column, command):
+        """
+        Create and place a framed button for selecting a fractal type with hoverable icons.
+        
+        Parameters:
+            placement: The parent tkinter widget or container where the button will be placed.
+            text (str): Label displayed below the icon on the button.
+            icon_name (str): Base name of the icon files located in the images/ directory (without suffix).
+            row (int): Grid row index where the button will be placed.
+            column (int): Grid column index where the button will be placed.
+            command (callable): Callback invoked when the button is clicked.
+        
+        Returns:
+            tuple: (button, icons) where `button` is the created tkinter.Button and `icons` is a two-tuple
+            (color_photoimage, bw_photoimage) of tkinter.PhotoImage objects used for hover and default states.
+        """
         icons = (
             tkinter.PhotoImage(file="images/" + icon_name + ".png"),
             tkinter.PhotoImage(file="images/" + icon_name + "_bw.png")
@@ -61,25 +84,56 @@ class FractalTypeDialog(tkinter.Toplevel):
         return button, icons
 
     def cancel(self):
+        """
+        Close and destroy the dialog window.
+        """
         self.destroy()
 
     def show(self):
+        """
+        Show the dialog and block execution until the window is closed.
+        
+        This deiconifies the toplevel window and waits for it to be destroyed, returning control after the dialog is closed.
+        """
         self.wm_deiconify()
         self.wait_window()
         # return self.rooms, self.id.get()
 
 
 def select_fractal_type_dialog():
+    """
+    Open the "Select fractal type" dialog.
+    
+    Creates a FractalTypeDialog with no parent, opening the modal dialog that lets the user choose a fractal type.
+    """
     FractalTypeDialog(None)
 
 def on_cplx_clicked():
+    """
+    Open the dialog for selecting or configuring a complex-plane fractal type.
+    """
     ComplexFractalTypeDialog(None)
 
 def on_dynamic_clicked():
+    """
+    Open the "Dynamic system" fractal type dialog.
+    
+    Instantiates a DynamicFractalTypeDialog with no parent.
+    """
     DynamicFractalTypeDialog(None)
 
 def on_ifs_clicked():
+    """
+    Open the IFS fractal type selection dialog.
+    
+    Creates an IFSFractalTypeDialog with no parent window, triggering the dialog UI for configuring an IFS fractal.
+    """
     IFSFractalTypeDialog(None)
 
 def on_l_system_clicked():
+    """
+    Open the L-system fractal type dialog.
+    
+    Instantiates the LSystemFractalTypeDialog with no parent window.
+    """
     LSystemFractalTypeDialog(None)

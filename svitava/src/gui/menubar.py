@@ -11,7 +11,13 @@ class Menubar(tkinter.Menu):
     """Menu bar displayed on the main window."""
 
     def __init__(self, parent, main_window):
-        """Initialize the menu bar."""
+        """
+        Create and populate the application's top-level menu bar and bind its keyboard shortcuts.
+        
+        Parameters:
+        	parent (tkinter.Tk or tkinter.Widget): The root or parent widget to attach the menu to and register key bindings on.
+        	main_window (object): Application main window providing resources used by the menus (for example `icons`) and callbacks.
+        """
         super().__init__(tearoff=0)
 
         self.parent = parent
@@ -74,4 +80,9 @@ class Menubar(tkinter.Menu):
         self.parent.bind('<Control-n>', lambda event: self.command_fractal_type_dialog())
 
     def command_fractal_type_dialog(self):
+        """
+        Open the fractal-type selection dialog.
+        
+        Displays the dialog that lets the user choose a fractal or pattern type to create.
+        """
         select_fractal_type_dialog()

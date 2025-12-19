@@ -20,7 +20,23 @@ class Icons:
     """All icons used on the GUI."""
 
     def __init__(self):
-        """Initialize all icons and convert them to PhotoImage."""
+        """
+        Create PhotoImage objects for all GUI icons and assign them to instance attributes.
+        
+        Creates the following attributes, each initialized from the corresponding icons.* module data:
+        - exit_icon (from icons.application_exit.icon)
+        - help_faq_icon (from icons.help_faq.icon)
+        - help_about_icon (from icons.help_about.icon)
+        - fractal_new_icon (from icons.fractal_new.icon)
+        - filter_new_icon (from icons.filter_new.icon)
+        - fill_color_icon (from icons.fill_color.icon)
+        - pattern_new_icon (from icons.pattern.icon)
+        - draw_arrow_forward_icon (from icons.draw_arrow_forward.icon)
+        - file_open_icon (from icons.file_open.icon)
+        - file_save_icon (from icons.file_save.icon)
+        - file_save_as_icon (from icons.file_save_as.icon)
+        - edit_icon (from icons.edit.icon)
+        """
         self.exit_icon = tkinter.PhotoImage(data=icons.application_exit.icon)
         self.help_faq_icon = tkinter.PhotoImage(data=icons.help_faq.icon)
         self.help_about_icon = tkinter.PhotoImage(data=icons.help_about.icon)
