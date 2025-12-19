@@ -1,0 +1,20 @@
+"""Icon for the following action: draw arrow forward"""
+
+# This icon was converted from the Oxygen Icon Theme
+# Please see copyright for further informations
+
+icon = """
+iVBORw0KGgoAAAANSUhEUgAAABYAAAAWCAYAAADEtGw7AAAAAXNSR0IArs4c6QAAAAZiS0dEAP8A
+/wD/oL2nkwAAAAlwSFlzAAAEwgAABMIBvM+QGAAAAAd0SU1FB9kGCQwfL2Q8l84AAAJESURBVHja
+xZTPa9NgGMffN0mDaUkrQoeHXTzsLuyyi1UYW2nH8LBVdhg4dvPg1T/CowdvZQxci24pkrq1He5Q
+wxQWUC+rx/kn1NKSX20enyeaEKWwyip74OmTPvk+n5fneZKwazcA+H9w0/z69Ozss2maX3KXaYV/
+ATuO/UJVk/O27bRPTz8tTRHsMEW5wWdmboFluccnJ8bylMAu45wzWU7w2dnbgB20ms33Y+GCpmkT
+g23bRqjMJEliyaTC5+bugOcNW7reyP+t5fRzcKC/RMETxvxxvEjqug4Ui0vc8zwmCALLZrOY8+Dw
+sEWcwvr6w+Yf4N3dCmCSAfjolIFxER0IRKNgmUwmZGDOBU3TOd4ubG4+akYztiwb2xOZ7wO6z0Yj
+8lEUh0O6/uWpVJKpqko6OoicRsMXFuZx5lajXH5ViC0PWCIh0/wwJkgYRFEUQ6elITRFmghKkazf
+77N0Os0XFx8AjvNoZ6csS5hHkECFBIsKKMavCU5zRSMt5SiGndD93zoBO7zpERgLpKiAikkUB8dh
+aNF/NIQMA32v1wPD+Mix8/tbW2tARJpvKI4XRgfFLDwoPITu044CKC41t7FRMigfgBVFeV6pvH52
+yUeI3jzY3n7M4+DBYADtthFAS6U1IyrY23vHJrVq9Q3Erdvt+vv7NXrU7rGrGEJi0B9+rfYWdL0+
+FipNjo12QYvC9j/QonKrq0XjymBRlJyLi+/y+XmHS5KcW1nJG9P4utGLk+90vlUFQbwbQKdt9XqD
+XZv9BFItVLxaN7XpAAAAAElFTkSuQmCC
+"""
