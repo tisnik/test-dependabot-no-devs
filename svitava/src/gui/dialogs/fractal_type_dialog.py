@@ -28,10 +28,10 @@ class FractalTypeDialog(tkinter.Toplevel):
         top_part = tkinter.LabelFrame(self, text="Fractal type", padx=5, pady=5)
         top_part.grid(row=1, column=1, sticky="NWSE")
 
-        cplx_button, cplx_icons = self.fractal_button(top_part, "In complex plane", "mandelbrot", 0, 1, on_cplx_clicked)
-        ifs_button, ifs_icons = self.fractal_button(top_part, "Dynamic system", "dynamic", 0, 2, on_dynamic_clicked)
-        ifs_button, ifs_icons = self.fractal_button(top_part, "IFS", "ifs", 1, 1, on_ifs_clicked)
-        ifs_button, ifs_icons = self.fractal_button(top_part, "L-system system", "lsystem", 1, 2, on_l_system_clicked)
+        _cplx_button, _cplx_icons = self.fractal_button(top_part, "In complex plane", "mandelbrot", 0, 1, on_cplx_clicked)
+        _dynamic_button, _dynamic_icons = self.fractal_button(top_part, "Dynamic system", "dynamic", 0, 2, on_dynamic_clicked)
+        _ifs_button, _ifs_icons = self.fractal_button(top_part, "IFS", "ifs", 1, 1, on_ifs_clicked)
+        _lsystem_button, _lsystem_icons = self.fractal_button(top_part, "L-system system", "lsystem", 1, 2, on_l_system_clicked)
 
         # rest
         cancelButton = tkinter.Button(self, text="Cancel", command=self.cancel)
