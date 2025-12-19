@@ -2,11 +2,16 @@
 
 import tkinter
 
-from gui.canvas import *
-from gui.menubar import *
-from gui.icons import *
-from gui.status_bar import *
-from gui.toolbar import *
+"""Main window shown on screen."""
+
+import tkinter
+from tkinter import messagebox
+
+from gui.canvas import Canvas
+from gui.menubar import Menubar
+from gui.icons import Icons
+from gui.status_bar import StatusBar
+from gui.toolbar import Toolbar
 
 
 class MainWindow:
