@@ -81,10 +81,13 @@ class TokenUsageHistory:
             output_tokens,
         )
         query_statement: str = ""
+        query_statement: str = ""
         if self.postgres_connection_config is not None:
             query_statement = CONSUME_TOKENS_FOR_USER_PG
-        if self.sqlite_connection_config is not None:
+        elif self.sqlite_connection_config is not None:
             query_statement = CONSUME_TOKENS_FOR_USER_SQLITE
+        else:
+            raise ValueError("No database configuration available")
 
         # timestamp to be used
         updated_at = datetime.now()
