@@ -48,8 +48,10 @@ class TokenUsageHistory:
         logger.info("Initializing connection to quota usage history database")
         if self.postgres_connection_config is not None:
             self.connection = connect_pg(self.postgres_connection_config)
-        if self.sqlite_connection_config is not None:
+        elif self.sqlite_connection_config is not None:
             self.connection = connect_sqlite(self.sqlite_connection_config)
+        else:
+            raise ValueError("No database configuration provided")
 
         try:
             self._initialize_tables()
