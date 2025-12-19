@@ -10,7 +10,15 @@ class Tooltip:
     """Create a tooltip for a given widget."""
 
     def __init__(self, widget: tkinter.Button, text: str = "widget info") -> None:
-        """Initialize the widget."""
+        """
+        Create a Tooltip attached to the given tkinter widget.
+        
+        Initializes tooltip configuration (delay and wrap length), stores the widget and text, and binds the widget's <Enter>, <Leave>, and <ButtonPress> events to manage showing and hiding the tooltip.
+        
+        Parameters:
+            widget (tkinter.Button): Target widget to attach the tooltip to.
+            text (str): Text to display inside the tooltip. Defaults to "widget info".
+        """
         self.waittime = 500  # miliseconds
         self.wraplength = 180  # pixels
         self.widget = widget
@@ -28,28 +36,53 @@ from typing import Optional
         self.tw = None
 
     def enter(self, event: tkinter.Event | None = None) -> None:
-        """Handle the event: cursor pointer moves to the tooltip area."""
+        """
+        Schedule the tooltip to appear after the configured delay when the pointer enters the widget.
+        
+        Parameters:
+            event (tkinter.Event | None): Optional event from the widget's Enter binding (ignored).
+        """
         self.schedule()
 
     def leave(self, event: tkinter.Event | None = None) -> None:
-        """Handle the event: cursor pointer leaves the tooltip area."""
+        """
+        Cancel any scheduled tooltip display and hide the tooltip when the pointer leaves the widget.
+        
+        Parameters:
+            event (tkinter.Event | None): The leave event from the widget, or None if invoked directly.
+        """
         self.unschedule()
         self.hidetip()
 
     def schedule(self) -> None:
-        """Schedule time for displaying tooltip."""
+        """
+        Schedule showing the tooltip after the configured delay.
+        
+        Cancels any previously scheduled show and sets a new timer to call `showtip` after `waittime` milliseconds.
+        """
         self.unschedule()
         self.id = self.widget.after(self.waittime, self.showtip)
 
     def unschedule(self) -> None:
-        """Unschedule time for displaying tooltip."""
+        """
+        Cancel any pending scheduled tooltip display and clear the stored schedule id.
+        
+        If a callback was scheduled with the widget's `after`, cancels it via `widget.after_cancel`; does nothing when no schedule exists.
+        """
         id = self.id
         self.id = None
         if id:
             self.widget.after_cancel(id)
 
     def showtip(self, event=None) -> None:
-        """Show the tooltip on screen."""
+        """
+        Display the tooltip near the associated widget.
+        
+        Creates a borderless toplevel window positioned adjacent to the widget and shows the configured tooltip text.
+        
+        Parameters:
+        	event (tkinter.Event | None): Optional event that triggered showing the tooltip; ignored by this method.
+        """
         x = y = 0
         x, y, cx, cy = self.widget.bbox("insert")
         x += self.widget.winfo_rootx() + 25
@@ -71,7 +104,12 @@ from typing import Optional
         label.pack(ipadx=1)
 
     def hidetip(self) -> None:
-        """Hide the tooltip."""
+        """
+        Hide the tooltip window if present and clear the internal reference.
+        
+        This destroys the tooltip's toplevel window (if one exists) and sets the
+        internal tooltip attribute to None so the tooltip is no longer shown.
+        """
         tw = self.tw
         self.tw = None
         if tw:

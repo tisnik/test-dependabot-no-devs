@@ -18,7 +18,14 @@ class MainWindow:
     """Main window shown on screen."""
 
     def __init__(self):
-        """Initialize main window."""
+        """
+        Create and configure the main application window and its primary UI components.
+        
+        Initializes the Tk root window, sets its title, and constructs application-wide UI elements:
+        an Icons registry, Toolbar, StatusBar, Canvas, and Menubar. Arranges these widgets
+        in the window grid so the canvas expands with the window. Exposes the following
+        attributes on the instance: `root`, `icons`, `toolbar`, `statusbar`, `canvas`, and `menubar`.
+        """
         self.root = tkinter.Tk()
         self.root.title("Svitava GUI")
 
@@ -41,13 +48,21 @@ class MainWindow:
         self.root.mainloop()
 
     def quit(self):
-        """Display message box whether to quit the application."""
+        """
+        Prompt the user to confirm quitting and exit the application on confirmation.
+        
+        Shows a Yes/No confirmation dialog; if the user selects Yes, stops the application's main event loop.
+        """
         answer = messagebox.askyesno("Do you want to quit the program?",
                                      "Do you want to quit the program?")
         if answer:
             self.root.quit()
 
     def configure_grid(self):
-        """Configure grid on canvas."""
+        """
+        Configure the root window grid to allow the central canvas to expand with the window.
+        
+        Sets the row index 2 and column index 2 weights on the root grid so widgets placed there grow when the main window is resized.
+        """
         tkinter.Grid.rowconfigure(self.root, 2, weight=1)
         tkinter.Grid.columnconfigure(self.root, 2, weight=1)
