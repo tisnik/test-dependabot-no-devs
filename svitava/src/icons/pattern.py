@@ -1,0 +1,26 @@
+"""Icon for the following action: pattern"""
+
+# This icon was converted from the Oxygen Icon Theme
+# Please see copyright for further informations
+
+icon = """
+iVBORw0KGgoAAAANSUhEUgAAABYAAAAWCAMAAADzapwJAAAAAXNSR0IArs4c6QAAAAlwSFlzAAAJ
+hAAACYQBquJjeQAAAAd0SU1FB9kGCgAhAwyOttoAAAG8UExURQAAAJ+fo6GhpaKipqKip6enrKio
+rampqaurrq2tsLu7wMDAxMXFycnJzZycoZ6eo56epKGhpqiorre3vMXFyq2ts66us8rKzqWlqaqq
+rrGxtLW1t7y8wMDAxaurrp6eop+fo6GhpaKip6enrKamq6enrK2tsMnJzaCgpKGhpbKytMnJzsrK
+zp+fpKGhppuboJycoa2tsq6us8HBx8PDx6GhpqSkp6ysrqysr6+vsrCwssrKzMzMztbW19nZ2tvb
+3N3d397e3t7e3+Hh4uXl5ebm6O/v7/Dw8PDw8ZeXnZmZnpuboKiorKmpraqqr6ursK6usa6usq+v
+sq+vs6+vtLOztbOztrS0tra2ure3ure3u7i4u7m5vbq6vbq6vru7wL+/w8HBw8LCxMPDyMTExsXF
+yMXFysfHysjIy8nJy8rKzszMzszM0M3Nz87O0M/P0tvb3N/f3+Li4uPj4+Tk5OXl5ebm5ufn5+jo
+6Onp6erq6uvr6+zs7O3t7e7u7u/v7/Dw8PHx8fLy8vPz8/T09PX19fX19vb29vf39/j49/j4+Pn5
++fr6+vv7+/z8/P39/f7+/v7+/////v///z8p05wAAABJdFJOUwAAAAAAAAAAAAAAAAAAMjIyMjNI
+SU5OUFZYZGmMjaKkpKWlpqioqKmvr8Li4uPj5eXp6ezs8vL6+vv7/v7+/v7+/v7+/v7+/v4Mk42G
+AAAAAWJLR0ST4QPftgAAAW5JREFUGBl9wc1PE0EYwOHfvDNr2+0HtAkBCls82Wi4GU7GkGiiBv5f
+Dx6M0cSYxoRLPUmqkdJYaLHYpdLOzr4We/d5YKXKP1VWHHcqadx0h7z3k2klZckCZV97eHTzPC7e
+v36Wp7OyBwvxLDletBMBs+PGTy5HsccAu8etLFfV3IhTBq/7YCmsv3qkqkAUiZLX1vt5EOatIVbE
+SByhqJl925tj7zWeHoIio96IsuIXu/FPb0Mzb1tFPn/4cnomm/kC7YZLR+mFDcb1TnoRV7rREDh4
+i5BUsdb9GDvv3VXfGnAJDuWOaoCQqzGCKsLgN0tJXUW0sRUwkg2w1IdtId+Yeorb+20F/TQdOTt5
+bEHCy72Bbm0HA1Hz1Bo4qB9ZCGL8fJGr6se0g0C/YgNYk+XGmqXaGVhIb6IkCCig8LVzDhaK41vf
+fRBEDci79KRXzLCQlYa/CqHTKsifN9mg+710C4aVnbW1TS4m1+f8z1+jOKLwBtzJPwAAAABJRU5E
+rkJggg==
+"""
