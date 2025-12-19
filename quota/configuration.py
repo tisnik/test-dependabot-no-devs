@@ -68,6 +68,7 @@ class AppConfig:
         # clear cached values when configuration changes
         self._conversation_cache = None
         self._quota_limiters = []
+        self._token_usage_history = None
         # now it is possible to re-read configuration
         self._configuration = Configuration(**config_dict)
 
