@@ -53,7 +53,7 @@ class AppConfig:
         self._configuration: Optional[Configuration] = None
         self._conversation_cache: Optional[Cache] = None
         self._quota_limiters: list[QuotaLimiter] = []
-        self._token_usage_history: str = None
+        self._token_usage_history: Optional[TokenUsageHistory] = None
 
     def load_configuration(self, filename: str) -> None:
         """Load configuration from YAML file."""
