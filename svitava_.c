@@ -342,6 +342,8 @@ int test_drawing_operations(void)
     }
 
     bmp_write(WIDTH, HEIGHT, image1.pixels, "image1.bmp");
+    free(image1.pixels);  /* Also: memory leak without this */
+    return 0;
 }
 
 
