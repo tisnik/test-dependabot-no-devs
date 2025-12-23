@@ -252,7 +252,7 @@ int bmp_write(unsigned int width, unsigned int height, unsigned char *pixels,
     unsigned char bmp_header[] = {
         /* BMP header structure: */
         0x42, 0x4d,             /* magic number */
-        0x46, 0x00, 0x00, 0x00, /* size of header=70 bytes */
+        0x46, 0x00, 0x00, 0x00, /* size in bytes (placeholder, unused) */
         0x00, 0x00,             /* unused */
         0x00, 0x00,             /* unused */
         0x36, 0x00, 0x00, 0x00, /* 54 bytes - offset to data */
