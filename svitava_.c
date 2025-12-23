@@ -48,11 +48,28 @@ typedef struct {
 } image_t;
 
 
+/**
+ * Compute the total size in bytes of an image's pixel buffer.
+ *
+ * @param image Pointer to the image whose buffer size will be computed.
+ * @returns Total number of bytes required for the image's pixel buffer (width * height * bpp).
+ */
 size_t image_size(const image_t *image)
 {
     return image->width * image->height * image->bpp;
 }
 
+/**
+ * Create an image_t with the given width, height, and bytes-per-pixel, allocating a pixel buffer.
+ *
+ * The returned image_t fields width, height, and bpp are initialized and pixels points to
+ * a newly allocated buffer of size width * height * bpp. If allocation fails, pixels will be NULL.
+ *
+ * @param width Image width in pixels.
+ * @param height Image height in pixels.
+ * @param bpp Bytes per pixel (bytes used to store a single pixel).
+ * @returns The initialized image_t; its `pixels` member points to the allocated buffer or NULL on allocation failure.
+ */
 image_t image_create(const unsigned int width, const unsigned int height, const unsigned int bpp)
 {
     image_t image;
@@ -63,11 +80,29 @@ image_t image_create(const unsigned int width, const unsigned int height, const 
     return image;
 }
 
+/**
+ * Clear all pixel data in an image by setting every byte in the pixel buffer to zero.
+ *
+ * @param image Image whose pixel buffer will be cleared; must have a valid pixel buffer.
+ */
 void image_clear(image_t *image)
 {
     memset(image->pixels, 0x00, image_size(image));
 }
 
+/**
+ * Set the RGBA color of the pixel at the specified (x, y) coordinates in the image.
+ *
+ * If (x, y) lies outside the image bounds the function has no effect.
+ *
+ * @param image Pointer to the image whose pixel will be updated.
+ * @param x Horizontal pixel coordinate (0 is left).
+ * @param y Vertical pixel coordinate (0 is top).
+ * @param r Red component (0–255).
+ * @param g Green component (0–255).
+ * @param b Blue component (0–255).
+ * @param a Alpha component (0–255).
+ */
 void image_putpixel(image_t *image, int x, int y, unsigned char r, unsigned char g, unsigned char b, unsigned char a)
 {
     unsigned char *p;
@@ -79,6 +114,21 @@ void image_putpixel(image_t *image, int x, int y, unsigned char r, unsigned char
     *p=a;
 }
 
+/**
+ * Update the pixel at (x, y) by replacing each color channel with the greater of
+ * the existing channel and the provided value; the alpha channel is written
+ * unconditionally.
+ *
+ * If (x, y) is outside the image bounds, the function does nothing.
+ *
+ * @param image Target image.
+ * @param x X coordinate of the pixel.
+ * @param y Y coordinate of the pixel.
+ * @param r Red component candidate; pixel's red becomes `max(current, r)`.
+ * @param g Green component candidate; pixel's green becomes `max(current, g)`.
+ * @param b Blue component candidate; pixel's blue becomes `max(current, b)`.
+ * @param a Alpha component to write (overwrites existing alpha).
+ */
 void image_putpixel_max(image_t *image, int x, int y, unsigned char r, unsigned char g, unsigned char b, unsigned char a)
 {
     unsigned char *p;
@@ -93,6 +143,21 @@ void image_putpixel_max(image_t *image, int x, int y, unsigned char r, unsigned 
     *p=a;
 }
 
+/**
+ * Retrieve the RGBA components of the pixel at (x, y).
+ *
+ * If (x, y) is outside the image bounds the function returns without modifying
+ * the output pointers. The output pointers must be non-NULL when (x, y) is
+ * inside bounds.
+ *
+ * @param image Pointer to the source image.
+ * @param x X coordinate of the pixel.
+ * @param y Y coordinate of the pixel.
+ * @param r Pointer to receive the red component (0–255).
+ * @param g Pointer to receive the green component (0–255).
+ * @param b Pointer to receive the blue component (0–255).
+ * @param a Pointer to receive the alpha component (0–255).
+ */
 void image_getpixel(const image_t *image, int x, int y, unsigned char *r, unsigned char *g, unsigned char *b, unsigned char *a)
 {
     unsigned char *p;
@@ -104,6 +169,21 @@ void image_getpixel(const image_t *image, int x, int y, unsigned char *r, unsign
     *a=*p;
 }
 
+/**
+ * Draws a horizontal line between two x coordinates at a given y using the specified RGBA color.
+ *
+ * The line includes both endpoints; the order of `x1` and `x2` does not matter. Pixels that lie
+ * outside the image bounds are ignored.
+ *
+ * @param image Target image to draw into.
+ * @param x1 One end x coordinate of the line.
+ * @param x2 Other end x coordinate of the line.
+ * @param y Y coordinate of the line.
+ * @param r Red component (0–255).
+ * @param g Green component (0–255).
+ * @param b Blue component (0–255).
+ * @param a Alpha component (0–255).
+ */
 void image_hline(image_t *image, int x1, int x2, int y, unsigned char r, unsigned char g, unsigned char b, unsigned char a)
 {
     int x, fromX=MIN(x1, x2), toX=MAX(x1, x2);
@@ -113,6 +193,18 @@ void image_hline(image_t *image, int x1, int x2, int y, unsigned char r, unsigne
     }
 }
 
+/**
+ * Draws a vertical line at column x between y1 and y2 inclusive using the specified RGBA color.
+ *
+ * @param image Target image.
+ * @param x X coordinate (column) where the line is drawn.
+ * @param y1 One end Y coordinate of the line.
+ * @param y2 Other end Y coordinate of the line.
+ * @param r Red component (0-255).
+ * @param g Green component (0-255).
+ * @param b Blue component (0-255).
+ * @param a Alpha component (0-255).
+ */
 void image_vline(image_t *image, int x, int y1, int y2, unsigned char r, unsigned char g, unsigned char b, unsigned char a)
 {
     int y, fromY=MIN(y1, y2), toY=MAX(y1, y2);
@@ -122,6 +214,22 @@ void image_vline(image_t *image, int x, int y1, int y2, unsigned char r, unsigne
     }
 }
 
+/**
+ * Draws a straight line between two pixel coordinates using an integer rasterization algorithm.
+ *
+ * The line includes both endpoint pixels and writes the specified RGBA color to each covered pixel.
+ * Pixels that lie outside the image bounds are ignored.
+ *
+ * @param image Target image to draw into.
+ * @param x1 X coordinate of the start point (in pixels).
+ * @param y1 Y coordinate of the start point (in pixels).
+ * @param x2 X coordinate of the end point (in pixels).
+ * @param y2 Y coordinate of the end point (in pixels).
+ * @param r Red component of the color (0-255).
+ * @param g Green component of the color (0-255).
+ * @param b Blue component of the color (0-255).
+ * @param a Alpha component of the color (0-255).
+ */
 void image_line(image_t *image, int x1, int y1, int x2, int y2, unsigned char r, unsigned char g, unsigned char b, unsigned char a)
 {
     int dx = abs(x2-x1), sx = x1<x2 ? 1 : -1;
@@ -148,6 +256,24 @@ void image_line(image_t *image, int x1, int y1, int x2, int y2, unsigned char r,
     }
 }
 
+/**
+ * Draws an anti-aliased straight line between two points into an RGBA image.
+ *
+ * The line is rasterized with sub-pixel intensity distribution so adjacent pixels
+ * receive proportionally scaled color components for smoothing. Color components
+ * are applied using the image's per-pixel maximum blending semantics (brightest
+ * component wins); alpha is written as provided.
+ *
+ * @param image Target image buffer (RGBA) to draw into.
+ * @param x1 X coordinate of the line start.
+ * @param y1 Y coordinate of the line start.
+ * @param x2 X coordinate of the line end.
+ * @param y2 Y coordinate of the line end.
+ * @param r Red component (0–255) of the line color.
+ * @param g Green component (0–255) of the line color.
+ * @param b Blue component (0–255) of the line color.
+ * @param a Alpha component (0–255) of the line color.
+ */
 void image_line_aa(image_t *image, int x1, int y1, int x2, int y2, unsigned char r, unsigned char g, unsigned char b, unsigned char a)
 {
     int dx=x2-x1;
@@ -306,6 +432,14 @@ int bmp_write(unsigned int width, unsigned int height, unsigned char *pixels,
     return 0;
 }
 
+/**
+ * Performs a demo drawing sequence on a 512×512 RGBA image, writes the result to "image1.bmp", and releases the image buffer.
+ *
+ * The routine creates an image, clears it, draws small colored pixel blocks, a horizontal and a vertical line,
+ * a series of straight lines, and a series of anti-aliased lines, then exports the image as a 24-bit BMP and frees memory.
+ *
+ * @returns 0 on success.
+ */
 int test_drawing_operations(void)
 {
 #define WIDTH 512
@@ -352,6 +486,11 @@ int test_drawing_operations(void)
  * @returns 0 on successful execution.
  */
 #ifndef NO_MAIN
+/**
+ * Program entry point that executes the default drawing test sequence.
+ *
+ * @returns Exit code produced by the test sequence (e.g., `0` on success).
+ */
 int main(void) {
     /*
     int result = render_test_images();
