@@ -27,7 +27,7 @@ svitava.c build as executable:
 #define EPSILON 0.01
 #define DIST2(x1, y1, x2, y2)                                                  \
     (((x1) - (x2)) * ((x1) - (x2)) + ((y1) - (y2)) * ((y1) - (y2)))
-#define MIN_FP_VALUE 1.0 - 100
+#define MIN_FP_VALUE 1.0e-100
 #define RGBA 4
 #define MAX(a,b) ((a)>(b) ? (a) : (b))
 #define MIN(a,b) ((a)<(b) ? (a) : (b))
