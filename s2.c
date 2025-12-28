@@ -1,3 +1,12 @@
+/**
+ * Interleave pixels from two source images into a destination image using a horizontal pattern.
+ *
+ * For each pixel position (x,y), selects the pixel from `src1` when x is odd and from `src2` when x is even, then writes that RGBA pixel into `dest`.
+ *
+ * @param src1 Source image providing pixels for odd columns; must have the same dimensions as `src2` and `dest`.
+ * @param src2 Source image providing pixels for even columns; must have the same dimensions as `src1` and `dest`.
+ * @param dest Destination image receiving the interleaved pixels; must have the same dimensions as `src1` and `src2`.
+ */
 void composite_horizontal_interlace(const image_t *src1, const image_t *src2, image_t *dest) {
     unsigned int i, j;
     for (j = 0; j < src1->height; j++) {
@@ -14,6 +23,17 @@ void composite_horizontal_interlace(const image_t *src1, const image_t *src2, im
     }
 }
 
+/**
+ * Compose `dest` by interleaving pixels from `src1` and `src2` along rows.
+ *
+ * For each pixel position, pixels on odd-numbered rows are taken from `src1`
+ * and pixels on even-numbered rows are taken from `src2`; the selected RGBA
+ * values are written into `dest` at the same coordinates.
+ *
+ * @param src1 Source image supplying pixels for odd rows.
+ * @param src2 Source image supplying pixels for even rows.
+ * @param dest Destination image receiving the interleaved pixels.
+ */
 void composite_vertical_interlace(const image_t *src1, const image_t *src2, image_t *dest) {
     unsigned int i, j;
     for (j = 0; j < src1->height; j++) {
@@ -30,6 +50,17 @@ void composite_vertical_interlace(const image_t *src1, const image_t *src2, imag
     }
 }
 
+/**
+ * Compose a destination image by selecting pixels from two sources in a checkerboard pattern.
+ *
+ * For each coordinate (i, j), the destination receives the pixel from `src1` when (i + j) is odd;
+ * otherwise the pixel is taken from `src2`.
+ *
+ * @param src1 Source image providing pixels for one set of checkerboard positions.
+ * @param src2 Source image providing pixels for the alternating checkerboard positions.
+ * @param dest Destination image where the composed pixels are written. Must have the same dimensions
+ *             as `src1` and `src2`.
+ */
 void composite_interlace(const image_t *src1, const image_t *src2, image_t *dest) {
     unsigned int i, j;
     for (j = 0; j < src1->height; j++) {
@@ -46,6 +77,16 @@ void composite_interlace(const image_t *src1, const image_t *src2, image_t *dest
     }
 }
 
+/**
+ * Blend two source images into a destination by averaging corresponding RGBA channels.
+ *
+ * Each destination pixel is written with the per-channel average of the two source pixels:
+ * channel = (channel_src1 + channel_src2) >> 1 (integer division by 2).
+ *
+ * @param src1 First source image; its width and height determine the processed area.
+ * @param src2 Second source image; pixels are read at the same coordinates as src1.
+ * @param dest Destination image that will be written with the blended pixels.
+ */
 void composite_blend(const image_t *src1, const image_t *src2, image_t *dest) {
     unsigned int i, j;
     for (j = 0; j < src1->height; j++) {
@@ -73,6 +114,16 @@ static const unsigned char true_color_tga_header[] = {
     0x20                    /* picture orientation: top-left origin */
 };
 
+/**
+ * Export raw RGBA pixel data as an uncompressed 24-bit TGA image (top-left origin).
+ *
+ * Expects pixels in 4-byte RGBA order; writes width*height pixels as BGR triplets (alpha byte is ignored).
+ * @param width Image width in pixels.
+ * @param height Image height in pixels.
+ * @param pixels Pointer to pixel buffer containing width*height*4 bytes in RGBA order.
+ * @param file_name Destination file path for the TGA output.
+ * @returns 0 on success, 1 if `pixels` is NULL, -1 on file open/write/close failure.
+ */
 int image_export_tga(unsigned int width, unsigned int height,
               const unsigned char *pixels, const char *file_name) {
     FILE                *fout;
@@ -124,6 +175,16 @@ int image_export_tga(unsigned int width, unsigned int height,
     return 0;
 }
 
+/**
+ * Populate a 256-entry RGB palette with a multi-segment green-centered gradient.
+ *
+ * The function fills the provided buffer in-place with 256 RGB triplets (3 bytes each),
+ * producing segments that transition through green, green-to-yellow, yellow-to-white,
+ * white-to-yellow, yellow-to-green, and green-to-black.
+ *
+ * @param palette Pointer to a buffer large enough for 256 * 3 bytes. If NULL, the
+ *                function returns without modifying memory.
+ */
 void palette_greens(unsigned char *palette) {
     unsigned char *p = palette;
     int            i;
