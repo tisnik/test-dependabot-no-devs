@@ -129,6 +129,9 @@ void image_putpixel(image_t *image, int x, int y, unsigned char r,
  */
 void image_putpixel_max(image_t *image, int x, int y, unsigned char r, unsigned char g, unsigned char b, unsigned char a) {
     unsigned char *p;
+    if (image == NULL || image->pixels == NULL) {
+        return;
+    }
     if (x < 0 || y < 0 || x >= (int)image->width || y >= (int)image->height) {
         return;
     }
