@@ -3,24 +3,13 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-/*
- * Short  Long        Argument?  Description
- * -f     --fractal   yes        fractal type
- * -p     --pattern   yes        pattern type
- * -i     --filter    yes        filter type
- * -p     --palette   yes        color palette name
+/**
+ * Parse command-line options (short and long forms), print each recognized option
+ * with its argument (if any), list any remaining non-option arguments, and exit.
  *
- * -w     --width     yes        width of the resulting image
- * -h     --height    yes        height of the resulting image
- * -m     --maxiter   yes        max. number of iterations (when applicable)
- *
- * -o     --output    yes        output file name
- * -x     --first     yes        first image for filter-like operation
- * -y     --second    yes        second image for filter-like operation
- * -z     --third     yes        third image for filter-like operation
- *
- * -v     --verbose   no         verbose operations
- * -h     --help      no         help
+ * @param argc Number of command-line arguments.
+ * @param argv Array of command-line argument strings.
+ * @returns EXIT_SUCCESS on successful completion.
  */
 int main(int argc, char *argv[]) {
   int c;
