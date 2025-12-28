@@ -66,16 +66,22 @@ image_t image_create(const unsigned int width, const unsigned int height, const 
     return image;
 }
 
+/**
+ * Create a new image with the same dimensions and bytes-per-pixel as the given image.
+ *
+ * @param image Source image to clone.
+ * @returns A newly created image_t with the same width, height, and bpp as `image`; the pixel buffer is separately allocated and may be NULL if allocation fails.
+ */
 image_t image_clone(const image_t *image) {
     return image_create(image->width, image->height, image->bpp);
 }
 
 /**
- * Clear all pixel data in an image by setting every byte in the pixel buffer
- * to zero (regardless of image type).
+ * Zeroes the image's pixel buffer.
  *
- * @param image Image whose pixel buffer will be cleared; must have a valid
- *              pixel buffer.
+ * Does nothing if `image` is NULL or `image->pixels` is NULL.
+ *
+ * @param image Image whose pixel buffer will be cleared.
  */
 void image_clear(image_t *image) {
     if (image == NULL || image->pixels == NULL) {
@@ -85,9 +91,10 @@ void image_clear(image_t *image) {
 }
 
 /**
- * Set the RGBA color of the pixel at the specified (x, y) coordinates in the image.
+ * Set the pixel at (x, y) to the specified RGBA components.
  *
- * If (x, y) lies outside the image bounds the function has no effect.
+ * Writes R, G, B components to the pixel; writes A only when the image's bpp equals RGBA.
+ * If (x, y) is outside the image bounds the function does nothing.
  *
  * @param image Pointer to the image whose pixel will be updated.
  * @param x Horizontal pixel coordinate (0 is left).
@@ -95,7 +102,7 @@ void image_clear(image_t *image) {
  * @param r Red component (0–255).
  * @param g Green component (0–255).
  * @param b Blue component (0–255).
- * @param a Alpha component (0–255).
+ * @param a Alpha component (0–255); stored only when the image has an RGBA bpp.
  */
 void image_putpixel(image_t *image, int x, int y, unsigned char r,
                     unsigned char g, unsigned char b, unsigned char a) {
@@ -113,19 +120,17 @@ void image_putpixel(image_t *image, int x, int y, unsigned char r,
 }
 
 /**
- * Update the pixel at (x, y) by replacing each color channel with the greater of
- * the existing channel and the provided value; the alpha channel is written
- * unconditionally.
+ * Replace each color channel at (x, y) with the greater of its current value and the provided candidate, and overwrite alpha.
  *
- * If (x, y) is outside the image bounds, the function does nothing.
+ * If (x, y) is outside the image bounds or the image/pixel buffer is NULL, no action is performed.
  *
  * @param image Target image.
  * @param x X coordinate of the pixel.
  * @param y Y coordinate of the pixel.
- * @param r Red component candidate; pixel's red becomes `max(current, r)`.
- * @param g Green component candidate; pixel's green becomes `max(current, g)`.
- * @param b Blue component candidate; pixel's blue becomes `max(current, b)`.
- * @param a Alpha component to write (overwrites existing alpha).
+ * @param r Red component candidate; pixel red becomes the greater of its current value and `r`.
+ * @param g Green component candidate; pixel green becomes the greater of its current value and `g`.
+ * @param b Blue component candidate; pixel blue becomes the greater of its current value and `b`.
+ * @param a Alpha value to write; overwrites the pixel's alpha when the image uses RGBA.
  */
 void image_putpixel_max(image_t *image, int x, int y, unsigned char r, unsigned char g, unsigned char b, unsigned char a) {
     unsigned char *p;
@@ -180,6 +185,20 @@ void image_getpixel(const image_t *image, int x, int y, unsigned char *r, unsign
     *a = *p;
 }
 
+/**
+ * Apply a convolution kernel to the image, producing a filtered version in-place.
+ *
+ * Applies the provided size×size integer kernel to each pixel inside the image
+ * (excluding a border of floor(size/2) pixels). For each processed pixel the
+ * weighted sums of the R, G, B channels are computed, divided by `divisor`, and
+ * written back into the image buffer; the alpha channel of written pixels is set to 0.
+ * Border pixels that cannot be fully covered by the kernel are left unchanged.
+ *
+ * @param image   Image to be filtered; its pixel buffer is updated with the result.
+ * @param size    Kernel dimension; must match both kernel array dimensions and be an odd positive integer.
+ * @param kernel  2D integer kernel of dimensions [size][size]; kernel[row][col] is applied around each pixel.
+ * @param divisor Value used to normalize the accumulated channel sums; must be non-zero.
+ */
 void apply_kernel(image_t *image, int size, int kernel[size][size], int divisor) {
     int x, y;
     image_t tmp;
@@ -210,6 +229,17 @@ void apply_kernel(image_t *image, int size, int kernel[size][size], int divisor)
     free(tmp.pixels);
 }
 
+/**
+ * Apply a 3×3 weighted smoothing filter to the given image in-place.
+ *
+ * Uses a 3×3 kernel with weights:
+ *   0 1 0
+ *   1 4 1
+ *   0 1 0
+ * and a divisor of 9 to perform a weighted average of each pixel's neighbourhood.
+ *
+ * @param image Image to be filtered; its pixel data is modified in-place.
+ */
 void filter_smooth_3x3_block(image_t *image) {
     int kernel[3][3] = {
         {0,1,0},
@@ -219,4 +249,3 @@ void filter_smooth_3x3_block(image_t *image) {
 
     apply_kernel(image, 3, kernel, 9);
 }
-
