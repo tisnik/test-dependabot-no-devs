@@ -72,12 +72,15 @@ image_t image_clone(const image_t *image) {
 
 /**
  * Clear all pixel data in an image by setting every byte in the pixel buffer
- * to zero (regardles of image type).
+ * to zero (regardless of image type).
  *
  * @param image Image whose pixel buffer will be cleared; must have a valid
  *              pixel buffer.
  */
 void image_clear(image_t *image) {
+    if (image == NULL || image->pixels == NULL) {
+        return;
+    }
     memset(image->pixels, 0x00, image_size(image));
 }
 
