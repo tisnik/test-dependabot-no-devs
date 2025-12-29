@@ -68,10 +68,11 @@ image_t image_create(const unsigned int width, const unsigned int height, const 
 }
 
 /**
- * Create a new image with the same dimensions and bytes-per-pixel as the given image.
+ * Create a deep copy of an image.
  *
+ * If `image` is NULL or its pixel buffer is NULL, returns an image with width=0, height=0, bpp=0 and pixels=NULL.
  * @param image Source image to clone.
- * @returns A newly created image_t with the same width, height, and bpp as `image`; the pixel buffer is separately allocated and may be NULL if allocation fails.
+ * @returns A new image_t with the same width, height, and bpp; the pixel buffer contains duplicated pixel data and will be NULL if allocation fails.
  */
 image_t image_clone(const image_t *image) {
     image_t clone;
@@ -90,11 +91,12 @@ image_t image_clone(const image_t *image) {
 }
 
 /**
- * Clear all pixel data in an image by setting every byte in the pixel buffer
- * to zero (regardles of image type).
+ * Zeroes an image's pixel buffer, setting every byte to 0.
  *
- * @param image Image whose pixel buffer will be cleared; must have a valid
- *              pixel buffer.
+ * If `image` is NULL or `image->pixels` is NULL the function returns without
+ * modifying anything.
+ *
+ * @param image Image whose pixel buffer will be cleared.
  */
 void image_clear(image_t *image) {
     if (image == NULL || image->pixels == NULL) {
@@ -135,19 +137,20 @@ void image_putpixel(image_t *image, int x, int y, unsigned char r,
 }
 
 /**
- * Update the pixel at (x, y) by replacing each color channel with the greater of
- * the existing channel and the provided value; the alpha channel is written
- * unconditionally.
+ * Update the pixel at (x, y) so each RGB channel becomes the greater of its
+ * current value and the corresponding provided candidate, and the alpha channel
+ * is overwritten with the provided value.
  *
- * If (x, y) is outside the image bounds, the function does nothing.
+ * If `image` or its pixel buffer is NULL, or if (x, y) lies outside the image
+ * bounds, no modification is performed.
  *
- * @param image Target image.
+ * @param image Target image to modify.
  * @param x X coordinate of the pixel.
  * @param y Y coordinate of the pixel.
- * @param r Red component candidate; pixel's red becomes `max(current, r)`.
- * @param g Green component candidate; pixel's green becomes `max(current, g)`.
- * @param b Blue component candidate; pixel's blue becomes `max(current, b)`.
- * @param a Alpha component to write (overwrites existing alpha).
+ * @param r Candidate red value; resulting red = `max(current, r)`.
+ * @param g Candidate green value; resulting green = `max(current, g)`.
+ * @param b Candidate blue value; resulting blue = `max(current, b)`.
+ * @param a Alpha value to write (overwrites existing alpha when present).
  */
 void image_putpixel_max(image_t *image, int x, int y, unsigned char r, unsigned char g, unsigned char b, unsigned char a) {
     unsigned char *p;
@@ -212,18 +215,18 @@ void image_getpixel(const image_t *image, int x, int y, unsigned char *r, unsign
 
 
 /**
- * Apply a convolution kernel to the image, producing a filtered version in-place.
+ * Apply a square convolution kernel to the image, updating its pixel buffer in place.
  *
- * Applies the provided size×size integer kernel to each pixel inside the image
- * (excluding a border of floor(size/2) pixels). For each processed pixel the
- * weighted sums of the R, G, B channels are computed, divided by `divisor`, and
- * written back into the image buffer; the alpha channel of written pixels is set to 0.
- * Border pixels that cannot be fully covered by the kernel are left unchanged.
+ * For each pixel that can be fully covered by the kernel (i.e., excluding a border of floor(size/2)
+ * pixels) the function computes weighted sums of the R, G, and B channels using the provided
+ * kernel, divides each sum by `divisor`, clamps results to 0–255, and writes them back; the written
+ * pixel alpha is set to 0. Pixels on the image border that cannot be fully covered by the kernel
+ * are left unchanged.
  *
- * @param image   Image to be filtered; its pixel buffer is updated with the result.
- * @param size    Kernel dimension; must match both kernel array dimensions and be an odd positive integer.
- * @param kernel  2D integer kernel of dimensions [size][size]; kernel[row][col] is applied around each pixel.
- * @param divisor Value used to normalize the accumulated channel sums; must be non-zero.
+ * @param image   Image whose pixels will be filtered and updated; must have a valid pixel buffer.
+ * @param size    Kernel width and height; must be a positive odd integer matching both kernel dimensions.
+ * @param kernel  2D integer kernel with dimensions [size][size]; kernel[row][col] is applied around each pixel.
+ * @param divisor Normalization divisor applied to accumulated channel sums; must be non-zero.
  */
 void apply_kernel(image_t *image, int size, int kernel[size][size], int divisor) {
     int x, y;
@@ -291,6 +294,13 @@ void filter_smooth_3x3_block(image_t *image) {
     apply_kernel(image, 3, kernel, 9);
 }
 
+/**
+ * Apply a 3×3 Gaussian-like smoothing filter to the provided image in-place.
+ *
+ * Uses the 3×3 kernel { {1,2,1}, {2,4,2}, {1,2,1} } with a divisor of 16 to perform smoothing.
+ *
+ * @param image Image to be filtered; modified in-place. If `image` or its pixel buffer is NULL, the function does nothing.
+ */
 void filter_smooth_3x3_gauss(image_t *image) {
     static int kernel[3][3] = {
         {1,2,1},
@@ -301,6 +311,11 @@ void filter_smooth_3x3_gauss(image_t *image) {
     apply_kernel(image, 3, kernel, 16);
 }
 
+/**
+ * Apply a 3×3 sharpening filter to the image in place.
+ *
+ * @param image Image whose pixels will be modified by the sharpening filter.
+ */
 void filter_smooth_3x3_sharpen(image_t *image) {
     static int kernel[3][3] = {
         { 0,-1, 0},
@@ -311,6 +326,11 @@ void filter_smooth_3x3_sharpen(image_t *image) {
     apply_kernel(image, 3, kernel, 1);
 }
 
+/**
+ * Apply a 3×3 edge-detection filter (Laplacian kernel) to the image in-place.
+ *
+ * @param image Image to filter; no action is taken if `image` is NULL or has no pixel buffer.
+ */
 void filter_smooth_3x3_edge_detection_1(image_t *image) {
     static int kernel[3][3] = {
         { 0,-1, 0},
@@ -321,6 +341,10 @@ void filter_smooth_3x3_edge_detection_1(image_t *image) {
     apply_kernel(image, 3, kernel, 1);
 }
 
+/**
+ * Apply a 3×3 edge-detection filter that highlights image edges by accentuating local intensity differences.
+ * @param image Image to filter in-place; if NULL or invalid, no action is performed.
+ */
 void filter_smooth_3x3_edge_detection_2(image_t *image) {
     static int kernel[3][3] = {
         {-1,-1,-1},
@@ -331,6 +355,16 @@ void filter_smooth_3x3_edge_detection_2(image_t *image) {
     apply_kernel(image, 3, kernel, 1);
 }
 
+/**
+ * Apply a 3×3 Laplacian-like edge-detection filter to the provided image in-place.
+ *
+ * The kernel applied is:
+ *   [ 0,  1,  0 ]
+ *   [ 1, -4,  1 ]
+ *   [ 0,  1,  0 ]
+ *
+ * @param image Image to be filtered; the pixel buffer is modified in-place. If `image` or its pixel buffer is NULL, no action is taken.
+ */
 void filter_smooth_3x3_edge_detection_3(image_t *image) {
     static int kernel[3][3] = {
         { 0, 1, 0},
@@ -341,6 +375,16 @@ void filter_smooth_3x3_edge_detection_3(image_t *image) {
     apply_kernel(image, 3, kernel, 1);
 }
 
+/**
+ * Apply a 3×3 horizontal edge-detection filter to an image in-place.
+ *
+ * The kernel used is:
+ *   [-1, -1, -1]
+ *   [ 0,  0,  0]
+ *   [ 1,  1,  1]
+ *
+ * @param image Image whose pixels will be modified by the filter.
+ */
 void filter_smooth_3x3_horizontal_edge_detection(image_t *image) {
     static int kernel[3][3] = {
         {-1,-1,-1},
@@ -351,6 +395,14 @@ void filter_smooth_3x3_horizontal_edge_detection(image_t *image) {
     apply_kernel(image, 3, kernel, 1);
 }
 
+/**
+ * Apply a 3×3 vertical edge-detection filter to the image in-place.
+ *
+ * The filter highlights vertical edges by convolving the image with a 3×3
+ * vertical edge-detection kernel.
+ *
+ * @param image Image to be filtered; if `image` is NULL or `image->pixels` is NULL, no action is taken.
+ */
 void filter_smooth_3x3_vertical_edge_detection(image_t *image) {
     static int kernel[3][3] = {
         {-1, 0, 1},
@@ -361,6 +413,10 @@ void filter_smooth_3x3_vertical_edge_detection(image_t *image) {
     apply_kernel(image, 3, kernel, 1);
 }
 
+/**
+ * Apply the 3×3 horizontal Sobel operator to the given image, modifying pixels in-place.
+ * @param image Image to filter; its pixel buffer is updated with the horizontal Sobel result.
+ */
 void filter_smooth_3x3_horizontal_sobel_operator(image_t *image) {
     static int kernel[3][3] = {
         {-1, 0, 1},
@@ -371,6 +427,16 @@ void filter_smooth_3x3_horizontal_sobel_operator(image_t *image) {
     apply_kernel(image, 3, kernel, 1);
 }
 
+/**
+ * Apply a 3×3 vertical Sobel operator to the image, modifying pixels in place.
+ *
+ * The filter emphasizes vertical edges by convolving the image with the kernel
+ * [-1, -2, -1; 0, 0, 0; 1, 2, 1]. The operation updates the image's RGB
+ * channels; alpha behavior follows the image's bytes-per-pixel semantics.
+ *
+ * @param image Image to filter; modified in place. If `image` is NULL or
+ *              `image->pixels` is NULL the function returns without changes.
+ */
 void filter_smooth_3x3_vertical_sobel_operator(image_t *image) {
     static int kernel[3][3] = {
         {-1,-2,-1},
@@ -381,6 +447,16 @@ void filter_smooth_3x3_vertical_sobel_operator(image_t *image) {
     apply_kernel(image, 3, kernel, 1);
 }
 
+/**
+ * Apply a 3×3 Laplacian filter to the image in-place, enhancing edges.
+ *
+ * Applies the 3×3 Laplacian kernel:
+ *   [ 0 -1  0
+ *    -1  4 -1
+ *     0 -1  0 ]
+ *
+ * @param image Image whose pixel buffer will be filtered in-place. If `image` is NULL or has no pixel buffer, the function returns without modifying it.
+ */
 void filter_smooth_3x3_laplacian(image_t *image) {
     static int kernel[3][3] = {
         { 0,-1, 0},
@@ -397,13 +473,12 @@ void filter_smooth_3x3_laplacian(image_t *image) {
  */
 #ifndef NO_MAIN
 /**
- * Program entry point that executes the specified rendering operations.
+ * Program entry point; currently a no-op.
  *
- * @returns Exit code produced by the test sequence (e.g., `0` on success).
+ * @returns Process exit code (0 indicates success).
  */
 int main(int argc, char **argv) {
     int result = 0;
     return result;
 }
 #endif
-
