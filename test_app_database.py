@@ -1,6 +1,6 @@
 """Benchmarks for app.database module."""
 
-from typing import Callable, Optional
+from typing import Optional
 from pathlib import Path
 import pytest
 import random
@@ -13,6 +13,10 @@ from app.database import get_session
 from configuration import configuration
 from utils.suid import get_suid
 from models.database.conversations import UserConversation
+
+# number of records to be stored in database before benchmarks
+MIDDLE_DB_RECORDS_COUNT = 1000
+LARGE_DB_RECORDS_COUNT = 10000
 
 
 @pytest.fixture(name="configuration_filename")
@@ -203,47 +207,114 @@ def update_user_conversation(session: Session, id: str) -> None:
     session.commit()
 
 
-def test_store_new_user_conversations_small_db(
-    sqlite_database: Callable, benchmark: BenchmarkFixture
+def list_conversation_for_all_users(session: Session) -> None:
+    query = session.query(UserConversation)
+    assert query is not None
+
+    user_conversations = query.all()
+    assert user_conversations is not None
+
+
+def benchmark_store_new_user_conversations(
+    benchmark: BenchmarkFixture, records_to_insert: int
 ) -> None:
-    """Benchmark for the DB operation to create and store new topic and conversation ID mapping."""
     with get_session() as session:
+        # store bunch of conversations first
+        for id in range(records_to_insert):
+            store_new_user_conversation(session, str(id))
+        # then perform the benchmark
         benchmark(store_new_user_conversation, session)
 
 
-def test_store_new_user_conversations_large_db(
-    sqlite_database: Callable, benchmark: BenchmarkFixture
+def _test_store_new_user_conversations_small_db(
+    sqlite_database: None, benchmark: BenchmarkFixture
 ) -> None:
     """Benchmark for the DB operation to create and store new topic and conversation ID mapping."""
-    with get_session() as session:
-        # store bunch of conversations first
-        for id in range(2000):
-            store_new_user_conversation(session, str(id))
-        benchmark(store_new_user_conversation, session)
+    benchmark_store_new_user_conversations(benchmark, 0)
 
 
-def test_update_user_conversation_small_db(
-    sqlite_database: Callable,
-    benchmark: BenchmarkFixture,
+def _test_store_new_user_conversations_middle_db(
+    sqlite_database: None, benchmark: BenchmarkFixture
 ) -> None:
-    """Benchmark for the DB operation to update existing conversation."""
+    """Benchmark for the DB operation to create and store new topic and conversation ID mapping."""
+    benchmark_store_new_user_conversations(benchmark, MIDDLE_DB_RECORDS_COUNT)
+
+
+def _test_store_new_user_conversations_large_db(
+    sqlite_database: None, benchmark: BenchmarkFixture
+) -> None:
+    """Benchmark for the DB operation to create and store new topic and conversation ID mapping."""
+    benchmark_store_new_user_conversations(benchmark, LARGE_DB_RECORDS_COUNT)
+
+
+def benchmark_update_user_conversation(
+    benchmark: BenchmarkFixture, records_to_insert: int
+) -> None:
     with get_session() as session:
         # store bunch of conversations first
-        store_new_user_conversation(session, "1234")
-
-        # update existing configuration
+        if records_to_insert <= 1234:
+            store_new_user_conversation(session, "1234")
+        for id in range(records_to_insert):
+            store_new_user_conversation(session, str(id))
+        # then perform the benchmark
         benchmark(update_user_conversation, session, "1234")
 
 
-def test_update_user_conversation_large_db(
-    sqlite_database: Callable,
+def _test_update_user_conversation_small_db(
+    sqlite_database: None,
     benchmark: BenchmarkFixture,
 ) -> None:
     """Benchmark for the DB operation to update existing conversation."""
+    benchmark_update_user_conversation(benchmark, 0)
+
+
+def _test_update_user_conversation_middle_db(
+    sqlite_database: None,
+    benchmark: BenchmarkFixture,
+) -> None:
+    """Benchmark for the DB operation to update existing conversation."""
+    benchmark_update_user_conversation(benchmark, MIDDLE_DB_RECORDS_COUNT)
+
+
+def _test_update_user_conversation_large_db(
+    sqlite_database: None,
+    benchmark: BenchmarkFixture,
+) -> None:
+    """Benchmark for the DB operation to update existing conversation."""
+    benchmark_update_user_conversation(benchmark, LARGE_DB_RECORDS_COUNT)
+
+
+def benchmark_list_conversations_for_all_users(
+    benchmark: BenchmarkFixture, records_to_insert: int
+) -> None:
     with get_session() as session:
         # store bunch of conversations first
-        for id in range(2000):
+        for id in range(records_to_insert):
             store_new_user_conversation(session, str(id))
+        # then perform the benchmark
+        benchmark(list_conversation_for_all_users, session)
 
-        # update existing configuration
-        benchmark(update_user_conversation, session, "1234")
+
+def test_list_conversations_for_all_users_small_db(
+    sqlite_database: None,
+    benchmark: BenchmarkFixture
+) -> None:
+    """Benchmark for the DB operation to list all conversations."""
+    benchmark_list_conversations_for_all_users(benchmark, 0)
+
+
+def test_list_conversations_for_all_users_middle_db(
+    sqlite_database: None,
+    benchmark: BenchmarkFixture
+) -> None:
+    """Benchmark for the DB operation to list all conversations."""
+    benchmark_list_conversations_for_all_users(benchmark, MIDDLE_DB_RECORDS_COUNT)
+
+
+def test_list_conversations_for_all_users_large_db(
+    sqlite_database: None,
+    benchmark: BenchmarkFixture
+) -> None:
+    """Benchmark for the DB operation to list all conversations."""
+    benchmark_list_conversations_for_all_users(benchmark, LARGE_DB_RECORDS_COUNT)
+
