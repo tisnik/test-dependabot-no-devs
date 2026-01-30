@@ -27,6 +27,7 @@ def configuration_filename_fixture() -> str:
 
 @pytest.fixture(name="sqlite_database")
 def sqlite_database_fixture(configuration_filename: str, tmp_path: Path) -> None:
+    """Initialize a temporary SQLite database for benchmarking."""
     # try to load the configuration containing SQLite database setup
     configuration.load_configuration(configuration_filename)
     assert configuration.database_configuration.sqlite is not None
@@ -34,7 +35,7 @@ def sqlite_database_fixture(configuration_filename: str, tmp_path: Path) -> None
     # we need to start each benchmark with empty database
     configuration.database_configuration.sqlite.db_path = str(tmp_path / "database.db")
 
-    # initialize database session on preplan tables creation
+    # initialize database session and create tables
     database.initialize_database()
     database.create_tables()
 
@@ -208,11 +209,12 @@ def update_user_conversation(session: Session, id: str) -> None:
 
 
 def list_conversation_for_all_users(session: Session) -> None:
+    """List all user conversations from the database."""
     query = session.query(UserConversation)
-    assert query is not None
 
     user_conversations = query.all()
     assert user_conversations is not None
+    assert len(user_conversations) >= 0
 
 
 def benchmark_store_new_user_conversations(
@@ -252,15 +254,20 @@ def benchmark_update_user_conversation(
 ) -> None:
     with get_session() as session:
         # store bunch of conversations first
+        # Ensure record "1234" exists for the update benchmark.
+        # if records_to_insert <= 1234, range() won't include 1234, so insert it explicitly.
         if records_to_insert <= 1234:
             store_new_user_conversation(session, "1234")
+
+        # pre-populate database with records
         for id in range(records_to_insert):
             store_new_user_conversation(session, str(id))
+
         # then perform the benchmark
         benchmark(update_user_conversation, session, "1234")
 
 
-def _test_update_user_conversation_small_db(
+def test_update_user_conversation_small_db(
     sqlite_database: None,
     benchmark: BenchmarkFixture,
 ) -> None:
@@ -268,7 +275,7 @@ def _test_update_user_conversation_small_db(
     benchmark_update_user_conversation(benchmark, 0)
 
 
-def _test_update_user_conversation_middle_db(
+def test_update_user_conversation_middle_db(
     sqlite_database: None,
     benchmark: BenchmarkFixture,
 ) -> None:
@@ -276,7 +283,7 @@ def _test_update_user_conversation_middle_db(
     benchmark_update_user_conversation(benchmark, MIDDLE_DB_RECORDS_COUNT)
 
 
-def _test_update_user_conversation_large_db(
+def test_update_user_conversation_large_db(
     sqlite_database: None,
     benchmark: BenchmarkFixture,
 ) -> None:
