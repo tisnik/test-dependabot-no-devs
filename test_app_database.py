@@ -38,7 +38,7 @@ def sqlite_database_fixture(configuration_filename: str, tmp_path: Path) -> None
 def generate_provider() -> str:
     providers = [
         "openai",
-        "azure_openai",
+        "azure",
         "vertexAI",
         "watsonx",
         "RHOAI (vLLM)",
