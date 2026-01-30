@@ -92,6 +92,14 @@ def generate_model_for_provider(provider: str) -> str:
             "multilingual-e5-large",
             "granite-embedding-107m-multilingual",
             "ibm-granite/granite-4.0-micro",
+            "ibm-granite/granite-4.0-micro-base",
+            "ibm-granite/granite-4.0-h-micro",
+            "ibm-granite/granite-4.0-h-micro-base",
+            "ibm-granite/granite-4.0-h-tiny",
+            "ibm-granite/granite-4.0-h-tiny-base",
+            "ibm-granite/granite-4.0-h-small",
+            "ibm-granite/granite-4.0-h-small-base",
+            "ibm-granite/granite-4.0-tiny-preview",
             "ibm-granite/granite-4.0-tiny-base-preview",
         ],
         "RHOAI (vLLM)": ["meta-llama/Llama-3.2-1B-Instruct"],
@@ -120,6 +128,11 @@ def generate_topic_summary() -> str:
             "ramec a mista vychovy kadru",
             "stabilni a kvantitativni vzrust a sfera nasi aktivity",
             "vytvorena struktura organizace",
+            "novy model organizacni cinnosti",
+            "stale, informacne-propagandisticke zabezpeceni nasi prace",
+            "dalsi rozvoj ruznych forem cinnosti",
+            "upresneni a rozvoj struktur",
+            "konzultace se sirokym aktivem",
             "pocatek kazdodenni prace na poli formovani pozice",
         ],
         [
@@ -200,7 +213,7 @@ def test_store_new_user_conversations_large_db(
     with get_session() as session:
         # store bunch of conversations first
         for id in range(2000):
-            store_new_user_conversation(session, id)
+            store_new_user_conversation(session, str(id))
         benchmark(store_new_user_conversation, session)
 
 
@@ -211,10 +224,10 @@ def test_update_user_conversation_small_db(
     """Benchmark for the DB operation to update existing conversation."""
     with get_session() as session:
         # store bunch of conversations first
-        store_new_user_conversation(session, 1234)
+        store_new_user_conversation(session, "1234")
 
         # update existing configuration
-        benchmark(update_user_conversation, session, 1234)
+        benchmark(update_user_conversation, session, "1234")
 
 
 def test_update_user_conversation_large_db(
@@ -225,7 +238,7 @@ def test_update_user_conversation_large_db(
     with get_session() as session:
         # store bunch of conversations first
         for id in range(2000):
-            store_new_user_conversation(session, id)
+            store_new_user_conversation(session, str(id))
 
         # update existing configuration
-        benchmark(update_user_conversation, session, 1234)
+        benchmark(update_user_conversation, session, "1234")
