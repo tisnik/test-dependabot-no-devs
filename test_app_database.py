@@ -36,6 +36,7 @@ def sqlite_database_fixture(configuration_filename: str, tmp_path: Path) -> None
 
 
 def generate_provider() -> str:
+    """Generate provider name."""
     providers = [
         "openai",
         "azure",
@@ -49,6 +50,7 @@ def generate_provider() -> str:
 
 
 def generate_model_for_provider(provider: str) -> str:
+    """Generate model ID for given provider."""
     models: dict[str, list[str]] = {
         "openai": [
             "gpt-5",
@@ -110,6 +112,7 @@ def generate_model_for_provider(provider: str) -> str:
 
 
 def generate_topic_summary() -> str:
+    """Generate topic summary."""
     yaps = [
         [
             "Soudruzi,",
@@ -166,6 +169,7 @@ def generate_topic_summary() -> str:
 
 
 def store_new_user_conversation(session: Session, id: Optional[str] = None) -> None:
+    """Store the new user conversation into database."""
     provider = generate_provider()
     model = generate_model_for_provider(provider)
     topic_summary = generate_topic_summary()
@@ -183,6 +187,7 @@ def store_new_user_conversation(session: Session, id: Optional[str] = None) -> N
 
 
 def update_user_conversation(session: Session, id: str) -> None:
+    """Update existing conversation in the database."""
     provider = generate_provider()
     model = generate_model_for_provider(provider)
     topic_summary = generate_topic_summary()
