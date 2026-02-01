@@ -9,6 +9,11 @@
 #define TEST_END \
     }
 
+/**
+ * Checks that image_size returns 0 when given a NULL image.
+ *
+ * Asserts that calling image_size(NULL) produces a size of 0.
+ */
 void test_image_size_null_image(void) {
     TEST_BEGIN
     size_t size = image_size(NULL);
@@ -17,6 +22,11 @@ void test_image_size_null_image(void) {
 
 }
 
+/**
+ * Verify that creating an image with a width of zero produces an empty image.
+ *
+ * Asserts that the created image has width == 0, height == 0, bpp == 0, and pixels == NULL.
+ */
 void test_image_create_zero_width(void) {
     TEST_BEGIN
     image_t image = image_create(0, 100, 4);
@@ -27,6 +37,9 @@ void test_image_create_zero_width(void) {
     TEST_END
 }
 
+/**
+ * Verify that creating an image with width greater than MAX_WIDTH yields a zeroed image and no pixel buffer.
+ */
 void test_image_create_too_wide(void) {
     TEST_BEGIN
     image_t image = image_create(MAX_WIDTH+1, 100, 4);
@@ -37,6 +50,12 @@ void test_image_create_too_wide(void) {
     TEST_END
 }
 
+/**
+ * Verify that creating an image with height 0 produces an empty image.
+ *
+ * Asserts that the returned image has width == 0, height == 0, bpp == 0,
+ * and pixels == NULL.
+ */
 void test_image_create_zero_height(void) {
     TEST_BEGIN
     image_t image = image_create(100, 0, 4);
@@ -57,6 +76,12 @@ void test_image_create_too_high(void) {
     TEST_END
 }
 
+/**
+ * Verify that calling image_create with an invalid image type produces a zeroed image.
+ *
+ * Calls image_create(100, 100, 0) and asserts that the resulting image has width == 0,
+ * height == 0, bpp == 0, and pixels == NULL.
+ */
 void test_image_create_wrong_image_type(void) {
     TEST_BEGIN
     image_t image = image_create(100, 100, 0);
@@ -75,6 +100,11 @@ void test_image_create_grayscale(void) {
     TEST_END
 }
 
+/**
+ * Tests that creating a 100x100 RGB image allocates a non-NULL pixel buffer.
+ *
+ * Asserts the pixel buffer returned by image_create(100, 100, RGB) is not NULL and frees it.
+ */
 void test_image_create_rgb(void) {
     TEST_BEGIN
     image_t image = image_create(100, 100, RGB);
@@ -101,6 +131,12 @@ void test_image_clone_null_image(void) {
     TEST_END
 }
 
+/**
+ * Verify that cloning an image struct with no pixel buffer yields a zeroed image.
+ *
+ * Asserts that the resulting cloned image has width == 0, height == 0, bpp == 0,
+ * and pixels == NULL.
+ */
 void test_image_clone_image_without_pixels(void) {
     TEST_BEGIN
     image_t image, cloned;
@@ -136,6 +172,12 @@ void test_image_clone_proper_image(void) {
     TEST_END
 }
 
+/**
+ * Verify that cloning an image with width and height greater than the allowed maxima produces a zeroed image.
+ *
+ * Creates an RGB image, inflates its width and height beyond MAX_WIDTH/MAX_HEIGHT, and asserts that
+ * image_clone returns an image with width 0, height 0, bpp 0, and NULL pixels.
+ */
 void test_image_clone_large_image(void) {
     TEST_BEGIN
     image_t image, cloned;
@@ -197,6 +239,9 @@ void test_image_clear_proper_image(void) {
     TEST_END
 }
 
+/**
+ * Verify image_putpixel returns NULL_IMAGE_POINTER when called with a NULL image pointer.
+ */
 void test_image_putpixel_null_image(void) {
     TEST_BEGIN
     int result = image_putpixel(NULL, 0, 0, 0, 0, 0, 0);
@@ -204,6 +249,10 @@ void test_image_putpixel_null_image(void) {
     TEST_END
 }
 
+/**
+ * Verify image_putpixel reports a NULL_PIXELS_POINTER error when the image's
+ * pixels pointer is NULL.
+ */
 void test_image_putpixel_image_without_pixels(void) {
     TEST_BEGIN
     image_t image;
@@ -219,6 +268,12 @@ void test_image_putpixel_image_without_pixels(void) {
     TEST_END
 }
 
+/**
+ * Verify that image_putpixel rejects negative coordinates.
+ *
+ * Creates a 100x100 grayscale image and asserts that calling image_putpixel
+ * with a negative x or y coordinate returns INVALID_COORDINATES.
+ */
 void test_image_putpixel_negative_coordinates(void) {
     TEST_BEGIN
     image_t image;
@@ -237,6 +292,12 @@ void test_image_putpixel_negative_coordinates(void) {
     TEST_END
 }
 
+/**
+ * Verify that image_putpixel rejects coordinates outside the image bounds.
+ *
+ * Creates a 100x100 grayscale image and asserts that calls to image_putpixel
+ * with x > 99 or y > 99 return INVALID_COORDINATES.
+ */
 void test_image_putpixel_coordinates_outside_range(void) {
     TEST_BEGIN
     image_t image;
@@ -255,6 +316,12 @@ void test_image_putpixel_coordinates_outside_range(void) {
     TEST_END
 }
 
+/**
+ * Test that image_putpixel writes exactly three RGB components into a 1x1 RGB image.
+ *
+ * Creates a 1x1 RGB image, sets the pixel with values (1, 2, 3, 4), and asserts that
+ * the image's pixel buffer contains the three RGB components {1, 2, 3}; frees pixels.
+ */
 void test_image_putpixel_rgb_image(void) {
     TEST_BEGIN
     image_t image;
@@ -309,6 +376,9 @@ void test_image_putpixel_grayscale_image(void) {
     TEST_END
 }
 
+/**
+ * Verifies that image_putpixel_max reports a NULL_IMAGE_POINTER error when given a NULL image pointer.
+ */
 void test_image_putpixel_max_null_image(void) {
     TEST_BEGIN
     int result = image_putpixel_max(NULL, 0, 0, 0, 0, 0, 0);
@@ -407,6 +477,13 @@ void test_image_putpixel_max_rgba_image(void) {
     TEST_END
 }
 
+/**
+ * Verify image_putpixel_max writes correct grayscale values for GRAYSCALE images.
+ *
+ * Creates a 1x1 grayscale image, clears it, calls image_putpixel_max with
+ * different component values and verifies the stored grayscale byte matches
+ * the expected results (first call leaves 0, second call produces value 18).
+ */
 void test_image_putpixel_max_grayscale_image(void) {
     TEST_BEGIN
     image_t image;
@@ -471,6 +548,12 @@ void test_image_getpixel_negative_coordinates() {
     TEST_END
 }
 
+/**
+ * Verify image_getpixel reports invalid coordinates for positions outside image bounds.
+ *
+ * Creates a 100×100 grayscale image and asserts that requesting a pixel at x == 101 or y == 101
+ * returns INVALID_COORDINATES.
+ */
 void test_image_getpixel_coordinates_outside_range() {
     TEST_BEGIN
     unsigned char r, g, b, a;
@@ -490,6 +573,12 @@ void test_image_getpixel_coordinates_outside_range() {
     TEST_END
 }
 
+/**
+ * Verifies image_getpixel returns NULL_COLOR_COMPONENT_POINTER when any color component pointer is NULL.
+ *
+ * The test invokes image_getpixel on a valid image while passing NULL for each of the color component output
+ * pointers (r, g, b, a) in turn and asserts the function returns the NULL_COLOR_COMPONENT_POINTER error code.
+ */
 void test_image_getpixel_null_color_component() {
     TEST_BEGIN
     unsigned char r, g, b, a;
@@ -543,6 +632,13 @@ void test_image_getpixel_rgb_image() {
     TEST_END
 }
 
+/**
+ * Test retrieval of RGBA pixel components.
+ *
+ * Creates a 100×100 RGBA image, verifies that a cleared pixel returns 0,0,0,0,
+ * writes a pixel with components (1,2,3,4), verifies those components are read back,
+ * and releases the image pixel buffer.
+ */
 void test_image_getpixel_rgba_image() {
     TEST_BEGIN
     unsigned char r, g, b, a;
@@ -597,6 +693,11 @@ void test_image_getpixel_grayscale_image() {
     TEST_END
 }
 
+/**
+ * Verify that drawing a horizontal line on a NULL image reports a NULL image pointer error.
+ *
+ * Asserts that calling image_hline with a NULL image pointer returns NULL_IMAGE_POINTER.
+ */
 void test_image_hline_null_image(void) {
     TEST_BEGIN
     int result = image_hline(NULL, 0, 0, 0, 0, 0, 0, 0);
@@ -604,6 +705,12 @@ void test_image_hline_null_image(void) {
     TEST_END
 }
 
+/**
+ * Verifies that drawing a horizontal line on an image with no pixel buffer reports a NULL pixels error.
+ *
+ * Creates an image struct with valid dimensions and bpp but NULL `pixels`, calls `image_hline`, and
+ * asserts that the function returns `NULL_PIXELS_POINTER`.
+ */
 void test_image_hline_image_without_pixels(void) {
     TEST_BEGIN
     image_t image;
@@ -619,6 +726,12 @@ void test_image_hline_image_without_pixels(void) {
     TEST_END
 }
 
+/**
+ * Verify image_hline reports INVALID_COORDINATES when any coordinate is negative.
+ *
+ * Creates a 100x100 grayscale image, clears it, and asserts that image_hline
+ * rejects negative x1, x2, and/or y values across several combinations.
+ */
 void test_image_hline_negative_coordinates(void) {
     TEST_BEGIN
     image_t image;
@@ -652,6 +765,19 @@ void test_image_hline_negative_coordinates(void) {
     TEST_END
 }
 
+/**
+ * Verifies that image_hline rejects coordinates outside the image bounds.
+ *
+ * Creates a 100×100 grayscale image and asserts that image_hline returns
+ * INVALID_COORDINATES when:
+ *  - x1 is greater than the image width - 1,
+ *  - x2 is greater than the image width - 1,
+ *  - both x1 and x2 are greater than the image width - 1,
+ *  - y is greater than the image height - 1.
+ *
+ * The test allocates and frees the image pixel buffer and uses assertions to
+ * validate expected return codes.
+ */
 void test_image_hline_coordinates_outside_range(void) {
     TEST_BEGIN
     image_t image;
@@ -680,6 +806,12 @@ void test_image_hline_coordinates_outside_range(void) {
     TEST_END
 }
 
+/**
+ * Test drawing a horizontal line on a 1x1 RGB image.
+ *
+ * Verifies that calling image_hline on a 1x1 RGB image writes the provided RGB components
+ * into the single pixel and returns OK; frees the image pixels after the check.
+ */
 void test_image_hline_rgb_image_1x1(void) {
     TEST_BEGIN
     image_t image;
@@ -698,6 +830,14 @@ void test_image_hline_rgb_image_1x1(void) {
     TEST_END
 }
 
+/**
+ * Test drawing a horizontal RGB line across the first row of a 2x2 image.
+ *
+ * Creates a 2x2 RGB image, clears it, draws a horizontal line from x=0 to x=1 at y=0
+ * with color components R=100, G=150, B=200 (alpha provided but ignored for RGB),
+ * and verifies the pixel buffer layout: the first two pixels contain the RGB values
+ * and the remaining pixels remain zeroed.
+ */
 void test_image_hline_rgb_image_2x2(void) {
     TEST_BEGIN
     image_t image;
@@ -716,6 +856,12 @@ void test_image_hline_rgb_image_2x2(void) {
     TEST_END
 }
 
+/**
+ * Test that drawing a horizontal line on a 1x1 RGBA image writes the provided RGBA values to the single pixel.
+ *
+ * Creates a 1x1 RGBA image, clears it, draws a horizontal line covering the single pixel with RGBA(100,150,200,250),
+ * and asserts the operation returns OK and the image pixel buffer matches the expected bytes.
+ */
 void test_image_hline_rgba_image_1x1(void) {
     TEST_BEGIN
     image_t image;
@@ -752,6 +898,12 @@ void test_image_hline_rgba_image_2x2(void) {
     TEST_END
 }
 
+/**
+ * Verifies that drawing a horizontal line on a 1x1 grayscale image writes the expected single pixel value.
+ *
+ * Creates a 1x1 grayscale image, clears it, draws a horizontal line at y=0 from x=0 to x=0 with provided color components,
+ * and asserts that the image's single pixel matches the expected grayscale value.
+ */
 void test_image_hline_grayscale_image_1x1(void) {
     TEST_BEGIN
     image_t image;
@@ -770,6 +922,12 @@ void test_image_hline_grayscale_image_1x1(void) {
     TEST_END
 }
 
+/**
+ * Verifies that drawing a horizontal line on a 2x2 grayscale image writes the expected pixel values.
+ *
+ * Creates a 2x2 grayscale image, clears it, draws a horizontal span across the first row, and asserts
+ * that the pixels in the affected span are set to the expected grayscale values while other pixels remain unchanged.
+ */
 void test_image_hline_grayscale_image_2x2(void) {
     TEST_BEGIN
     image_t image;
@@ -788,6 +946,16 @@ void test_image_hline_grayscale_image_2x2(void) {
     TEST_END
 }
 
+/**
+ * Run the complete image processing test suite in a deterministic order.
+ *
+ * Executes all unit tests covering image size, creation, cloning, clearing,
+ * pixel writing (putpixel and putpixel_max), pixel reading (getpixel), and
+ * horizontal line drawing (hline). Tests are invoked in grouped sections to
+ * ensure predictable setup and teardown across cases.
+ *
+ * @return 0 on success.
+ */
 int main(void) {
     /* tests for function image_size() */
     test_image_size_null_image();
@@ -855,4 +1023,3 @@ int main(void) {
 
     return 0;
 }
-
