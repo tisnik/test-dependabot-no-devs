@@ -24,8 +24,10 @@ def recursive_update(original: dict) -> dict:
             key == "anyOf"
             and isinstance(value, list)
             and len(value) >= 2
+            and isinstance(value[0], dict)
             and "type" in value[0]
-            and value[1]["type"] == "null"
+            and isinstance(value[1], dict)
+            and value[1].get("type") == "null"
         ):
             # only the first type is correct,
             # we need to ignore the second one
