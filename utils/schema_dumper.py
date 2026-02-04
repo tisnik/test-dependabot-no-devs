@@ -7,12 +7,16 @@ from models.config import Configuration
 
 
 def recursive_update(original: dict) -> dict:
-    """Recursively update the schema to be 100% OpenAPI-compatible.
-
+    """
+    Transform a JSON Schema produced by Pydantic into an OpenAPI-compatible schema dictionary.
+    
+    Performs a recursive transformation of the input schema: converts `anyOf` entries that allow `null` into a single `type` plus `nullable: True`, maps `exclusiveMinimum` to `minimum`, and applies the same fixes to nested objects.
+    
     Parameters:
-        original: The original schema dictionary to transform.
+        original (dict): Input JSON Schema dictionary to transform.
+    
     Returns:
-        A new dictionary with OpenAPI-compatible transformations applied.
+        dict: A new schema dictionary with OpenAPI-compatible adjustments applied.
     """
     new: dict = {}
     for key, value in original.items():
@@ -45,14 +49,14 @@ def recursive_update(original: dict) -> dict:
 
 
 def dump_schema(filename: str) -> None:
-    """Dump the configuration schema into OpenAPI-compatible JSON file.
-
+    """
+    Write the Configuration model's JSON schema as an OpenAPI 3.0.0 document to the given file.
+    
+    This creates an OpenAPI-compatible JSON object (openapi: "3.0.0") containing basic info, an empty paths object, and components.schemas populated from the generated schema for `Configuration` after applying OpenAPI compatibility transformations.
+    
     Parameters:
-        - filename: str - name of file to export the schema to
-
-    Returns:
-        - None
-
+        filename (str): Destination file path to write the OpenAPI JSON document.
+    
     Raises:
         IOError: If the file cannot be written.
     """

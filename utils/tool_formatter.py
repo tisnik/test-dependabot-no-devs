@@ -8,21 +8,18 @@ logger = logging.getLogger(__name__)
 
 def format_tool_response(tool_dict: dict[str, Any]) -> dict[str, Any]:
     """
-    Format a tool dictionary to include only required fields.
-
-    If the input description contains structured metadata (e.g.,
-    lines starting with `TOOL_NAME=` or `DISPLAY_NAME=`), the
-    description will be replaced with a cleaned, human-readable
-    version extracted by `extract_clean_description`.
-
+    Format a raw tool dictionary into a standardized, trimmed representation.
+    
+    If the tool's description appears to contain structured metadata (for example, lines starting with "TOOL_NAME=" or "DISPLAY_NAME="), the function will replace it with a cleaned, user-facing description extracted from that metadata when possible.
+    
     Parameters:
-        tool_dict: Raw tool dictionary from Llama Stack
-
+        tool_dict (dict[str, Any]): Raw tool dictionary; missing fields will be defaulted.
+    
     Returns:
-        dict[str, Any]: Formatted tool dictionary containing the following keys:
+        dict[str, Any]: Formatted tool dictionary with these keys:
             - identifier: tool identifier string (defaults to "").
             - description: cleaned or original description string.
-            - parameters: list of parameter definitions (defaults to empty list).
+            - parameters: list of parameter definitions (defaults to []).
             - provider_id: provider identifier string (defaults to "").
             - toolgroup_id: tool group identifier string (defaults to "").
             - server_source: server source string (defaults to "").
@@ -121,13 +118,9 @@ def extract_clean_description(description: str) -> str:
 
 def format_tools_list(tools: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """
-    Format a list of tools with structured description parsing.
-
-    Parameters:
-        tools: (list[dict[str, Any]]): List of raw tool dictionaries
-
+    Format a list of raw tool dictionaries into standardized tool objects.
+    
     Returns:
-        list[dict[str, Any]]: Formatted tool dictionaries with normalized
-                              fields and cleaned descriptions.
+        list[dict[str, Any]]: A list of formatted tool dictionaries with normalized fields and cleaned descriptions.
     """
     return [format_tool_response(tool) for tool in tools]

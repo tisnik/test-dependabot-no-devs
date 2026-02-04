@@ -21,7 +21,15 @@ logger = logging.getLogger("utils.transcripts")
 
 
 def _hash_user_id(user_id: str) -> str:
-    """Hash the user ID using SHA-256."""
+    """
+    Return the SHA-256 hex digest of the given user_id.
+    
+    Parameters:
+        user_id (str): The user identifier to hash.
+    
+    Returns:
+        str: Hexadecimal SHA-256 digest of the UTF-8 encoded user_id.
+    """
     return hashlib.sha256(user_id.encode("utf-8")).hexdigest()
 
 
@@ -67,23 +75,24 @@ def store_transcript(  # pylint: disable=too-many-arguments,too-many-positional-
     truncated: bool,
     attachments: list[Attachment],
 ) -> None:
-    """Store transcript in the local filesystem.
-
+    """
+    Store a single query/response turn as a JSON transcript file on disk.
+    
     Parameters:
-        user_id: The user ID (UUID).
-        conversation_id: The conversation ID (UUID).
-        model_id: Identifier of the model used to generate the LLM response.
-        provider_id: Optional provider identifier for the model.
-        query_is_valid: The result of the query validation.
-        query: The query (without attachments).
-        query_request: The request containing a query.
-        summary: Summary of the query/response turn.
-        rag_chunks: The list of serialized `RAGChunk` dictionaries.
-        truncated: The flag indicating if the history was truncated.
-        attachments: The list of `Attachment` objects.
-
+        user_id: The user's identifier (will be hashed before storage).
+        conversation_id: The conversation identifier used to group transcripts.
+        model_id: Identifier of the model that produced the LLM response.
+        provider_id: Optional identifier of the model provider.
+        query_is_valid: Whether the incoming query passed validation.
+        query: The (redacted) text of the query without attachments.
+        query_request: The original query request containing provider and model metadata.
+        summary: TurnSummary containing the LLM response, tool calls, and tool results.
+        rag_chunks: List of serialized RAG chunk dictionaries associated with the turn.
+        truncated: True if conversation history was truncated when producing this turn.
+        attachments: List of Attachment objects associated with the query.
+    
     Raises:
-        IOError, OSError: If writing the transcript file to disk fails.
+        IOError, OSError: If the transcript file cannot be written to disk.
     """
     transcripts_path = construct_transcripts_path(user_id, conversation_id)
     transcripts_path.mkdir(parents=True, exist_ok=True)

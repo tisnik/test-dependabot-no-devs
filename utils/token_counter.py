@@ -24,11 +24,10 @@ class TokenCounter:
 
     def __str__(self) -> str:
         """
-        Return a human-readable summary of the token usage stored in this TokenCounter.
-
+        Human-readable summary of this TokenCounter's token usage.
+        
         Returns:
-            summary (str): A formatted string containing `input_tokens`,
-                           `output_tokens`, `input_tokens_counted`, and `llm_calls`.
+            str: Formatted string with `input_tokens`, `output_tokens`, `input_tokens_counted`, and `llm_calls`.
         """
         return (
             f"{self.__class__.__name__}: "
