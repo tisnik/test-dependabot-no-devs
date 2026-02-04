@@ -5,32 +5,25 @@ import uuid
 
 def get_suid() -> str:
     """
-    Generate a unique session ID (SUID) using UUID4.
-
-    The value is a canonical RFC 4122 UUID (hex groups separated by
-    hyphens) generated with uuid.uuid4().
-
+    Generate a canonical RFC 4122 UUID4 string to use as a session identifier.
+    
     Returns:
-        str: A UUID4 string suitable for use as a session identifier.
+        A UUID4 string in hyphen-separated hex group form (e.g. "550e8400-e29b-41d4-a716-446655440000").
     """
     return str(uuid.uuid4())
 
 
 def check_suid(suid: str) -> bool:
     """
-    Check if given string is a proper session ID.
-
-    Returns True if the string is a valid UUID or a llama-stack conversation ID.
-
+    Determine whether a string is a valid session or conversation ID.
+    
+    Accepts standard RFC 4122 UUID strings, 48-character hexadecimal llama-stack IDs, or the same hex ID prefixed with "conv_". Non-string inputs are considered invalid.
+    
     Parameters:
-        suid (str): UUID value to validate — accepts a UUID string,
-        or a llama-stack conversation ID (48-char hex, optionally with conv_ prefix).
-
-    Notes:
-        Validation accepts:
-        1. Standard UUID format (e.g., '550e8400-e29b-41d4-a716-446655440000')
-        2. 48-character hex string (llama-stack format)
-        3. 'conv_' prefix + 48-character hex string (53 chars total)
+        suid (str): Candidate ID to validate.
+    
+    Returns:
+        bool: `true` if `suid` is a valid UUID, a 48-character hex string, or `"conv_"` + 48-character hex; `false` otherwise.
     """
     if not isinstance(suid, str):
         return False
@@ -80,21 +73,13 @@ def normalize_conversation_id(conversation_id: str) -> str:
 
 def to_llama_stack_conversation_id(conversation_id: str) -> str:
     """
-    Convert a database conversation ID to llama-stack format.
-
-    Adds the 'conv_' prefix if not already present.
-
-    Args:
-        conversation_id: The conversation ID from database.
-
+    Convert a database conversation ID to llama-stack format by ensuring it starts with the 'conv_' prefix.
+    
+    Parameters:
+        conversation_id (str): Conversation ID that may already include the 'conv_' prefix.
+    
     Returns:
-        str: The conversation ID in llama-stack format (conv_xxx).
-
-    Examples:
-        >>> to_llama_stack_conversation_id('abc123')
-        'conv_abc123'
-        >>> to_llama_stack_conversation_id('conv_abc123')
-        'conv_abc123'
+        str: The conversation ID with a leading 'conv_' prefix (unchanged if it was already present).
     """
     if not conversation_id.startswith("conv_"):
         return f"conv_{conversation_id}"

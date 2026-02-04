@@ -14,19 +14,16 @@ class InvalidConfigurationError(Exception):
 
 def get_attribute_from_file(data: dict, file_name_key: str) -> Optional[str]:
     """
-    Return the contents of a file whose path is stored in the given mapping.
-
-    Looks up file_name_key in data; if a non-None value is found it is treated
-    as a filesystem path, the content of the file is read. In case the key is
-    missing or maps to None, returns None.
-
+    Retrieve file contents from a mapping using a path stored under a key.
+    
+    Looks up `file_name_key` in `data` and, if a non-None path is found, reads the file and returns its contents with trailing whitespace removed.
+    
     Parameters:
-        data (dict): Mapping containing the file path under file_name_key.
+        data (dict): Mapping containing the file path.
         file_name_key (str): Key in `data` whose value is the path to the file.
-
+    
     Returns:
-        Optional[str]: File contents with trailing whitespace stripped, or None
-        if the key is not present or is None.
+        Optional[str]: File contents with trailing whitespace removed, or `None` if the key is missing or maps to `None`.
     """
     file_path = data.get(file_name_key)
     if file_path is not None:
@@ -61,20 +58,16 @@ def directory_check(
     path: FilePath, must_exists: bool, must_be_writable: bool, desc: str
 ) -> None:
     """
-    Ensure the given path is an existing directory.
-
-    If the path is not a directory, raises InvalidConfigurationError.
-
+    Validate a directory path against existence, directory-ness, and optional writability requirements.
+    
     Parameters:
         path (FilePath): Filesystem path to validate.
-        must_exists (bool): Should the directory exists?
-        must_be_writable (bool): Should the check test if directory is writable?
-        desc (str): Short description of the value being checked; used in error
-        messages.
-
+        must_exists (bool): If True, require that the path exists; if False, missing path is allowed.
+        must_be_writable (bool): If True, require that the path is writable.
+        desc (str): Short description of the value being checked used in error messages.
+    
     Raises:
-        InvalidConfigurationError: If `path` does not point to a directory or
-        is not writable when required.
+        InvalidConfigurationError: If the path is required but does not exist, if it exists but is not a directory, or if it is required to be writable but is not.
     """
     if not os.path.exists(path):
         if must_exists:
@@ -123,15 +116,13 @@ def import_python_module(profile_name: str, profile_path: str) -> Optional[Modul
 
 def is_valid_profile(profile_module: ModuleType) -> bool:
     """
-    Check whether a module exposes a valid PROFILE_CONFIG with required structure.
-
-    The module must define a `PROFILE_CONFIG` attribute that is a dict and contains a non-empty
-    `system_prompts` entry. This function returns `True` only when `system_prompts` exists
-    and is itself a dict.
-
+    Validate that a module defines a PROFILE_CONFIG containing a `system_prompts` mapping.
+    
+    Parameters:
+        profile_module (ModuleType): The module to inspect for a valid PROFILE_CONFIG.
+    
     Returns:
-        True if the module provides a dict `PROFILE_CONFIG` containing a
-        `system_prompts` dict, False otherwise.
+        `true` if the module has a `PROFILE_CONFIG` that is a dict containing a `system_prompts` dict, `false` otherwise.
     """
     if not hasattr(profile_module, "PROFILE_CONFIG"):
         return False
