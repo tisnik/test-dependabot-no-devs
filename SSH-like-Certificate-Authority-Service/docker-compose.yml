@@ -1,0 +1,20 @@
+services:
+  app:
+    build: .
+    ports:
+      - "8443:8443"
+    env_file:
+      - ./secrets/.env
+    volumes:
+      - ./secrets/https/ca-service-local.cert.pem:/run/ca-service/https/ca-service-local.cert.pem:ro
+      - ./secrets/https/ca-service-local.key.pem:/run/ca-service/https/ca-service-local.key.pem:ro
+      - ./secrets/ssh/ca_key:/run/ca-service/ssh/ca_key:ro
+
+  test:
+    build:
+      context: .
+      target: builder
+    working_dir: /app
+    env_file:
+      - ./secrets/.env
+    command: ["go", "test", "-cover", "-v", "-timeout", "30s", "./..."]
