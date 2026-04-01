@@ -21,14 +21,19 @@ TEST_USER_NAME = "testuser"
 
 @pytest.fixture
 def token_header(single_key_set: list[dict[str, Any]]) -> dict[str, Any]:
-    """
-    Create a JWT header with algorithm "RS256" and `kid` taken from the first key in the provided key set.
-    
+    """A sample token header.
+
+    Create a JWT header using RS256 and the first key's `kid` from the provided key set.
+
     Parameters:
-        single_key_set (list[dict]): List of signing key dictionaries; the first element must contain a `"kid"`.
-    
+    ----------
+        single_key_set (list[dict]): List of signing key dictionaries; the
+        first element must contain a `"kid"`.
+
     Returns:
-        dict: JWT header with keys `"alg": "RS256"`, `"typ": "JWT"`, and `"kid"` set to `single_key_set[0]["kid"]`.
+    -------
+        dict: JWT header with keys `"alg": "RS256"`, `"typ": "JWT"`, and
+        `"kid"` set to the first key's `kid`.
     """
     return {"alg": "RS256", "typ": "JWT", "kid": single_key_set[0]["kid"]}
 
@@ -52,9 +57,10 @@ def token_payload() -> dict[str, Any]:
 
 
 def make_key() -> dict[str, Any]:
-    """
+    """Generate a key pair for testing purposes.
+
     Create an RSA test key pair and return the private key, public key, and key identifier.
-    
+
     Returns:
         dict: A dictionary with the following entries:
             - "private_key": the generated private JsonWebKey instance.
@@ -77,9 +83,10 @@ def single_key_set() -> list[dict[str, Any]]:
 
 @pytest.fixture
 def another_single_key_set() -> list[dict[str, Any]]:
-    """
+    """Same as single_key_set, but generates a different key pair by being its own fixture.
+
     Create a single-key JWK set using a newly generated RSA key.
-    
+
     Returns:
         list[dict[str, Any]]: A list containing one dict with keys:
             - `private_key`: the generated private JsonWebKey
@@ -95,15 +102,19 @@ def valid_token(
     token_header: dict[str, Any],
     token_payload: dict[str, Any],
 ) -> str:
-    """
-    Create an RS256-signed JWT using the first private key from a single-key JWK set.
-    
+    """A token that is valid and signed with the signing keys.
+
+    Create a JWT signed with the first private key from a single-key JWK set using RS256.
+
     Parameters:
-        single_key_set (list[dict[str, Any]]): JWK dicts where the first entry must contain a 'private_key' used to sign the token.
+    ----------
+        single_key_set (list[dict[str, Any]]): List of key dicts where the
+        first entry must contain a 'private_key' used to sign the token.
         token_header (dict[str, Any]): JWT header values to include in the token.
         token_payload (dict[str, Any]): JWT claims to include in the token.
-    
+
     Returns:
+    -------
         str: The compact serialized JWT signed with the provided private key.
     """
     jwt_instance = JsonWebToken(algorithms=["RS256"])
@@ -114,9 +125,8 @@ def valid_token(
 
 @pytest.fixture(autouse=True)
 def clear_jwk_cache() -> Generator:
-    """
-    Clears the global JWK cache before a test runs and again after the test completes.
-    
+    """Clear the global JWK cache before each test.
+
     This autouse fixture ensures the module-level `_jwk_cache` is emptied at setup and teardown to prevent cross-test interference.
     """
     _jwk_cache.clear()
@@ -127,24 +137,31 @@ def clear_jwk_cache() -> Generator:
 def make_signing_server(
     mocker: MockerFixture, key_set: list[dict[str, Any]], algorithms: list[str]
 ) -> Any:
-    """
-    Create and patch a mocked aiohttp.ClientSession that serves a JWKS response built from the provided key set.
-    
+    """A fake server to serve our signing keys as JWKs.
+
+    Create and patch a mocked aiohttp.ClientSession that serves a JWKS response
+    derived from the provided key set.
+
     Parameters:
+    ----------
         mocker (pytest.MockerFixture): Pytest mocker used to patch aiohttp.ClientSession.
-        key_set (list[dict[str, Any]]): List of signing key dicts; each item must include a
-            `private_key` exposing `as_dict(private=False)` and a `kid` value.
-        algorithms (list[str]): List of `alg` values to assign to each corresponding key
-            in `key_set`.
-    
+        key_set (list[dict[str, Any]]): List of signing key dicts; each item
+        must include a `private_key` with an `as_dict(private=False)` method
+        and a `kid` value.
+        algorithms (list[str]): List of JWK `alg` values to assign to each
+        corresponding key in `key_set`.
+
     Returns:
-        Any: The patched `aiohttp.ClientSession` class. The mock is configured so that:
-            - Instantiating the session returns an async-capable mock instance.
-            - Calling `session.get(...)` returns an async context manager whose entered value
-              is a response mock.
-            - `response.json()` returns `{"keys": keys}` where each key is the public JWK
-              derived from `private_key.as_dict(private=False)` extended with `kid` and `alg`.
-            - `response.raise_for_status()` is a no-op.
+    -------
+        Any: The mocked ClientSession class (the value assigned to the patched
+        `aiohttp.ClientSession`). The mock is configured so that:
+          - Instantiating the session returns an async context manager.
+          - Calling `await session.get(...)` returns an async context manager
+            whose entered value is a response object.
+          - The response's `json()` returns `{"keys": keys}` where each key is
+            the public JWK derived from `private_key.as_dict(private=False)`
+            extended with `kid` and `alg`.
+          - `response.raise_for_status()` is a no-op.
     """
     mock_session_class = mocker.patch("aiohttp.ClientSession")
     mock_response = mocker.AsyncMock()
@@ -185,23 +202,34 @@ def make_signing_server(
 def mocked_signing_keys_server(
     mocker: MockerFixture, single_key_set: list[dict[str, Any]]
 ) -> None:
-    """
-    Register a mocked JWKS HTTP server that serves the provided single RS256 JWK.
-    
+    """Single-key signing server.
+
+    Create and register a mocked signing keys HTTP server that serves a single RS256 JWK set.
+
     Parameters:
-        mocker (pytest_mock.MockerFixture): Pytest-mock fixture used to patch aiohttp.ClientSession and related network calls.
-        single_key_set (list[dict[str, Any]]): List containing one JWK dict (public key representation) that the mocked JWKS endpoint will return.
+    ----------
+        mocker (pytest_mock.MockerFixture): Pytest-mock fixture used to patch
+        aiohttp.ClientSession and related network calls.
+        single_key_set (list[dict[str, Any]]): A list containing one JWK dict
+        (public key representation) that will be returned by the mocked JWKS
+        endpoint.
     """
     return make_signing_server(mocker, single_key_set, ["RS256"])
 
 
 @pytest.fixture
 def default_jwk_configuration() -> JwkConfiguration:
-    """
-    Create a JwkConfiguration configured for tests.
-    
+    """Default JwkConfiguration for testing.
+
+    Create a default JwkConfiguration preconfigured for tests.
+
+    The returned configuration uses a mocked JWKS URL and a JwtConfiguration
+    that maps the user identifier to the `user_id` claim and the username to
+    the `username` claim.
+
     Returns:
-        JwkConfiguration: configuration pointing at a mocked JWKS URL and using "user_id" as the user ID claim and "username" as the username claim.
+        JwkConfiguration: Configuration with a mocked JWKS URL and default
+        claim mappings (`user_id` and `username`).
     """
     return JwkConfiguration(
         url=AnyHttpUrl("https://this#isgonnabemocked.com/jwks.json"),
@@ -237,11 +265,13 @@ def dummy_request(token: str) -> Request:
 
 @pytest.fixture
 def no_token_request() -> Request:
-    """
-    Create a FastAPI Request representing an HTTP request without an Authorization header.
-    
+    """Dummy request with no token.
+
+    Create a FastAPI Request that contains no Authorization header.
+
     Returns:
-        request (Request): A Request with an HTTP scope whose headers list contains no Authorization header.
+        request (Request): A request object with an HTTP scope and an empty
+        headers list (no Authorization present).
     """
     return Request(
         scope={
@@ -254,11 +284,12 @@ def no_token_request() -> Request:
 
 @pytest.fixture
 def not_bearer_token_request() -> Request:
-    """
-    Create a FastAPI Request with an Authorization header using a non-Bearer scheme.
-    
+    """Dummy request with no token.
+
+    Create a FastAPI Request whose Authorization header uses a non-Bearer scheme.
+
     Returns:
-        Request: A request whose `Authorization` header value is "NotBearer anything".
+        Request: A request with an Authorization header set to "NotBearer anything".
     """
     return Request(
         scope={
@@ -291,12 +322,20 @@ def set_auth_header(request: Request, token: str) -> None:
 
 
 def ensure_test_user_id_and_name(auth_tuple: tuple, expected_token: str) -> None:
-    """
-    Validate that an authentication tuple matches the expected test user values and token.
-    
+    """Utility to ensure that the values in the auth tuple match the test values.
+
+    Assert that an authentication tuple contains the expected test user values.
+
     Parameters:
-        auth_tuple (tuple): A 4-tuple (user_id, username, skip_userid_check, token) to validate.
-        expected_token (str): The expected token value that must equal the tuple's fourth element.
+    ----------
+        auth_tuple (tuple): A 4-tuple in the form (user_id, username, skip_userid_check, token).
+        expected_token (str): The token value expected to be present as the fourth element.
+
+    Raises:
+    ------
+        AssertionError: If any element of auth_tuple does not match the expected test values
+                        (user id equals TEST_USER_ID, username equals TEST_USER_NAME,
+                        skip_userid_check is False, and token equals expected_token).
     """
     user_id, username, skip_userid_check, token = auth_tuple
     assert user_id == TEST_USER_ID
@@ -326,16 +365,21 @@ def expired_token(
     token_header: dict[str, Any],
     token_payload: dict[str, Any],
 ) -> str:
-    """
-    Create a JWT that is correctly signed but has its expiration time set in the past.
-    
+    """An well-signed yet expired token.
+
+    Create a JWT that is correctly signed but has an expiration time set in the past.
+
     Parameters:
-        single_key_set (list[dict]): Key dicts where the first element's `private_key` is used to sign the token.
+    ----------
+        single_key_set (list[dict]): A list of key dicts; the first element's
+        `private_key` is used to sign the token.
         token_header (dict): JWT header values to include in the token.
-        token_payload (dict): JWT payload values; this function overwrites the `exp` claim to a past timestamp.
-    
+        token_payload (dict): JWT payload values; this function overwrites
+        `exp` to a past timestamp.
+
     Returns:
-        str: Signed JWT string with the `exp` claim set to a time in the past.
+    -------
+        str: The signed JWT as a string with an expired `exp` claim.
     """
     jwt_instance = JsonWebToken(algorithms=["RS256"])
     token_payload["exp"] = int(time.time()) - 3600  # Set expiration in the past
@@ -375,16 +419,22 @@ def invalid_token(
     token_header: dict[str, Any],
     token_payload: dict[str, Any],
 ) -> str:
-    """
-    Create a JWT signed with a different private key than the verifier's keys to produce an invalid-signature token for tests.
-    
+    """A token that is signed with different keys than the signing keys.
+
+    Create a JWT signed with a key different from the expected signing keys for
+    use in invalid-signature tests.
+
     Parameters:
-        another_single_key_set: Key set whose first entry's private key will be used to sign the token; this key should not match the verifier's keys.
-        token_header: JWT header values to encode into the token.
-        token_payload: JWT claims to encode into the token.
-    
+    ----------
+        another_single_key_set (list[dict[str, Any]]): A key set whose first
+        entry's "private_key" will be used to sign the token; should not match
+        the verifier's keys.
+        token_header (dict[str, Any]): JWT header to encode.
+        token_payload (dict[str, Any]): JWT claims to encode.
+
     Returns:
-        The compact serialized JWT string signed with the provided private key.
+    -------
+        str: The serialized JWT as a compact string.
     """
     jwt_instance = JsonWebToken(algorithms=["RS256"])
     return jwt_instance.encode(
@@ -453,16 +503,19 @@ def no_user_id_token(
     token_payload: dict[str, Any],
     token_header: dict[str, Any],
 ) -> str:
-    """
+    """Token without a user_id claim.
+
     Create a signed JWT that omits the `user_id` claim.
-    
-    Modifies the provided `token_payload` in-place to remove the `user_id` key and returns the JWT encoded and signed with the first private key from `single_key_set`.
-    
+
+    The token is encoded using the provided header and the first private key in
+    `single_key_set`; the supplied `token_payload` is modified in-place to
+    remove `user_id`.
+
     Parameters:
         token_payload (dict): Payload to encode; will be mutated to remove `user_id`.
-    
+
     Returns:
-        jwt (str): Encoded JWT string that does not contain the `user_id` claim.
+        jwt (str): Encoded JWT as a string that does not contain the `user_id` claim.
     """
     jwt_instance = JsonWebToken(algorithms=["RS256"])
     # Modify the token payload to include different claims
@@ -498,11 +551,12 @@ def no_username_token(
     token_payload: dict[str, Any],
     token_header: dict[str, Any],
 ) -> str:
-    """
+    """Token without a username claim.
+
     Create a JWT signed with the provided private key that omits the `username` claim.
-    
+
     Returns:
-        compact_jwt (str): A signed compact JWT string whose payload does not include the `username` claim.
+        A compact JWT string (signed) that does not contain the `username` claim.
     """
     jwt_instance = JsonWebToken(algorithms=["RS256"])
     # Modify the token payload to include different claims
@@ -538,18 +592,21 @@ def custom_claims_token(
     token_payload: dict[str, Any],
     token_header: dict[str, Any],
 ) -> str:
-    """
+    """Token with custom claims.
+
     Create an RS256-signed JWT that uses custom claim names for the user id and username.
-    
-    Replaces `user_id` and `username` in the provided payload with `id_of_the_user` and `name_of_the_user`, then signs the token using the first key in `single_key_set`.
-    
+
     Parameters:
-        single_key_set (list[dict[str, Any]]): Signing key dicts; the first entry's `private_key` is used to sign the token.
-        token_payload (dict[str, Any]): Base JWT claims; `user_id` and `username` will be replaced by the custom claim names.
-        token_header (dict[str, Any]): JWT header to include in the encoded token.
-    
+    ----------
+        single_key_set (list[dict[str, Any]]): List of signing key dicts; the
+        first entry's `private_key` is used to sign the token.
+        token_payload (dict[str, Any]): Base payload; `user_id` and `username`
+        are replaced with `id_of_the_user` and `name_of_the_user`.
+        token_header (dict[str, Any]): JWT header to include in the token.
+
     Returns:
-        str: The encoded JWT as a compact serialized string.
+    -------
+        str: The encoded JWT as a string.
     """
     jwt_instance = JsonWebToken(algorithms=["RS256"])
 
@@ -569,13 +626,16 @@ def custom_claims_token(
 def custom_claims_configuration(
     default_jwk_configuration: JwkConfiguration,
 ) -> JwkConfiguration:
-    """
-    Create a configuration that maps custom JWT claim names for the user id and username.
-    
+    """Configuration for custom claims.
+
+    Create a JwkConfiguration that maps custom JWT claim names for user ID and username.
+
     Parameters:
+    ----------
         default_jwk_configuration (JwkConfiguration): Base configuration to copy and modify.
-    
+
     Returns:
+    -------
         JwkConfiguration: A copy of the input configuration with `jwt_configuration.user_id_claim`
         set to "id_of_the_user" and `jwt_configuration.username_claim` set to "name_of_the_user".
     """
@@ -594,9 +654,8 @@ async def test_custom_claims(
     mocked_signing_keys_server: Any,
     custom_claims_token: str,
 ) -> None:
-    """
-    Verifies that the dependency extracts user id and username from a token using custom claim names.
-    
+    """Test with a token that has custom claims.
+
     Asserts the returned auth tuple matches the expected user id, username, skip flag, and original token.
     """
     _ = mocked_signing_keys_server
@@ -611,12 +670,11 @@ async def test_custom_claims(
 
 @pytest.fixture
 def token_header_256_1(multi_key_set: list[dict[str, Any]]) -> dict[str, Any]:
-    """
-    Create a JWT header that specifies algorithm RS256 and sets the `kid` to the first key's `kid` from multi_key_set.
-    
+    """A sample token header for RS256 using multi_key_set.
+
     Parameters:
         multi_key_set (list[dict[str, Any]]): List of JWK dictionaries; the header's `kid` is taken from multi_key_set[0]["kid"].
-    
+
     Returns:
         dict[str, Any]: JWT header containing "alg", "typ", and "kid".
     """
@@ -644,47 +702,57 @@ def token_header_256_2(multi_key_set: list[dict[str, Any]]) -> dict[str, Any]:
 
 @pytest.fixture
 def token_header_384(multi_key_set: list[dict[str, Any]]) -> dict[str, Any]:
-    """
-    Builds a JWT header for RS384 using the third key's `kid`.
-    
+    """A sample token header.
+
+    Builds a JWT header for RS384 using the third key's `kid` from a multi-key set.
+
     Parameters:
-        multi_key_set (list[dict[str, Any]]): A list of JWK-like dictionaries; must contain at least three entries. The `kid` from index 2 is used.
-    
+    ----------
+        multi_key_set (list[dict[str, Any]]): A list of JWK-like dicts; must
+        contain at least three entries. The `kid` from the item at index 2 is
+        used.
+
     Returns:
-        dict[str, Any]: JWT header with keys `"alg": "RS384"`, `"typ": "JWT"`, and `"kid"` set to the third key's `kid`.
+    -------
+        dict[str, Any]: JWT header with keys `"alg": "RS384"`, `"typ": "JWT"`,
+        and `"kid"` set to the third key's `kid`.
     """
     return {"alg": "RS384", "typ": "JWT", "kid": multi_key_set[2]["kid"]}
 
 
 @pytest.fixture
 def token_header_256_no_kid() -> dict[str, Any]:
-    """
-    Constructs a JWT header indicating RS256 without a key ID.
-    
+    """RS256 no kid.
+
+    JWT header indicating the RS256 algorithm and intentionally omitting a key ID.
+
     Returns:
-        header (dict[str, Any]): JWT header with "alg" set to "RS256", "typ" set to "JWT", and no "kid" field.
+        header (dict[str, Any]): JWT header with "alg" set to "RS256" and no "kid" field.
     """
     return {"alg": "RS256", "typ": "JWT"}
 
 
 @pytest.fixture
 def token_header_384_no_kid() -> dict[str, Any]:
-    """
-    Create a JWT header that specifies the RS384 algorithm and omits the `kid` field.
-    
+    """RS384 no kid.
+
+    Create a JWT header for the RS384 algorithm that omits the `kid` field.
+
     Returns:
-        header (dict): JWT header containing `"alg": "RS384"` and `"typ": "JWT"`.
+        header (dict): JWT header with `"alg": "RS384"` and `"typ": "JWT"`, without a `kid` entry.
     """
     return {"alg": "RS384", "typ": "JWT"}
 
 
 @pytest.fixture
 def multi_key_set() -> list[dict[str, Any]]:
-    """
-    Create three distinct RSA signing key dictionaries for multi-key tests.
-    
-    Each dictionary contains 'private_key', 'public_key', and 'kid' for use by the test suite.
-    
+    """Default multi-key set for signing tokens.
+
+    Create a list of three distinct RSA signing key dictionaries for multi-key tests.
+
+    Each dictionary contains the generated key pair and identifier fields used
+    by tests (e.g., `private_key`, `public_key`, and `kid`).
+
     Returns:
         list[dict[str, Any]]: A list of three signing key dictionaries.
     """
@@ -699,16 +767,16 @@ def valid_tokens(
     token_payload: dict[str, Any],
     token_header_384: dict[str, Any],
 ) -> tuple[str, str, str]:
-    """
-    Create three JWTs signed by the three keys in `multi_key_set` using the provided headers and payload.
-    
-    Each returned token is signed with the corresponding key and algorithm:
-    - token1: `multi_key_set[0]` with `token_header_256_1` (RS256)
-    - token2: `multi_key_set[1]` with `token_header_256_2` (RS256)
-    - token3: `multi_key_set[2]` with `token_header_384` (RS384)
-    
+    """Generate valid tokens for each key in the multi-key set.
+
+    Generate three valid JWTs signed by the three keys in the provided
+    multi-key set using the given headers and payload.
+
     Returns:
-        tuple[str, str, str]: A tuple of JWT compact-serialization strings `(token1, token2, token3)`.
+        tuple[str, str, str]: A tuple of JWT strings (token1, token2, token3)
+        signed with multi_key_set[0] (RS256, header token_header_256_1),
+        multi_key_set[1] (RS256, header token_header_256_2), and
+        multi_key_set[2] (RS384, header token_header_384), respectively.
     """
     key_for_256_1 = multi_key_set[0]
     key_for_256_2 = multi_key_set[1]
@@ -739,14 +807,14 @@ def valid_tokens_no_kid(
     token_payload: dict[str, Any],
     token_header_384_no_kid: dict[str, Any],
 ) -> tuple[str, str, str]:
-    """
-    Generate three JWTs signed by the provided multi-key set using headers that omit the `kid`.
-    
+    """Generate valid tokens for each key in the multi-key set without a kid.
+
+    Generate three valid JWTs signed by the three keys in multi_key_set, with
+    headers that omit the `kid`.
+
     Returns:
-        tuple[str, str, str]: Three JWT strings in order:
-            (1) RS256 signed with the first key,
-            (2) RS256 signed with the second key,
-            (3) RS384 signed with the third key.
+        tuple[str, str, str]: Tuple of JWT strings in order (RS256 signed with
+        first key, RS256 signed with second key, RS384 signed with third key).
     """
     key_for_256_1 = multi_key_set[0]
     key_for_256_2 = multi_key_set[1]
