@@ -121,7 +121,9 @@ async def test_noop_with_token_auth_dependency_no_bearer() -> None:
 
 
 async def test_noop_with_token_auth_dependency_empty_user_id() -> None:
-    """Test that NoopWithTokenAuthDependency rejects empty user_id with HTTP 400."""
+    """
+    Test that NoopWithTokenAuthDependency raises an HTTP 400 error when the user_id query parameter is empty.
+    """
     dependency = NoopWithTokenAuthDependency()
 
     # Create a mock request with empty user_id but valid token

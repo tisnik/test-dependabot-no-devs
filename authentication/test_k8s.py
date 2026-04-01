@@ -42,23 +42,17 @@ class MockK8sResponseStatus:
         uid: Optional[str] = None,
         groups: Optional[list[str]] = None,
     ) -> None:
-        """Init function.
-
-        Initialize a mock Kubernetes response status representing
-        authentication and authorization results.
-
+        """
+        Represent a mocked Kubernetes token review / subject access review status for tests.
+        
+        When `authenticated` is True, `self.user` is populated with a MockK8sUser constructed from `username`, `uid`, and `groups`; otherwise `self.user` is set to None.
+        
         Parameters:
-        ----------
-            authenticated (Optional[bool]): Whether the token was
-            authenticated; when True, `user` is populated.
-            allowed (Optional[bool]): Whether the action is authorized (subject
-            access review result).
-            username (Optional[str]): Username to set on the created
-            `MockK8sUser` when `authenticated` is True.
-            uid (Optional[str]): User UID to set on the created `MockK8sUser`
-            when `authenticated` is True.
-            groups (Optional[list[str]]): Group list to set on the created
-            `MockK8sUser` when `authenticated` is True.
+            authenticated (Optional[bool]): Whether the token was authenticated; controls population of `user`.
+            allowed (Optional[bool]): Whether the action is authorized (subject access review result).
+            username (Optional[str]): Username to assign to the mocked user when authenticated is True.
+            uid (Optional[str]): UID to assign to the mocked user when authenticated is True.
+            groups (Optional[list[str]]): Groups to assign to the mocked user when authenticated is True.
         """
         self.authenticated = authenticated
         self.allowed = allowed
@@ -81,16 +75,13 @@ class MockK8sUser:
         uid: Optional[str] = None,
         groups: Optional[list[str]] = None,
     ) -> None:
-        """Init function.
-
-        Create a mock Kubernetes user holding identity attributes.
-
+        """
+        Initialize a mock Kubernetes user with identity attributes.
+        
         Parameters:
-        ----------
-                username (Optional[str]): The user's username, or None if not provided.
-                uid (Optional[str]): The user's unique identifier, or None if not provided.
-                groups (Optional[list[str]]): List of groups the user belongs
-                to, or None if not provided.
+            username (Optional[str]): The user's username, or None when absent.
+            uid (Optional[str]): The user's unique identifier, or None when absent.
+            groups (Optional[list[str]]): List of group names the user belongs to, or None when absent.
         """
         self.username = username
         self.uid = uid
@@ -111,17 +102,15 @@ class MockK8sResponse:
         uid: Optional[str] = None,
         groups: Optional[list[str]] = None,
     ) -> None:
-        """Init function.
-
-        Initialize a mock Kubernetes API response wrapper containing a status object.
-
+        """
+        Create a mock Kubernetes API response wrapper containing a status object.
+        
         Parameters:
-        ----------
-            authenticated (Optional[bool]): Whether the token was authenticated; use None to omit.
-            allowed (Optional[bool]): Whether the action is authorized; use None to omit.
-            username (Optional[str]): Username of the authenticated user, if any.
-            uid (Optional[str]): User ID of the authenticated user, if any.
-            groups (Optional[list[str]]): Groups the authenticated user belongs to, if any.
+            authenticated (Optional[bool]): If True, status indicates the token was authenticated; if False, authenticated is false; if None, omit the field.
+            allowed (Optional[bool]): If True, status indicates the action is authorized; if False, not authorized; if None, omit the field.
+            username (Optional[str]): Username to include in the status user when authenticated.
+            uid (Optional[str]): User ID to include in the status user when authenticated.
+            groups (Optional[list[str]]): List of groups to include in the status user when authenticated.
         """
         self.status = MockK8sResponseStatus(
             authenticated, allowed, username, uid, groups
@@ -400,10 +389,12 @@ async def test_auth_dependency_no_token_readiness_liveness_endpoints_2(
 async def test_auth_dependency_no_token_normal_endpoints(
     mocker: MockerFixture,
 ) -> None:
-    """Test the auth dependency without a token for endpoints different to readiness and liveness.
-
-    For this test the skip_for_health_probes configuration parameter is set to
-    True.
+    """
+    Verify that K8SAuthDependency rejects requests without an Authorization header for non-health endpoints when skip_for_health_probes is enabled.
+    
+    This test patches the configuration to set authentication.skip_for_health_probes=True, mocks Kubernetes token- and subject-access-review APIs to indicate unauthenticated/unauthorized, and sends requests to "/" and "/v1/info". It asserts that the dependency raises an HTTPException with status code 401 and that the error detail contains:
+    - response: "Missing or invalid credentials provided by client"
+    - cause: "No Authorization header found"
     """
     config_dict = {
         "name": "test",
@@ -836,7 +827,11 @@ async def test_kube_admin_cluster_version_not_found_returns_500(
 async def test_kube_admin_cluster_version_permission_error_returns_500(
     mocker: MockerFixture,
 ) -> None:
-    """Test kube:admin flow returns 500 when permission to ClusterVersion is denied."""
+    """
+    Verify kube:admin authentication returns HTTP 500 when reading the ClusterVersion resource is forbidden.
+    
+    Sets up a request with a valid Bearer token, mocks subject access review to allow the action and mocks the authenticated user as `kube:admin`. Patches cluster-id retrieval to raise ClusterVersionPermissionError and asserts that the dependency raises an HTTPException with status code 500, `detail["response"] == "Internal server error"`, and that `detail["cause"]` contains an "Insufficient permissions" message.
+    """
     dependency = K8SAuthDependency()
     mock_authz_api = mocker.patch("authentication.k8s.K8sClientSingleton.get_authz_api")
     mock_authz_api.return_value.create_subject_access_review.return_value = (
