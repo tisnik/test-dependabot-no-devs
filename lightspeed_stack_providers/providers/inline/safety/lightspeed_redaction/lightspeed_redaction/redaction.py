@@ -1,0 +1,166 @@
+import logging
+import re
+import uuid
+from typing import Any, Optional
+
+from llama_stack_api import (
+    ModerationObject,
+    ModerationObjectResults,
+    RunModerationRequest,
+    RunShieldResponse,
+    Safety,
+    Shield,
+    ShieldsProtocolPrivate,
+)
+from llama_stack_api.inference import (
+    OpenAIAssistantMessageParam,
+    OpenAIDeveloperMessageParam,
+    OpenAISystemMessageParam,
+    OpenAIToolMessageParam,
+    OpenAIUserMessageParam,
+)
+
+from .config import (
+    RedactionShieldConfig,
+)
+
+# Message type alias for run_shield parameter
+Message = (
+    OpenAIUserMessageParam
+    | OpenAISystemMessageParam
+    | OpenAIAssistantMessageParam
+    | OpenAIToolMessageParam
+    | OpenAIDeveloperMessageParam
+)
+
+log = logging.getLogger(__name__)
+
+
+class RedactionShieldImpl(Safety, ShieldsProtocolPrivate):
+    """Redaction shield that mutates messages with inline rules."""
+
+    def __init__(self, config: RedactionShieldConfig, deps: dict[str, Any]) -> None:
+        self.config: RedactionShieldConfig = config
+        self.compiled_rules: list[dict[str, Any]] = self._compile_rules()
+
+    def _compile_rules(self) -> list[dict[str, Any]]:
+        """Compile regex patterns from configuration rules."""
+        compiled_rules: list[dict[str, Any]] = []
+
+        for rule in self.config.rules:
+            try:
+                flags: int = 0 if self.config.case_sensitive else re.IGNORECASE
+                compiled_pattern = re.compile(rule.pattern, flags)
+
+                compiled_rules.append(
+                    {
+                        "pattern": compiled_pattern,
+                        "replacement": rule.replacement,
+                        "original_pattern": rule.pattern,
+                    }
+                )
+
+                log.debug(f"Compiled redaction rule: {rule.pattern}")
+
+            except re.error as e:
+                log.error(f"Invalid regex pattern '{rule.pattern}': {e}")
+            except Exception as e:
+                log.error(f"Error compiling rule {rule.pattern}: {e}")
+
+        log.info(f"Compiled {len(compiled_rules)} redaction rules")
+        return compiled_rules
+
+    async def initialize(self) -> None:
+        """Initialize the shield."""
+
+    async def shutdown(self) -> None:
+        """Shutdown the shield."""
+
+    async def register_shield(self, shield: Shield) -> None:
+        """Register a shield."""
+
+    async def run_shield(
+        self,
+        shield_id: str,
+        messages: list[Message],
+        params: Optional[dict[str, Any]] = None,
+    ) -> RunShieldResponse:
+        """Run the redaction shield - mutates messages directly."""
+        for message in messages:
+            if hasattr(message, "content") and isinstance(message.content, str):
+                original_content: str = message.content
+                redacted_content: str = self._apply_redaction_rules(original_content)
+
+                if redacted_content != original_content:
+                    message.content = redacted_content  # Mutating in-place
+
+        return RunShieldResponse(violation=None)
+
+    async def run_moderation(self, request: RunModerationRequest) -> ModerationObject:
+        """Run moderation on input text, checking for sensitive data.
+
+        When sensitive data is detected, the content is flagged and blocked.
+        This serves as a safety net for flows that don't use run_shield.
+        For flows using lightspeed_inline_agent, redaction happens in the agent.
+        """
+        inputs = request.input if isinstance(request.input, list) else [request.input]
+        results = []
+
+        for text_input in inputs:
+            redacted = self._apply_redaction_rules(text_input)
+            contains_sensitive_data = redacted != text_input
+
+            if contains_sensitive_data:
+                results.append(
+                    ModerationObjectResults(
+                        flagged=True,
+                        categories={"sensitive_data": True},
+                        category_scores={"sensitive_data": 1.0},
+                        category_applied_input_types={"sensitive_data": ["text"]},
+                        user_message=(
+                            "Your message appears to contain sensitive information "
+                            "(such as passwords, API keys, or other secrets). "
+                            "Please remove sensitive data and try again."
+                        ),
+                        metadata={"contains_sensitive_data": True},
+                    )
+                )
+            else:
+                results.append(
+                    ModerationObjectResults(
+                        flagged=False,
+                        categories={},
+                        category_scores={},
+                        metadata={"contains_sensitive_data": False},
+                    )
+                )
+
+        return ModerationObject(
+            id=f"modr-{uuid.uuid4()}",
+            model=request.model or "lightspeed-redaction",
+            results=results,
+        )
+
+    def _apply_redaction_rules(self, content: str) -> str:
+        """Apply all redaction rules to content."""
+        if not content or not self.compiled_rules:
+            return content
+
+        redacted_content: str = content
+        applied_rules: list[str] = []
+
+        for rule in self.compiled_rules:
+            try:
+                if rule["pattern"].search(redacted_content):
+                    redacted_content = rule["pattern"].sub(
+                        rule["replacement"], redacted_content
+                    )
+                    applied_rules.append(rule["original_pattern"])
+
+            except Exception as e:
+                log.debug(f"Error applying rule {rule['original_pattern']}: {e}")
+
+        if applied_rules:
+            log.debug(f"Applied {len(applied_rules)} redaction rules to content")
+
+        return redacted_content
