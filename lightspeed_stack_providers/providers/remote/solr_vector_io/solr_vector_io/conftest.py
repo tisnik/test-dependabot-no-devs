@@ -9,8 +9,9 @@ import requests
 @pytest.fixture(scope="session", autouse=True)
 def check_solr_running() -> Generator:
     """
-    Pre-test check to ensure Solr is running before executing any tests.
-    Aborts all tests if Solr is not accessible.
+    Verify Solr is reachable before running tests.
+    
+    Performs a one-time check against the configured Solr collection select endpoint (uses tests.SOLR_URL and tests.COLLECTION_NAME). If Solr responds with HTTP 200 the fixture yields and allows tests to proceed; on non-200 responses, connection errors, timeouts (5 second request timeout), or other exceptions the fixture aborts the entire pytest run via pytest.exit with a non-zero return code.
     """
     # Import SOLR_URL from test file to avoid duplication
     from tests import COLLECTION_NAME, SOLR_URL
