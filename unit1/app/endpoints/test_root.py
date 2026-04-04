@@ -14,7 +14,7 @@ async def test_root_endpoint(mocker: MockerFixture) -> None:
     """Test the root endpoint handler."""
     mock_authorization_resolvers(mocker)
 
-    auth = AuthTuple(("test_user_id", "test_user_name", False, "token"))
+    auth: AuthTuple = ("test_user_id", "test_user_name", False, "token")
     request = Request(
         scope={
             "type": "http",
