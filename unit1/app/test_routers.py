@@ -123,6 +123,7 @@ def test_include_routers() -> None:
     assert mcp_servers.router in app.get_routers()
     assert shields.router in app.get_routers()
     assert providers.router in app.get_routers()
+    assert rags.router in app.get_routers()
     assert query.router in app.get_routers()
     assert streaming_query.router in app.get_routers()
     assert config.router in app.get_routers()
