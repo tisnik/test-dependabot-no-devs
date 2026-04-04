@@ -480,6 +480,6 @@ async def test_models_endpoint_llama_stack_connection_error(
         await models_endpoint_handler(
             request=request, auth=auth, model_type=ModelFilter(model_type=None)
         )
-        assert e.value.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
-        assert e.value.detail["response"] == "Unable to connect to Llama Stack"  # type: ignore
-        assert "Unable to connect to Llama Stack" in e.value.detail["cause"]  # type: ignore
+    assert e.value.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
+    assert e.value.detail["response"] == "Unable to connect to Llama Stack"  # type: ignore
+    assert "Unable to connect to Llama Stack" in e.value.detail["cause"]  # type: ignore
