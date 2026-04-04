@@ -29,7 +29,14 @@ TEST_REQUEST_IDS = (
 
 @pytest.fixture(name="registry")
 def registry_fixture() -> Generator[StreamInterruptRegistry, None, None]:
-    """Provide singleton registry with deterministic per-test cleanup."""
+    """
+    Provide a StreamInterruptRegistry fixture and ensure deterministic cleanup of test request IDs.
+    
+    Yields a new StreamInterruptRegistry instance to the test, and deregisters each request ID in TEST_REQUEST_IDS before and after the test to prevent cross-test state leakage.
+    
+    Returns:
+        registry (StreamInterruptRegistry): The registry instance supplied to the test.
+    """
     registry = StreamInterruptRegistry()
     for request_id in TEST_REQUEST_IDS:
         registry.deregister_stream(request_id)
@@ -45,6 +52,11 @@ async def test_stream_interrupt_endpoint_success(
     """Interrupt endpoint cancels an active stream for the same user."""
 
     async def pending_stream() -> None:
+        """
+        Simulates a long-running streaming task by sleeping for 10 seconds.
+        
+        Used in tests to represent an active/pending stream that can be cancelled.
+        """
         await asyncio.sleep(10)
 
     task = asyncio.create_task(pending_stream())
@@ -93,6 +105,11 @@ async def test_stream_interrupt_endpoint_wrong_user(
     """Interrupt endpoint does not cancel streams owned by other users."""
 
     async def pending_stream() -> None:
+        """
+        Simulates a long-running streaming task by sleeping for 10 seconds.
+        
+        Used in tests to represent an active/pending stream that can be cancelled.
+        """
         await asyncio.sleep(10)
 
     task = asyncio.create_task(pending_stream())
@@ -131,6 +148,11 @@ async def test_stream_interrupt_endpoint_already_completed(
     """Interrupt endpoint reports already-completed streams without error."""
 
     async def completed_stream() -> None:
+        """
+        A coroutine that represents a stream which has already completed.
+        
+        Used by tests to simulate an already-finished streaming task; this coroutine performs no actions and returns immediately.
+        """
         return None
 
     task = asyncio.create_task(completed_stream())

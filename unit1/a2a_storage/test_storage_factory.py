@@ -20,9 +20,25 @@ class _FakeProperty:  # pylint: disable=too-few-public-methods
     """Descriptor that returns a fixed value (like PropertyMock)."""
 
     def __init__(self, value: Any) -> None:
+        """
+        Initialize the descriptor with a fixed return value.
+        
+        Parameters:
+            value (Any): The value that the descriptor will always return from `__get__`.
+        """
         self._value = value
 
     def __get__(self, obj: Any, owner: Any = None) -> Any:
+        """
+        Descriptor getter that always returns the stored value regardless of the accessed instance or owner.
+        
+        Parameters:
+            obj (Any): The instance the attribute was accessed on (ignored).
+            owner (Any): The owner class the attribute was accessed through (ignored).
+        
+        Returns:
+            Any: The value provided to the descriptor when it was created.
+        """
         return self._value
 
 
@@ -31,7 +47,11 @@ class TestA2AStorageFactory:
 
     @pytest.fixture(autouse=True)
     def reset_factory(self) -> Generator[None, None, None]:
-        """Reset factory state before each test."""
+        """
+        Reset the A2AStorageFactory state before and after a test run.
+        
+        This fixture calls A2AStorageFactory.reset() prior to yielding to the test and again after the test completes to ensure isolation between tests.
+        """
         A2AStorageFactory.reset()
         yield
         A2AStorageFactory.reset()

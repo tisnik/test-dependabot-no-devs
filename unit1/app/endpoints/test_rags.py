@@ -76,10 +76,9 @@ async def test_rags_endpoint_success(
 
         def __init__(self, rag_id: str) -> None:
             """
-            Initialize a RagInfo instance with the given identifier.
-
+            Create a RagInfo instance with the specified identifier.
+            
             Parameters:
-            ----------
                 rag_id (str): The unique identifier for the RAG.
             """
             self.id = rag_id
@@ -89,10 +88,11 @@ async def test_rags_endpoint_success(
 
         def __init__(self) -> None:
             """
-            Initialize the object with a predefined list of RagInfo objects used as mock data.
-
-            The instance attribute `data` contains three RagInfo instances with
-            fixed IDs simulating available RAG entries for tests.
+            Initialize the RagList with three mock RagInfo entries for tests.
+            
+            The instance attribute `data` will contain three RagInfo objects with fixed IDs:
+            "vs_00000000-cafe-babe-0000-000000000000", "vs_7b52a8cf-0fa3-489c-beab-27e061d102f3",
+            and "vs_7b52a8cf-0fa3-489c-cafe-27e061d102f3".
             """
             self.data = [
                 RagInfo("vs_00000000-cafe-babe-0000-000000000000"),
@@ -207,17 +207,18 @@ async def test_rag_info_endpoint_success(
         """RagInfo mock."""
 
         def __init__(self) -> None:
-            """This function initializes an instance with predefined attributes.
-
+            """
+            Initialize a sample RagInfo-like object populated with fixed test values.
+            
             Attributes:
-                id (str): Identifier for the instance, set to "xyzzy".
-                name (str): Name of the instance, set to "rag_name".
-                created_at (int): Creation timestamp, set to 123456.
-                last_active_at (int): Last active timestamp, set to 1234567.
-                expires_at (int): Expiry timestamp, set to 12345678.
-                object (str): Type of object, set to "faiss".
-                status (str): Status of the instance, set to "completed".
-                usage_bytes (int): Usage in bytes, set to 100.
+                id (str): "xyzzy"
+                name (str): "rag_name"
+                created_at (int): 123456
+                last_active_at (int): 1234567
+                expires_at (int): 12345678
+                object (str): "faiss"
+                status (str): "completed"
+                usage_bytes (int): 100
             """
             self.id = "xyzzy"
             self.name = "rag_name"
@@ -253,7 +254,15 @@ async def test_rag_info_endpoint_success(
 
 
 def _make_byok_config(tmp_path: Any) -> AppConfig:
-    """Create an AppConfig with BYOK RAG entries for testing."""
+    """
+    Create an AppConfig pre-populated with two BYOK RAG entries and a SQLite file at tmp_path/test.db for testing.
+    
+    Parameters:
+        tmp_path (Any): Path-like location where the test SQLite file `test.db` will be created.
+    
+    Returns:
+        AppConfig: Configuration populated with Llama Stack connection info and two `byok_rag` entries mapping user-facing `rag_id`s ("ocp-4.18-docs", "company-kb") to their `vector_db_id`s ("vs_abc123", "vs_def456") and pointing both to the created DB path.
+    """
     db_file = Path(tmp_path) / "test.db"
     db_file.touch()
     cfg = AppConfig()
@@ -305,7 +314,12 @@ async def test_rags_endpoint_returns_rag_ids_from_config(
         """RagInfo mock."""
 
         def __init__(self, rag_id: str) -> None:
-            """Initialize with ID."""
+            """
+            Initialize the instance with the given RAG identifier.
+            
+            Parameters:
+                rag_id (str): RAG identifier to assign to the instance's `id` attribute.
+            """
             self.id = rag_id
 
     # pylint: disable=R0903
@@ -313,7 +327,14 @@ async def test_rags_endpoint_returns_rag_ids_from_config(
         """List of RAGs mock."""
 
         def __init__(self) -> None:
-            """Initialize with mapped and unmapped entries."""
+            """
+            Create a predefined list of RagInfo entries used by tests to exercise BYOK mapping and passthrough behavior.
+            
+            Initializes self.data to three RagInfo objects whose `id` values are:
+            - "vs_abc123" (mapped in tests to "ocp-4.18-docs"),
+            - "vs_def456" (mapped in tests to "company-kb"),
+            - "vs_unmapped" (not present in the BYOK config and expected to pass through unchanged).
+            """
             self.data = [
                 RagInfo("vs_abc123"),  # mapped to ocp-4.18-docs
                 RagInfo("vs_def456"),  # mapped to company-kb
@@ -346,7 +367,19 @@ async def test_rag_info_endpoint_accepts_rag_id_from_config(
         """RagInfo mock."""
 
         def __init__(self) -> None:
-            """Initialize with test data."""
+            """
+            Create a test RAG/vector-store object populated with fixed sample fields for use in unit tests.
+            
+            Attributes:
+                id (str): Underlying vector-store identifier (e.g., "vs_abc123").
+                name (str): Human-readable name of the RAG.
+                created_at (int): Creation timestamp.
+                last_active_at (int): Last active timestamp.
+                expires_at (int): Expiration timestamp.
+                object (str): Object type, e.g., "vector_store".
+                status (str): Current status, e.g., "completed".
+                usage_bytes (int): Storage usage in bytes.
+            """
             self.id = "vs_abc123"
             self.name = "OCP 4.18 Docs"
             self.created_at = 100

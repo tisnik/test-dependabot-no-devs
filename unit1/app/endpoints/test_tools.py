@@ -33,7 +33,20 @@ MOCK_AUTH: AuthTuple = ("mock_user_id", "mock_username", False, "mock_token")
 
 @pytest.fixture
 def mock_configuration() -> Configuration:
-    """Create a mock configuration with MCP servers."""
+    """
+    Builds a test Configuration populated with default service, Llama Stack, user-data, and two MCP servers.
+    
+    The returned configuration contains:
+    - service settings with TLS paths, CORS, host/port, base_url, auth disabled, and logging/workers defaults;
+    - llama_stack settings pointing to http://localhost:8321 with a placeholder API key and timeout;
+    - user_data_collection with transcripts and feedback disabled;
+    - two ModelContextProtocolServer entries:
+      - "filesystem-tools" at http://localhost:3000
+      - "git-tools" at http://localhost:3001
+    
+    Returns:
+        Configuration: A Configuration instance configured for unit tests with the above defaults.
+    """
     return Configuration(
         name="test",
         service=ServiceConfiguration(
@@ -89,10 +102,18 @@ def mock_configuration() -> Configuration:
 
 
 def _make_tool_def_mock(mocker: MockerFixture, fields: dict[str, Any]) -> MockType:
-    """Create a mock ToolDef object matching Llama Stack's tools.list() output.
-
-    The mock supports ``dict()`` conversion so the endpoint can do
-    ``tool_dict = dict(tool)`` and get a plain dict back.
+    """
+    Create a mock object that behaves like a ToolDef returned by Llama Stack's tools.list().
+    
+    The returned mock exposes the provided fields as attributes and implements the mapping protocol
+    so dict(tool_mock) yields a plain dict of those fields (supports keys(), iteration, and item access).
+    
+    Parameters:
+        mocker: The pytest mocker fixture used to construct the Mock.
+        fields (dict[str, Any]): Mapping of attribute names to values to be exposed on the mock.
+    
+    Returns:
+        MockType: A mock configured to represent a ToolDef-like object.
     """
     mock = mocker.Mock()
     mock.__dict__.update(fields)

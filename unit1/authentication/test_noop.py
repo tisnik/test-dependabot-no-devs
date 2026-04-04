@@ -25,7 +25,11 @@ async def test_noop_auth_dependency() -> None:
 
 
 async def test_noop_auth_dependency_custom_user_id() -> None:
-    """Test the NoopAuthDependency class."""
+    """
+    Verify that NoopAuthDependency uses the `user_id` from the request query string and returns the default username, a skip_userid_check flag, and the NO_USER_TOKEN.
+    
+    The returned tuple must contain "test-user" as the `user_id`, `DEFAULT_USER_NAME` as the `username`, `skip_userid_check` equal to `True`, and `NO_USER_TOKEN` as the `user_token`.
+    """
     dependency = NoopAuthDependency()
 
     # Create a mock request

@@ -13,7 +13,15 @@ class TestSQLiteA2AContextStore:
 
     @pytest.fixture
     async def store(self, tmp_path: Path) -> SQLiteA2AContextStore:
-        """Create a fresh SQLite context store for each test."""
+        """
+        Create and initialize a fresh SQLiteA2AContextStore backed by a temporary database file.
+        
+        Parameters:
+            tmp_path (Path): Temporary directory in which the SQLite database file will be created.
+        
+        Returns:
+            SQLiteA2AContextStore: An initialized context store ready for use in tests.
+        """
         db_path = tmp_path / "test_a2a_context.db"
         engine = create_async_engine(
             f"sqlite+aiosqlite:///{db_path}",

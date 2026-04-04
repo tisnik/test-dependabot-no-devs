@@ -36,14 +36,10 @@ class MockFastAPI(FastAPI):
     """Mock class for FastAPI."""
 
     def __init__(self) -> None:  # pylint: disable=super-init-not-called
-        """Initialize mock class.
-
-        Create a mock FastAPI-like app and initialize its router
-        registry.
-
-        The instance attribute `routers` is initialized as an empty
-        list that will store tuples of (router, prefix), where
-        `prefix` is the route prefix string or `None`.
+        """
+        Initialize the MockFastAPI router registry.
+        
+        Create a mock FastAPI-like app and set `self.routers` to an empty list that will store tuples `(router, prefix)`, where `prefix` is a route prefix string or `None`.
         """
         self.routers: list[tuple[Any, Optional[str]]] = []
 
@@ -109,7 +105,11 @@ class MockFastAPI(FastAPI):
 
 
 def test_include_routers() -> None:
-    """Test the function include_routers."""
+    """
+    Verify that include_routers registers all expected endpoint routers on the FastAPI app.
+    
+    Asserts that exactly 22 routers are recorded on the mock app and that each expected endpoint router (e.g., root, info, models, tools, mcp_auth, mcp_servers, shields, providers, query, streaming_query, config, feedback, health, authorized, conversations_v1, conversations_v2, metrics, rlsapi_v1, a2a, stream_interrupt, responses) has been included. One conversations-related assertion is intentionally commented out.
+    """
     app = MockFastAPI()
     include_routers(app)
 
@@ -140,14 +140,10 @@ def test_include_routers() -> None:
 
 
 def test_check_prefixes() -> None:
-    """Test the router prefixes.
-
-    Verify that include_routers registers the expected routers with their configured URL prefixes.
-
-    Asserts that 21 routers are registered on a MockFastAPI instance and that
-    each router's prefix matches the expected value (e.g., root, health,
-    authorized, metrics use an empty prefix; most API routers use "/v1";
-    conversations_v2 uses "/v2").
+    """
+    Verify include_routers registers the expected routers with their configured URL prefixes.
+    
+    Asserts that 22 routers are registered on a MockFastAPI instance and that each router's mount prefix matches the expected value: empty string for root, health, authorized, metrics, and a2a; "/v1" for the majority of API routers; and "/v2" for conversations_v2.
     """
     app = MockFastAPI()
     include_routers(app)

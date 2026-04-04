@@ -179,7 +179,9 @@ async def test_get_provider_success(
 async def test_get_provider_connection_error(
     mocker: MockerFixture, minimal_config: AppConfig
 ) -> None:
-    """Test that /providers/{provider_id} raises HTTP 500 if Llama Stack connection fails."""
+    """
+    Verify that requesting a provider returns HTTP 503 when the Llama Stack client connection fails.
+    """
     mocker.patch("app.endpoints.providers.configuration", minimal_config)
     mock_authorization_resolvers(mocker)
 

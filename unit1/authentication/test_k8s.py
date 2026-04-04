@@ -42,23 +42,15 @@ class MockK8sResponseStatus:
         uid: Optional[str] = None,
         groups: Optional[list[str]] = None,
     ) -> None:
-        """Init function.
-
-        Initialize a mock Kubernetes response status representing
-        authentication and authorization results.
-
+        """
+        Create a mocked Kubernetes token-review status representing authentication and authorization outcomes.
+        
         Parameters:
-        ----------
-            authenticated (Optional[bool]): Whether the token was
-            authenticated; when True, `user` is populated.
-            allowed (Optional[bool]): Whether the action is authorized (subject
-            access review result).
-            username (Optional[str]): Username to set on the created
-            `MockK8sUser` when `authenticated` is True.
-            uid (Optional[str]): User UID to set on the created `MockK8sUser`
-            when `authenticated` is True.
-            groups (Optional[list[str]]): Group list to set on the created
-            `MockK8sUser` when `authenticated` is True.
+            authenticated (Optional[bool]): Whether the token was authenticated; when True, `user` is populated.
+            allowed (Optional[bool]): Whether the action is authorized (subject access review result).
+            username (Optional[str]): Username to assign to the created `MockK8sUser` when `authenticated` is True.
+            uid (Optional[str]): User UID to assign to the created `MockK8sUser` when `authenticated` is True.
+            groups (Optional[list[str]]): Group list to assign to the created `MockK8sUser` when `authenticated` is True.
         """
         self.authenticated = authenticated
         self.allowed = allowed
@@ -81,16 +73,13 @@ class MockK8sUser:
         uid: Optional[str] = None,
         groups: Optional[list[str]] = None,
     ) -> None:
-        """Init function.
-
-        Create a mock Kubernetes user holding identity attributes.
-
+        """
+        Create a mock Kubernetes user with optional username, uid, and group memberships.
+        
         Parameters:
-        ----------
-                username (Optional[str]): The user's username, or None if not provided.
-                uid (Optional[str]): The user's unique identifier, or None if not provided.
-                groups (Optional[list[str]]): List of groups the user belongs
-                to, or None if not provided.
+        	username (Optional[str]): The user's username, or None if not provided.
+        	uid (Optional[str]): The user's unique identifier, or None if not provided.
+        	groups (Optional[list[str]]): List of group names the user belongs to, or None if not provided.
         """
         self.username = username
         self.uid = uid
@@ -111,17 +100,15 @@ class MockK8sResponse:
         uid: Optional[str] = None,
         groups: Optional[list[str]] = None,
     ) -> None:
-        """Init function.
-
-        Initialize a mock Kubernetes API response wrapper containing a status object.
-
+        """
+        Create a mock Kubernetes API response wrapper containing a `status` object.
+        
         Parameters:
-        ----------
-            authenticated (Optional[bool]): Whether the token was authenticated; use None to omit.
-            allowed (Optional[bool]): Whether the action is authorized; use None to omit.
-            username (Optional[str]): Username of the authenticated user, if any.
-            uid (Optional[str]): User ID of the authenticated user, if any.
-            groups (Optional[list[str]]): Groups the authenticated user belongs to, if any.
+            authenticated (Optional[bool]): If True, mark the token as authenticated; if False, mark as not authenticated; if None, omit the field.
+            allowed (Optional[bool]): If True, mark the action as authorized; if False, mark as not authorized; if None, omit the field.
+            username (Optional[str]): Authenticated user's username, or None to omit.
+            uid (Optional[str]): Authenticated user's UID, or None to omit.
+            groups (Optional[list[str]]): List of groups the user belongs to, or None to omit.
         """
         self.status = MockK8sResponseStatus(
             authenticated, allowed, username, uid, groups
@@ -241,10 +228,14 @@ async def test_auth_dependency_no_token(mocker: MockerFixture) -> None:
 async def test_auth_dependency_no_token_readiness_liveness_endpoints_1(
     mocker: MockerFixture,
 ) -> None:
-    """Test the auth dependency without a token for readiness and liveness endpoints.
-
-    For this test the skip_for_health_probes configuration parameter is set to
-    True.
+    """
+    Verify that when `authentication.skip_for_health_probes` is True and no Authorization header is present,
+    the K8SAuthDependency allows requests to `/readiness` and `/liveness` by returning the lightspeed health user.
+    
+    The test patches the application configuration to enable `skip_for_health_probes`, mocks the Kubernetes
+    token-review and subject-access-review APIs to simulate an invalid/missing token, and asserts that for each
+    health endpoint the dependency returns the default health user UID ("00000000-0000-0000-0000-000"), the
+    username "lightspeed-user", `skip_userid_check` set to True, and an empty token.
     """
     config_dict = {
         "name": "test",
@@ -315,10 +306,10 @@ async def test_auth_dependency_no_token_readiness_liveness_endpoints_1(
 async def test_auth_dependency_no_token_readiness_liveness_endpoints_2(
     mocker: MockerFixture,
 ) -> None:
-    """Test the auth dependency without a token.
-
-    For this test the skip_for_health_probes configuration parameter is set to
-    False.
+    """
+    Verify the K8S authentication dependency rejects health probe requests without Authorization when skip_for_health_probes is False.
+    
+    Patches the configuration to use the K8S authentication module with skip_for_health_probes set to False, mocks the Kubernetes token- and subject-access-review APIs to simulate an invalid/missing token, and asserts that requests to "/readiness" and "/liveness" with no Authorization header raise an HTTPException with status 401 and a detail indicating missing credentials and cause "No Authorization header found".
     """
     config_dict = {
         "name": "test",

@@ -25,7 +25,16 @@ MOCK_AUTH: AuthTuple = ("mock_user_id", "mock_username", False, "mock_token")
 
 @pytest.fixture
 def mock_configuration_with_client_auth() -> Configuration:
-    """Create a mock configuration with MCP servers that have client auth."""
+    """
+    Create a Configuration containing MCP servers that require client authentication.
+    
+    The returned Configuration includes two ModelContextProtocolServer entries:
+    - "github" with an Authorization header set to "client".
+    - "gitlab" with Authorization and X-API-Key headers both set to "client".
+    
+    Returns:
+        Configuration: A configuration populated with the above MCP servers and minimal required service/stack settings.
+    """
     return Configuration(  # type: ignore[call-arg]
         name="test",
         service=ServiceConfiguration(),  # type: ignore[call-arg]
@@ -53,7 +62,17 @@ def mock_configuration_with_client_auth() -> Configuration:
 
 @pytest.fixture
 def mock_configuration_mixed_auth() -> Configuration:
-    """Create a mock configuration with mixed auth types."""
+    """
+    Create a Configuration containing MCP servers with mixed authorization header setups.
+    
+    The returned Configuration includes three ModelContextProtocolServer entries:
+    - "github": has authorization_headers {"Authorization": "client"} indicating client-based auth.
+    - "k8s_mgmt": has authorization_headers {"Authorization": "kubernetes"} (different auth value).
+    - "public_server": has no authorization_headers.
+    
+    Returns:
+        Configuration: A Configuration populated with the three MCP servers described above.
+    """
     return Configuration(  # type: ignore[call-arg]
         name="test",
         service=ServiceConfiguration(),  # type: ignore[call-arg]
@@ -84,7 +103,14 @@ def mock_configuration_mixed_auth() -> Configuration:
 
 @pytest.fixture
 def mock_configuration_no_client_auth() -> Configuration:
-    """Create a mock configuration with no client auth servers."""
+    """
+    Create a Configuration containing MCP servers that do not require client authentication.
+    
+    Returns:
+        Configuration: A Configuration with two ModelContextProtocolServer entries:
+            - "k8s_mgmt": includes `authorization_headers={"Authorization": "kubernetes"}`.
+            - "public_server": has no `authorization_headers`.
+    """
     return Configuration(  # type: ignore[call-arg]
         name="test",
         service=ServiceConfiguration(),  # type: ignore[call-arg]
@@ -244,7 +270,11 @@ async def test_get_mcp_client_auth_options_empty_config(
 async def test_get_mcp_client_auth_options_whitespace_handling(
     mocker: MockerFixture,
 ) -> None:
-    """Test that whitespace in authorization header values is handled correctly."""
+    """
+    Ensure MCP client-auth option selection treats authorization header values with surrounding whitespace as indicating client authentication.
+    
+    Verifies that a server whose `authorization_headers` value trims to `"client"` is included in the response while a server whose trimmed value is not `"client"` is excluded.
+    """
     # Mock configuration with whitespace in values - wrap in AppConfig
     mock_config = Configuration(  # type: ignore[call-arg]
         name="test",
@@ -292,7 +322,11 @@ async def test_get_mcp_client_auth_options_whitespace_handling(
 async def test_get_mcp_client_auth_options_multiple_headers_single_server(
     mocker: MockerFixture,
 ) -> None:
-    """Test server with multiple client auth headers."""
+    """
+    Ensures the endpoint returns a single MCP server listing all authorization header names when that server defines multiple client-auth headers.
+    
+    Verifies the response contains one server named "multi_auth" and that its `client_auth_headers` include "Authorization", "X-API-Key", and "X-Custom-Token".
+    """
     # Mock configuration - wrap in AppConfig
     mock_config = Configuration(  # type: ignore[call-arg]
         name="test",

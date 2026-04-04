@@ -48,7 +48,12 @@ MOCK_AUTH = (
 
 @pytest.fixture
 def dummy_request() -> Request:
-    """Dummy request fixture for testing."""
+    """
+    Create a minimal FastAPI Request suitable for tests, with scope type "http" and an authorized_actions set on request state.
+    
+    Returns:
+        Request: A Request whose `scope["type"]` is "http" and `state.authorized_actions` is set to `set(Action)`.
+    """
     req = Request(
         scope={
             "type": "http",
@@ -60,7 +65,15 @@ def dummy_request() -> Request:
 
 @pytest.fixture(name="setup_configuration")
 def setup_configuration_fixture(mocker: MockerFixture) -> AppConfig:
-    """Set up configuration for tests."""
+    """
+    Create and patch a complete AppConfig configured for tests, including a test agent card.
+    
+    Parameters:
+        mocker (pytest_mock.MockerFixture): Pytest mocker fixture used to patch the module-level configuration.
+    
+    Returns:
+        AppConfig: An AppConfig instance initialized from a test dictionary (contains service, llama_stack, authentication/authorization, and a `customization.agent_card_config` describing a "Test Agent") and patched into app.endpoints.a2a.configuration.
+    """
     config_dict: dict[Any, Any] = {
         "name": "test",
         "service": {
@@ -113,7 +126,19 @@ def setup_configuration_fixture(mocker: MockerFixture) -> AppConfig:
 
 @pytest.fixture(name="setup_minimal_configuration")
 def setup_minimal_configuration_fixture(mocker: MockerFixture) -> AppConfig:
-    """Set up minimal configuration without agent_card_config."""
+    """
+    Create a minimal AppConfig and patch the a2a endpoints module configuration for tests.
+    
+    This fixture builds an AppConfig containing only the minimal required fields (no agent_card_config
+    inside customization) and patches app.endpoints.a2a.configuration to that instance so tests operate
+    against the minimal configuration.
+    
+    Parameters:
+        mocker (pytest.MockerFixture): The pytest mocker fixture used to apply the patch.
+    
+    Returns:
+        AppConfig: The initialized AppConfig instance with minimal configuration.
+    """
     config_dict: dict[Any, Any] = {
         "name": "test",
         "service": {

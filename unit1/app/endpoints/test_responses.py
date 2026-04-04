@@ -38,7 +38,13 @@ UTILS_RESPONSES_MODULE = "utils.responses"
 
 
 def _patch_base(mocker: MockerFixture, config: AppConfig) -> None:
-    """Patch configuration and mandatory checks for responses endpoint."""
+    """
+    Replace module-level configuration and common runtime checks with test doubles and install mocked client utilities used by the responses endpoint.
+    
+    Parameters:
+        mocker (pytest_mock.MockerFixture): Fixture used to apply patches and create mocks.
+        config (AppConfig): Configuration object to inject as the module-level `configuration`.
+    """
     mocker.patch(f"{MODULE}.configuration", config)
     mocker.patch(f"{MODULE}.check_configuration_loaded")
     mocker.patch(f"{MODULE}.check_tokens_available")
@@ -56,7 +62,17 @@ def _patch_base(mocker: MockerFixture, config: AppConfig) -> None:
 
 
 def _patch_client(mocker: MockerFixture) -> Any:
-    """Patch AsyncLlamaStackClientHolder; return (mock_client, mock_holder)."""
+    """
+    Create and install a mocked AsyncLlamaStackClient and its holder for tests.
+    
+    Parameters:
+        mocker (pytest_mock.MockerFixture): The pytest-mock fixture used to create and patch mocks.
+    
+    Returns:
+        tuple: A 2-tuple (mock_client, mock_holder) where `mock_client` is an AsyncMock conforming
+        to AsyncLlamaStackClient (with `vector_stores.list` returning an empty data list) and
+        `mock_holder` is a Mock whose `get_client()` returns `mock_client`.
+    """
     mock_client = mocker.AsyncMock(spec=AsyncLlamaStackClient)
     mock_vector_stores = mocker.Mock()
     mock_vector_stores.list = mocker.AsyncMock(return_value=mocker.Mock(data=[]))
@@ -74,7 +90,14 @@ def _patch_resolve_response_context(
     user_conversation: UserConversation | None = None,
     generate_topic_summary: bool = False,
 ) -> None:
-    """Patch resolve_response_context to return the given conversation context."""
+    """
+    Patch `resolve_response_context` so it always returns a `ResponsesConversationContext` constructed with the provided values.
+    
+    Parameters:
+    	conversation (str): Conversation identifier to set on the returned context.
+    	user_conversation (UserConversation | None): Optional `UserConversation` object to include in the returned context.
+    	generate_topic_summary (bool): Whether the returned context should request generation of a topic summary.
+    """
     mocker.patch(
         f"{MODULE}.resolve_response_context",
         new=mocker.AsyncMock(
@@ -92,7 +115,12 @@ def _patch_rag(
     *,
     rag_context: str = "",
 ) -> None:
-    """Patch RAG for responses endpoint by mocking build_rag_context."""
+    """
+    Patch the module's build_rag_context with an async mock that returns a fixed RAGContext.
+    
+    Parameters:
+        rag_context (str): The text to set as `RAGContext.context_text` returned by the patched function.
+    """
     mocker.patch(
         f"{MODULE}.build_rag_context",
         new=mocker.AsyncMock(
@@ -122,7 +150,18 @@ def _make_responses_response(
     model: str = "provider/model1",
     **kwargs: Any,
 ) -> ResponsesResponse:
-    """Build a minimal valid ResponsesResponse for tests."""
+    """
+    Builds a minimal valid ResponsesResponse object for tests, allowing default fields to be overridden.
+    
+    Parameters:
+        output_text (str): Text to set for the response's `output_text` field.
+        conversation (str): Conversation identifier to set for the response's `conversation` field.
+        model (str): Model identifier to set for the response's `model` field.
+        **kwargs: Additional response fields to override the defaults.
+    
+    Returns:
+        ResponsesResponse: A ResponsesResponse populated with default values merged with `kwargs`.
+    """
     defaults = {
         "id": "resp_1",
         "object": "response",
@@ -142,7 +181,19 @@ def _make_responses_response(
 def _patch_handle_non_streaming_common(
     mocker: MockerFixture, config: AppConfig
 ) -> None:
-    """Patch deps used by handle_non_streaming_response (blocked and success)."""
+    """
+    Patch common dependencies used by handle_non_streaming_response tests.
+    
+    This installs test patches for the responses endpoint module:
+    - replaces module `configuration` with the provided AppConfig
+    - stubs `get_available_quotas` to return an empty dict
+    - stubs `get_topic_summary` as an async function returning `None`
+    - patches `store_query_results` with a test double
+    
+    Parameters:
+        mocker (MockerFixture): pytest-mock fixture used to apply patches.
+        config (AppConfig): configuration object to inject into the module.
+    """
     mocker.patch(f"{MODULE}.configuration", config)
     mocker.patch(f"{MODULE}.get_available_quotas", return_value={})
     mocker.patch(
@@ -162,7 +213,12 @@ def dummy_request_fixture() -> Request:
 
 @pytest.fixture(name="minimal_config")
 def minimal_config_fixture() -> AppConfig:
-    """Minimal AppConfig for responses endpoint tests."""
+    """
+    Create an AppConfig populated with the minimal settings required by the responses endpoint unit tests.
+    
+    Returns:
+        AppConfig: configuration with service host "localhost" and port 8080, llama_stack URL and api_key set for tests, noop authentication, and empty authorization access rules.
+    """
     cfg = AppConfig()
     cfg.init_from_dict(
         {
@@ -184,7 +240,12 @@ def minimal_config_fixture() -> AppConfig:
 def _request_with_model_and_conv(
     input_text: str = "Hello", model: str = "provider/model1"
 ) -> ResponsesRequest:
-    """Build request with model and conversation set (as handler does)."""
+    """
+    Create a ResponsesRequest populated with the given input and model, and with the conversation set to the module's default VALID_CONV_ID.
+    
+    Returns:
+        ResponsesRequest: Request object with `input` and `model` set from the arguments and `conversation` set to VALID_CONV_ID.
+    """
     return ResponsesRequest(
         input=input_text,
         model=model,
@@ -198,7 +259,18 @@ def _request_with_previous_response_id(
     previous_response_id: str = "resp_prev_123",
     store: bool = True,
 ) -> ResponsesRequest:
-    """Build request with previous_response_id (conversation set by handler)."""
+    """
+    Create a ResponsesRequest pre-populated with a previous response reference and a valid conversation id.
+    
+    Parameters:
+        input_text (str): The user's input text.
+        model (str): The model identifier to use for the request.
+        previous_response_id (str): The id of a previous response to which this request refers.
+        store (bool): Whether the response should be stored.
+    
+    Returns:
+        ResponsesRequest: A request object with `previous_response_id` set and `conversation` assigned to VALID_CONV_ID.
+    """
     request = ResponsesRequest(
         input=input_text,
         model=model,
@@ -503,7 +575,11 @@ class TestResponsesEndpointHandler:
         minimal_config: AppConfig,
         mocker: MockerFixture,
     ) -> None:
-        """Blocked moderation with conversation calls append_turn_items_to_conversation."""
+        """
+        Ensure blocked moderation with a conversation appends the refusal to the conversation and returns a valid ResponsesResponse.
+        
+        Asserts that append_turn_items_to_conversation is awaited with the conversation ID, the original user input, and the moderation's refusal message, and that the handler returns a payload that validates as ResponsesResponse.
+        """
         responses_request = ResponsesRequest(
             input="Bad",
             conversation=VALID_CONV_ID,
@@ -1015,6 +1091,12 @@ class TestHandleStreamingResponse:
         }
 
         async def mock_stream() -> Any:
+            """
+            Async generator that yields a single mocked streaming chunk.
+            
+            Returns:
+                An asynchronous iterator that yields the `mock_chunk` object once.
+            """
             yield mock_chunk
 
         mock_client.responses.create = mocker.AsyncMock(return_value=mock_stream())
@@ -1096,6 +1178,12 @@ class TestHandleStreamingResponse:
         }
 
         async def mock_stream() -> Any:
+            """
+            Yield two mocked streaming response chunks for tests.
+            
+            Yields:
+                Two chunk objects representing a streaming response: first an in-progress chunk, then a completed chunk.
+            """
             yield in_progress_chunk
             yield completed_chunk
 
@@ -1172,6 +1260,14 @@ class TestHandleStreamingResponse:
         }
 
         async def mock_stream() -> Any:
+            """
+            Async generator that yields a single completed response chunk for streaming tests.
+            
+            Used to simulate a LlamaStack streaming response by producing one mocked completed chunk.
+            
+            Returns:
+                An async iterator that yields the mocked completed response chunk.
+            """
             yield completed_chunk
 
         mock_client.responses.create = mocker.AsyncMock(return_value=mock_stream())
@@ -1253,6 +1349,14 @@ class TestHandleStreamingResponse:
         }
 
         async def mock_stream() -> Any:
+            """
+            Async generator that yields a single completed response chunk for streaming tests.
+            
+            Used to simulate a LlamaStack streaming response by producing one mocked completed chunk.
+            
+            Returns:
+                An async iterator that yields the mocked completed response chunk.
+            """
             yield completed_chunk
 
         mock_client.responses.create = mocker.AsyncMock(return_value=mock_stream())

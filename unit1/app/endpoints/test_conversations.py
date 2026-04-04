@@ -68,36 +68,23 @@ def create_mock_conversation(
     last_used_provider: str,
     topic_summary: Optional[str] = None,
 ) -> MockType:
-    """Helper function to create a mock conversation object with all required attributes.
-
-    Create a mock conversation object with the attributes used by the
-    conversations list and detail tests.
-
-    The returned mock has the following attributes:
-    - id: the conversation identifier (string)
-    - created_at.isoformat(): returns the provided created_at string
-    - last_message_at.isoformat(): returns the provided last_message_at string
-    - message_count: number of messages in the conversation
-    - last_used_model: model identifier last used in the conversation
-    - last_used_provider: provider identifier last used in the conversation
-    - topic_summary: optional topic summary (may be None or empty string)
-
+    """
+    Create a mock conversation object with the attributes used by conversation list and detail tests.
+    
     Parameters:
-    ----------
         mocker (MockerFixture): pytest mocker fixture used to build the mock object.
         conversation_id (str): Conversation identifier to assign to the mock.
-        created_at (str): ISO-formatted created-at timestamp to be returned by
-        created_at.isoformat().
-        last_message_at (str): ISO-formatted last-message timestamp to be
-        returned by last_message_at.isoformat().
-        message_count (int): Message count to assign to the mock.
-        last_used_model (str): Last used model string to assign to the mock.
-        last_used_provider (str): Last used provider string to assign to the mock.
-        topic_summary (Optional[str]): Optional topic summary to assign to the mock.
-
+        created_at (str): ISO-formatted timestamp returned by created_at.isoformat().
+        last_message_at (str): ISO-formatted timestamp returned by last_message_at.isoformat().
+        message_count (int): Number of messages in the conversation.
+        last_used_model (str): Identifier of the last model used in the conversation.
+        last_used_provider (str): Identifier of the last provider used in the conversation.
+        topic_summary (Optional[str]): Optional topic summary (may be None or empty string).
+    
     Returns:
-    -------
-        mock_conversation: A mock object configured with the above attributes.
+        mock_conversation (MockType): A mock object with attributes `id`, `created_at.isoformat()`,
+            `last_message_at.isoformat()`, `message_count`, `last_used_model`, `last_used_provider`,
+            and `topic_summary`.
     """
     mock_conversation = mocker.Mock()
     mock_conversation.id = conversation_id
@@ -120,18 +107,24 @@ def create_mock_db_turn(
     provider: str = "google",
     model: str = "gemini-2.0-flash-exp",
 ) -> MockType:
-    """Create a mock UserTurn database object.
-
-    Args:
-        mocker: Mocker fixture
-        turn_number: Turn number (1-indexed)
-        started_at: ISO 8601 timestamp string
-        completed_at: ISO 8601 timestamp string
-        provider: Provider identifier
-        model: Model identifier
-
+    """
+    Create a mocked UserTurn database object populated with common turn fields.
+    
+    Parameters:
+        mocker: Pytest mocker fixture used to create the Mock.
+        turn_number: Turn number (1-indexed).
+        started_at: ISO 8601 timestamp string for when the turn started.
+        completed_at: ISO 8601 timestamp string for when the turn completed.
+        provider: Provider identifier.
+        model: Model identifier.
+    
     Returns:
-        Mock UserTurn database object with required attributes
+        Mock UserTurn instance with attributes:
+            - turn_number (int)
+            - started_at (datetime)
+            - completed_at (datetime)
+            - provider (str)
+            - model (str)
     """
     mock_turn = mocker.Mock(spec=UserTurn)
     mock_turn.turn_number = turn_number
@@ -146,11 +139,12 @@ def create_mock_db_turn(
 def _setup_user_turn_query(
     mock_query: MockType, db_turns: Optional[list[MockType]]
 ) -> None:
-    """Configure mock query for UserTurn model.
-
-    Args:
-        mock_query: The mock query object to configure.
-        db_turns: List of UserTurn objects to return, or None for empty list.
+    """
+    Configure the provided mock query so that calling filter_by().order_by().all() returns the given turns.
+    
+    Parameters:
+        mock_query: Mock query whose filter_by().order_by().all() chain will be configured.
+        db_turns: List of mocked UserTurn objects to return; if None, the chain will return an empty list.
     """
     turns_to_return = db_turns if db_turns is not None else []
     mock_query.filter_by.return_value.order_by.return_value.all.return_value = (
@@ -161,11 +155,18 @@ def _setup_user_turn_query(
 def _setup_user_conversation_query(
     mock_query: MockType, query_result: Optional[list[MockType]]
 ) -> None:
-    """Configure mock query for UserConversation model.
-
-    Args:
-        mock_query: The mock query object to configure.
-        query_result: List of UserConversation objects to return, or None for None.
+    """
+    Configure a mocked SQLAlchemy query for UserConversation to return controlled results.
+    
+    When `query_result` is a list, sets `mock_query.all()`, `mock_query.filter_by().all()`, and
+    `mock_query.filter_by().first()` to return that list (with `first()` returning the first element
+    or `None` if the list is empty). When `query_result` is `None`, ensures `mock_query.filter_by().first()`
+    returns `None`.
+    
+    Parameters:
+        mock_query: The mock query object to configure (e.g., returned by a mocked session.query()).
+        query_result: A list of mock UserConversation objects to be returned by query calls, or
+            `None` to simulate no matching conversation.
     """
     if query_result is not None:
         mock_query.all.return_value = query_result
@@ -180,11 +181,15 @@ def _setup_user_conversation_query(
 def _patch_get_session_functions(
     mocker: MockerFixture, mock_session_context: MockType
 ) -> None:
-    """Patch all get_session functions used by the endpoint handlers.
-
-    Args:
-        mocker: Mocker fixture for creating patches.
-        mock_session_context: The context manager mock to return from get_session.
+    """
+    Patch session acquisition and access helpers used by conversation endpoint handlers.
+    
+    Parameters:
+        mocker (MockerFixture): The pytest-mock fixture used to create patches.
+        mock_session_context (MockType): A context-manager mock that will be returned by patched `get_session` calls; its `__enter__` should yield the mocked session.
+    
+    Description:
+        Replaces `get_session` in app.endpoints.conversations_v1, app.database, and utils.endpoints to return `mock_session_context`, and forces `utils.endpoints.can_access_conversation` to return `True`.
     """
     mocker.patch(
         "app.endpoints.conversations_v1.get_session", return_value=mock_session_context
@@ -220,7 +225,15 @@ def mock_database_session(
     mock_session = mocker.Mock()
 
     def query_side_effect(model_class: type[Any]) -> Any:
-        """Handle different model queries."""
+        """
+        Return a mock query object configured to simulate database queries for the given model class.
+        
+        Parameters:
+            model_class (type[Any]): The ORM model class for which to create the mock query (e.g., `UserTurn` or a conversation model).
+        
+        Returns:
+            Mock: A mock object that behaves like a SQLAlchemy query configured for the provided `model_class`.
+        """
         mock_query = mocker.Mock()
         if model_class == UserTurn:
             _setup_user_turn_query(mock_query, db_turns)
@@ -242,15 +255,13 @@ def mock_database_session(
 
 @pytest.fixture(name="setup_configuration")
 def setup_configuration_fixture() -> AppConfig:
-    """Set up configuration for tests.
-
-    Create an AppConfig prepopulated with test-friendly default settings.
-
+    """
+    Create an AppConfig configured with test-friendly defaults for unit tests.
+    
+    The configuration uses localhost, disabled authentication and user-data collection, a single worker, and test Llama Stack credentials suitable for isolated tests.
+    
     Returns:
-        AppConfig: An AppConfig instance initialized from a dictionary
-        containing defaults suitable for tests (local service host/port,
-        disabled auth and user-data collection, test Llama Stack API key and
-        URL, and single worker).
+        AppConfig: An initialized AppConfig instance populated with the test defaults.
     """
     config_dict: dict[str, Any] = {
         "name": "test",
@@ -280,28 +291,17 @@ def setup_configuration_fixture() -> AppConfig:
 
 @pytest.fixture(name="mock_session_data")
 def mock_session_data_fixture() -> dict[str, Any]:
-    """Create mock session data for testing.
-
-    Provide a representative mock session data payload used by tests to
-    simulate a conversation session.
-
-    The returned dictionary contains:
-    - session_id: conversation identifier.
-    - session_name: human-readable session name.
-    - started_at: ISO 8601 timestamp when the session started.
-    - turns: list of turn objects; each turn includes:
-        - turn_id: identifier for the turn.
-        - input_messages: list of input message objects with `content`, `role`,
-          and optional `context`.
-        - output_message: assistant response object with `content`, `role`, and
-          auxiliary fields (e.g., `stop_reason`, `tool_calls`) that tests
-          expect to be filtered by simplification logic.
-        - started_at / completed_at: ISO 8601 timestamps for the turn.
-        - steps: detailed internal steps included to verify they are removed by simplification.
-
+    """
+    Create representative mock session data for unit tests simulating a Llama Stack conversation session.
+    
+    The returned dictionary contains the keys:
+    - `session_id`: conversation identifier,
+    - `session_name`: human-readable session name,
+    - `started_at`: ISO 8601 timestamp when the session started,
+    - `turns`: list of turn objects; each turn includes `turn_id`, `input_messages`, `output_message`, `started_at`, `completed_at`, and `steps`.
+    
     Returns:
-        dict: A mock session data structure matching the shape produced by the
-        Llama Stack client for use in unit tests.
+        dict: Mock session data matching the shape produced by the Llama Stack client for use in unit tests.
     """
     return {
         "session_id": VALID_CONVERSATION_ID,
@@ -344,18 +344,19 @@ def mock_session_data_fixture() -> dict[str, Any]:
 
 @pytest.fixture(name="expected_chat_history")
 def expected_chat_history_fixture() -> list[dict[str, Any]]:
-    """Create expected simplified chat history for testing.
-
+    """
     Expected simplified chat history used by tests.
-
+    
+    Each element is a conversation turn containing:
+    - messages: list of message dicts with `content` (str) and `type` (`"user"` or `"assistant"`)
+    - tool_calls: list of tool call summaries
+    - tool_results: list of tool result summaries
+    - provider: provider name (str)
+    - model: model name (str)
+    - started_at / completed_at: ISO 8601 UTC timestamp strings
+    
     Returns:
-        list[dict[str, Any]]: A list of conversation turns. Each turn contains:
-            - messages: list of message dicts with `content` (str) and `type`
-              (`"user"` or `"assistant"`)
-            - tool_calls: list of tool call summaries (empty by default)
-            - tool_results: list of tool result summaries (empty by default)
-            - started_at: ISO 8601 UTC timestamp string for the turn start
-            - completed_at: ISO 8601 UTC timestamp string for the turn end
+        A list of simplified conversation turns representing the expected chat history.
     """
     return [
         {
@@ -387,13 +388,11 @@ def expected_chat_history_fixture() -> list[dict[str, Any]]:
 
 @pytest.fixture(name="mock_conversation")
 def mock_conversation_fixture() -> UserConversation:
-    """Create a mock UserConversation object for testing.
-
+    """
+    Create a mock UserConversation for tests.
+    
     Returns:
-        mock_conv (UserConversation): A UserConversation initialized with
-        VALID_CONVERSATION_ID, user_id set to "another_user", message_count 2,
-        last_used_model "mock-model", last_used_provider "mock-provider", and
-        topic_summary "Mock topic".
+        A UserConversation with id set to VALID_CONVERSATION_ID, user_id "another_user" (different from the test auth user), message_count 2, last_used_model "mock-model", last_used_provider "mock-provider", and topic_summary "Mock topic".
     """
     mock_conv = UserConversation()
     mock_conv.id = VALID_CONVERSATION_ID
@@ -919,7 +918,11 @@ class TestGetConversationEndpoint:
         dummy_request: Request,
         mock_conversation: MockType,
     ) -> None:
-        """Test when SQLAlchemyError is raised while retrieving conversation turns."""
+        """
+        Verify get_conversation_endpoint_handler returns HTTP 500 when a SQLAlchemyError occurs while retrieving UserTurn rows.
+        
+        Patches configuration, conversation validation, DB session, and Llama Stack client so that querying UserTurn raises SQLAlchemyError; asserts the handler raises an HTTPException with status 500 and that the error detail contains "Database".
+        """
         mock_authorization_resolvers(mocker)
         mocker.patch(
             "app.endpoints.conversations_v1.configuration", setup_configuration
@@ -934,6 +937,15 @@ class TestGetConversationEndpoint:
         mock_session = mocker.Mock()
 
         def query_side_effect(model_class: type[Any]) -> Any:
+            """
+            Constructs a mock query object that simulates a database error for UserTurn queries and returns a generic mock for other models.
+            
+            Parameters:
+                model_class (type[Any]): The ORM model class being queried.
+            
+            Returns:
+                Mock object: If `model_class` is `UserTurn`, a mock whose `filter_by().order_by().all()` call raises `SQLAlchemyError("Database error")`; otherwise a generic mock suitable as a query substitute.
+            """
             if model_class == UserTurn:
                 mock_query = mocker.Mock()
                 mock_query_chain = (

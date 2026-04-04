@@ -35,7 +35,14 @@ MOCK_AUTH: AuthTuple = ("mock_user_id", "mock_username", False, "mock_token")
 
 @pytest.fixture
 def mock_configuration() -> Configuration:
-    """Create a mock configuration with MCP servers."""
+    """
+    Create a Configuration object pre-populated with realistic test values for MCP-server-related tests.
+    
+    The returned Configuration includes service TLS and CORS settings, a llama_stack configuration with a local URL and API key, disabled user data collection, and a single statically configured MCP server named "static-mcp". Use this configuration in unit tests that require a predictable app configuration with one preconfigured MCP server.
+    
+    Returns:
+        Configuration: A test Configuration instance ready for use in endpoint tests.
+    """
     return Configuration(
         name="test",
         service=ServiceConfiguration(
@@ -86,7 +93,16 @@ def mock_configuration() -> Configuration:
 
 
 def _make_app_config(mocker: MockerFixture, config: Configuration) -> AppConfig:
-    """Create an AppConfig with the given configuration and patch it."""
+    """
+    Create an AppConfig populated with the provided Configuration and patch it into the mcp_servers endpoint module.
+    
+    Parameters:
+        mocker (pytest.MockerFixture): Pytest mocker used to patch modules in tests.
+        config (Configuration): Configuration to assign to the new AppConfig.
+    
+    Returns:
+        AppConfig: The created AppConfig instance with an empty set of dynamic MCP server names, patched into app.endpoints.mcp_servers.
+    """
     app_config = AppConfig()
     app_config._configuration = config
     app_config._dynamic_mcp_server_names = set()
@@ -96,7 +112,15 @@ def _make_app_config(mocker: MockerFixture, config: Configuration) -> AppConfig:
 
 
 def _mock_client(mocker: MockerFixture) -> Any:
-    """Create and patch a mock Llama Stack client."""
+    """
+    Patch AsyncLlamaStackClientHolder so its get_client() returns an AsyncMock and return that mock client.
+    
+    Parameters:
+        mocker (pytest.MockerFixture): The pytest mocker fixture used to apply the patch.
+    
+    Returns:
+        AsyncMock: The mocked Llama Stack client instance.
+    """
     mock_holder = mocker.patch("app.endpoints.mcp_servers.AsyncLlamaStackClientHolder")
     mock_client = mocker.AsyncMock()
     mock_holder.return_value.get_client.return_value = mock_client

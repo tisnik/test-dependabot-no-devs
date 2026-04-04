@@ -175,7 +175,9 @@ class TestBuildConversationTurnFromCacheEntry:
         assert turn.messages[1].referenced_documents is None
 
     def test_build_turn_serialization_excludes_none_referenced_documents(self) -> None:
-        """Test that model_dump(exclude_none=True) omits referenced_documents when None."""
+        """
+        Verify that calling model_dump(exclude_none=True) on a built conversation turn omits the `referenced_documents` key for messages where it is `None`.
+        """
         entry = CacheEntry(
             query="Hello",
             response="Hi there!",

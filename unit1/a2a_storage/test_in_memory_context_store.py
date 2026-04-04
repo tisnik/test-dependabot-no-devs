@@ -64,7 +64,9 @@ class TestInMemoryA2AContextStore:
 
     @pytest.mark.asyncio
     async def test_delete_nonexistent_key(self, store: InMemoryA2AContextStore) -> None:
-        """Test deleting a key that doesn't exist (should not raise)."""
+        """
+        Ensure deleting a non-existent context key completes without raising an exception.
+        """
         # Should not raise any exception
         await store.delete("nonexistent-context-id")
 

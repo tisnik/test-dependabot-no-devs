@@ -87,7 +87,11 @@ async def test_api_key_with_token_auth_dependency_no_token(
 async def test_api_key_with_token_auth_dependency_no_bearer(
     default_api_key_token_configuration: APIKeyTokenConfiguration,
 ) -> None:
-    """Test the APIKeyTokenConfiguration class with no token."""
+    """
+    Verify that the auth dependency raises a 401 HTTPException when the Authorization header is present but does not use the Bearer scheme.
+    
+    Asserts that the raised HTTPException has status code 401 and that its `detail` is a dict containing `"cause": "No token found in Authorization header"`.
+    """
     dependency = APIKeyTokenAuthDependency(default_api_key_token_configuration)
 
     # Create a mock request without token

@@ -47,7 +47,9 @@ MOCK_AUTH: AuthTuple = ("mock_user_id", "mock_username", False, "mock_token")
 
 @pytest.fixture(autouse=True)
 def _clear_prompt_template_cache() -> None:
-    """Clear the lru_cache on _compile_prompt_template between tests."""
+    """
+    Clear the LRU cache used by _compile_prompt_template.
+    """
     _compile_prompt_template.cache_clear()
 
 
@@ -56,6 +58,14 @@ def mock_custom_prompt_fixture(mocker: MockerFixture) -> Callable[[str], None]:
     """Factory fixture that patches configuration with a custom system prompt."""
 
     def _set(prompt: str) -> None:
+        """
+        Patch app.endpoints.rlsapi_v1.configuration so its customization.system_prompt equals the provided prompt.
+        
+        This replaces the module-level `configuration` with a mock whose `customization.system_prompt` is set to `prompt`, enabling tests to control the system prompt value.
+        
+        Parameters:
+            prompt (str): The system prompt string to inject into the mocked configuration.
+        """
         mock_customization = mocker.Mock()
         mock_customization.system_prompt = prompt
         mock_config = mocker.Mock()
@@ -66,7 +76,13 @@ def mock_custom_prompt_fixture(mocker: MockerFixture) -> Callable[[str], None]:
 
 
 def _setup_responses_mock(mocker: MockerFixture, create_behavior: Any) -> None:
-    """Set up responses.create mock with custom behavior."""
+    """
+    Configure the AsyncLlamaStackClientHolder and its client so tests can control the behavior of responses.create.
+    
+    Parameters:
+        mocker (pytest.MockFixture): The pytest mocker fixture used to create and apply patches.
+        create_behavior (Any): Value or callable to assign to `responses.create` on the mocked client; can be a coroutine, function, exception, or any object the test needs to simulate.
+    """
     mock_responses = mocker.Mock()
     mock_responses.create = create_behavior
 
@@ -85,7 +101,17 @@ def _setup_responses_mock(mocker: MockerFixture, create_behavior: Any) -> None:
 def mock_configuration_fixture(
     mocker: MockerFixture, minimal_config: AppConfig
 ) -> AppConfig:
-    """Extend minimal_config with inference defaults and patch it."""
+    """
+    Patch the module-level configuration with an AppConfig that has standardized inference defaults for tests.
+    
+    Parameters:
+        mocker (pytest.MockerFixture): The pytest mocker used to patch module attributes.
+        minimal_config (AppConfig): Base configuration to modify; its `inference` section will be updated.
+    
+    Returns:
+        AppConfig: The same `minimal_config` instance after setting `inference.default_model` to "gpt-4-turbo",
+        `inference.default_provider` to "openai", and patching it into app.endpoints.rlsapi_v1.configuration.
+    """
     minimal_config.inference.default_model = "gpt-4-turbo"
     minimal_config.inference.default_provider = "openai"
     mocker.patch("app.endpoints.rlsapi_v1.configuration", minimal_config)
@@ -93,7 +119,16 @@ def mock_configuration_fixture(
 
 
 def _create_mock_response_output(mocker: MockerFixture, text: str) -> Any:
-    """Create a mock Responses API output item with assistant message."""
+    """
+    Create a mock Responses API output item representing an assistant message.
+    
+    Parameters:
+        mocker (pytest.Mock): The pytest mocker fixture used to construct the mock object.
+        text (str): The assistant message content to set on the mock.
+    
+    Returns:
+        mock_output_item: A mock object with attributes `type == "message"`, `role == "assistant"`, and `content` set to `text`.
+    """
     mock_output_item = mocker.Mock()
     mock_output_item.type = "message"
     mock_output_item.role = "assistant"
@@ -103,7 +138,11 @@ def _create_mock_response_output(mocker: MockerFixture, text: str) -> Any:
 
 @pytest.fixture(name="mock_llm_response")
 def mock_llm_response_fixture(mocker: MockerFixture) -> None:
-    """Mock the LLM integration for successful responses via Responses API."""
+    """
+    Set up a pytest fixture that configures the LLM Responses client to return a single successful assistant message.
+    
+    When used, the Responses client's create call will produce a response whose output contains one assistant message with the text "This is a test LLM response." Intended for use in tests that need a predictable, successful LLM reply.
+    """
     mock_response = mocker.Mock()
     mock_response.output = [
         _create_mock_response_output(mocker, "This is a test LLM response.")
@@ -136,7 +175,14 @@ def mock_api_connection_error_fixture(mocker: MockerFixture) -> None:
 
 @pytest.fixture(name="mock_generic_runtime_error")
 def mock_generic_runtime_error_fixture(mocker: MockerFixture) -> None:
-    """Mock responses.create() to raise a non-context-length RuntimeError."""
+    """
+    Mock the LlamaStack responses.create call to raise a generic RuntimeError for tests.
+    
+    Configures the test environment so that any invocation of responses.create raises RuntimeError("something went wrong"), simulating a non-API-connection runtime failure.
+    
+    Parameters:
+        mocker (pytest.MockFixture): The pytest mocker fixture used to apply the patch.
+    """
     _setup_responses_mock(
         mocker,
         mocker.AsyncMock(side_effect=RuntimeError("something went wrong")),
@@ -1001,7 +1047,11 @@ async def test_infer_generic_runtime_error_records_failure(
     mock_request_factory: Callable[..., Any],
     mock_background_tasks: Any,
 ) -> None:
-    """Test that non-context-length RuntimeErrors record inference failure metrics."""
+    """
+    Verify that a generic RuntimeError raised during inference is propagated and that a failure event is queued.
+    
+    Asserts the RuntimeError is re-raised by infer_endpoint and that background_tasks.add_task is called once with the handler identifier "infer_error".
+    """
     infer_request = RlsapiV1InferRequest(question="Test question")
     mock_request = mock_request_factory()
 

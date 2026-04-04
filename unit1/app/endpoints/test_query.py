@@ -51,17 +51,11 @@ def create_dummy_request() -> Request:
 
 @pytest.fixture(name="setup_configuration")
 def setup_configuration_fixture() -> AppConfig:
-    """Set up configuration for tests.
-
-    Create a reusable application configuration tailored for unit tests.
-
-    The returned AppConfig is initialized from a fixed dictionary that sets:
-    - a lightweight service configuration (localhost, port 8080, minimal workers, logging enabled),
-    - a test Llama Stack configuration (test API key and URL, not used as a library client),
-    - user data collection with transcripts disabled,
-    - an empty MCP servers list,
-    - a noop conversation cache.
-
+    """
+    Create an AppConfig pre-initialized for unit tests.
+    
+    Initializes an AppConfig from a fixed dictionary configuring a local test service (localhost:8080), test Llama Stack credentials and URL, user data collection with transcripts disabled, an empty MCP servers list, and a noop conversation cache.
+    
     Returns:
         AppConfig: an initialized configuration instance suitable for test fixtures.
     """
@@ -153,6 +147,14 @@ class TestQueryEndpointHandler:
         )
 
         async def mock_retrieve_response(*_args: Any, **_kwargs: Any) -> TurnSummary:
+            """
+            Mock replacement for retrieve_response used in tests that returns a prebuilt TurnSummary.
+            
+            Ignores all positional and keyword arguments and returns the supplied `mock_turn_summary`.
+            
+            Returns:
+                TurnSummary: The preconstructed turn summary instance used by the test.
+            """
             return mock_turn_summary
 
         mocker.patch(
@@ -392,6 +394,14 @@ class TestQueryEndpointHandler:
         )
 
         async def mock_retrieve_response(*_args: Any, **_kwargs: Any) -> TurnSummary:
+            """
+            Return an empty TurnSummary for use in tests.
+            
+            This test helper ignores all positional and keyword arguments and always produces a default, empty TurnSummary instance.
+            
+            Returns:
+                TurnSummary: An empty TurnSummary object.
+            """
             return TurnSummary()
 
         mocker.patch(
@@ -554,6 +564,14 @@ class TestQueryEndpointHandler:
         )
 
         async def mock_retrieve_response(*_args: Any, **_kwargs: Any) -> TurnSummary:
+            """
+            Return an empty TurnSummary for use in tests.
+            
+            This test helper ignores all positional and keyword arguments and always produces a default, empty TurnSummary instance.
+            
+            Returns:
+                TurnSummary: An empty TurnSummary object.
+            """
             return TurnSummary()
 
         mocker.patch(

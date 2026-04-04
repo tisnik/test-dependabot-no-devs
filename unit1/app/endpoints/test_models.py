@@ -20,7 +20,14 @@ class Model:
     """Model information returned in response."""
 
     def __init__(self, model_id: str, provider_id: str, model_type: str) -> None:
-        """Initialize model information."""
+        """
+        Create a model instance storing its identifier and provider/type metadata.
+        
+        Parameters:
+            model_id (str): Unique identifier for the model.
+            provider_id (str): Identifier of the model provider.
+            model_type (str): Category of the model (for example, "llm" or "embedding").
+        """
         self.id = model_id
         self.custom_metadata = {
             "model_type": model_type,
@@ -247,7 +254,11 @@ async def test_models_endpoint_handler_model_type_query_parameter(
 async def test_models_endpoint_handler_model_list_retrieved(
     mocker: MockerFixture,
 ) -> None:
-    """Test the models endpoint handler if model list can be retrieved."""
+    """
+    Verify the models endpoint returns all models with correct identifiers and model types.
+    
+    Mocks an AppConfig and the Llama Stack client to return four models, calls the endpoint with no model_type filter, and asserts the response is non-null, contains four entries, and that each entry's `identifier` and `model_type` match the mocked models in order.
+    """
     mock_authorization_resolvers(mocker)
 
     # configuration for tests

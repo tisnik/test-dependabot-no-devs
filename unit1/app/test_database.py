@@ -17,11 +17,13 @@ from models.config import PostgreSQLDatabaseConfiguration, SQLiteDatabaseConfigu
 
 @pytest.fixture(name="reset_database_state")
 def reset_database_state_fixture() -> Generator:
-    """Reset global database state before and after tests.
-
+    """
+    Reset and restore the module-level database engine and session globals around a test.
+    
+    This fixture yields control to the test with `database.engine` and `database.session_local` set to `None`, then restores their original values after the test completes.
+    
     Returns:
-        generator: A fixture generator that yields control to the test and
-        restores global database state afterwards.
+        generator: A fixture generator that yields once to the test and restores the original globals afterwards.
     """
     original_engine = database.engine
     original_session_local = database.session_local
@@ -275,25 +277,17 @@ class TestInitializeDatabase:
         mock_logger: MockType,
         enable_debug: bool = False,
     ) -> tuple[MockType, MockType]:
-        """Setup common mocks for initialize_database tests.
-
-        Create and configure common mock objects used by
-        initialize_database tests.
-
+        """
+        Create and configure common mock objects used by initialize_database tests.
+        
         Parameters:
-        ----------
-            mocker (MockerFixture): pytest-mock fixture used to create MagicMock instances.
-            mock_sessionmaker (MockType): Mocked sessionmaker whose return
-            value will be set to the mocked session-local factory.
-            mock_logger (MockType): Mock logger whose `isEnabledFor` behavior will be configured.
-            enable_debug (bool): If True, configures `mock_logger.isEnabledFor` to return True.
-
+            mocker: pytest-mock fixture for creating MagicMock instances.
+            mock_sessionmaker: Mocked sessionmaker; its return value will be set to the mocked session-local factory.
+            mock_logger: Mock logger whose isEnabledFor behavior will be configured.
+            enable_debug: If True, configures mock_logger.isEnabledFor to return True.
+        
         Returns:
-        -------
-            tuple[MockType, MockType]: A tuple (mock_engine,
-            mock_session_local) where `mock_engine` is a mocked SQLAlchemy
-            Engine and `mock_session_local` is the mocked session-local
-            factory.
+            tuple: (mock_engine, mock_session_local) where mock_engine is a mocked SQLAlchemy Engine and mock_session_local is the mocked session-local factory.
         """
         mock_engine = mocker.MagicMock(spec=Engine)
         mock_session_local = mocker.MagicMock()
@@ -308,20 +302,13 @@ class TestInitializeDatabase:
         mock_engine: MockType,
         mock_session_local: MockType,
     ) -> None:
-        """Verify common assertions for initialize_database tests.
-
-        Assert that initialize_database set up the engine and session factory
-        and that sessionmaker was invoked with the expected arguments.
-
+        """
+        Verify that initialize_database configured the module-level engine and session factory and that `sessionmaker` was called with the expected arguments.
+        
         Parameters:
-        ----------
-            mock_sessionmaker (MockType): Mock of the sessionmaker factory;
-            expected to have been called with autocommit=False,
-            autoflush=False, bind=mock_engine.
-            mock_engine (MockType): Mock Engine instance expected to be
-            assigned to database.engine.
-            mock_session_local (MockType): Mock session factory expected to be
-            assigned to database.session_local.
+            mock_sessionmaker (MockType): Mock of the `sessionmaker` factory; expected to have been called with `autocommit=False`, `autoflush=False`, and `bind=mock_engine`.
+            mock_engine (MockType): Mock Engine instance expected to be assigned to `database.engine`.
+            mock_session_local (MockType): Mock session factory expected to be assigned to `database.session_local`.
         """
         mock_sessionmaker.assert_called_once_with(
             autocommit=False, autoflush=False, bind=mock_engine
