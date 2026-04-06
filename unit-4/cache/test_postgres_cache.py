@@ -734,7 +734,7 @@ def test_connect_to_cache_with_too_long_namespace(
     postgres_cache_config_fixture_too_long_namespace: PostgreSQLDatabaseConfiguration,
 ) -> None:
     """Test that PostgresCache constructor raises ValueError for invalid namespace."""
-    # should fail due to invalid namespace containing spaces
+    # should fail due to namespace exceeding 63-character limit
     with pytest.raises(ValueError, match="Invalid namespace: too long namespace"):
         PostgresCache(postgres_cache_config_fixture_too_long_namespace)
 
