@@ -23,14 +23,11 @@ type AgentFixtures = Generator[
 def prepare_agent_mocks_fixture(
     mocker: MockerFixture,
 ) -> AgentFixtures:
-    """Prepare for mock for the LLM agent.
-
-    Provides common mocks for AsyncLlamaStackClient and AsyncAgent
-    with proper agent_id setup to avoid initialization errors.
-
-    Yields:
-        tuple: (mock_client, mock_agent) — two AsyncMock objects
-        representing the client and the agent.
+    """
+    Provide configured AsyncMock objects for an LLM client and agent for tests.
+    
+    Returns:
+        tuple: (mock_client, mock_agent) — two AsyncMock objects representing the client and the agent. The mock agent has `agent_id` and `_agent_id` set to a test value and its `create_turn.return_value.steps` initialized to an empty list to prevent agent-initialization errors.
     """
     mock_client = mocker.AsyncMock()
     mock_agent = mocker.AsyncMock()
@@ -47,14 +44,13 @@ def prepare_agent_mocks_fixture(
 
 @pytest.fixture(name="minimal_config")
 def minimal_config_fixture() -> AppConfig:
-    """Create a minimal AppConfig with only required fields.
-
-    This fixture provides a minimal valid configuration that can be used
-    in tests that don't need specific configuration values. It includes
-    only the required fields to avoid unnecessary instantiation.
-
+    """
+    Create a minimal AppConfig containing only the required fields for tests.
+    
+    The returned configuration is initialized with a small set of keys used by tests: name, service (host/port), llama_stack (api_key, url, use_as_library_client), user_data_collection, authentication (module), and authorization (access_rules).
+    
     Returns:
-        AppConfig: A minimal AppConfig instance with required fields only.
+        AppConfig: An AppConfig instance initialized with the minimal required fields.
     """
     cfg = AppConfig()
     cfg.init_from_dict(
