@@ -16,7 +16,19 @@ from quota.user_quota_limiter import UserQuotaLimiter
 def create_quota_limiter(
     name: str, initial_quota: int, quota_limit: int
 ) -> UserQuotaLimiter:
-    """Create new quota limiter instance."""
+    """
+    Constructs a UserQuotaLimiter configured for in-memory testing.
+    
+    This creates a quota handlers configuration that uses an in-memory SQLite database and a single user limiter entry, then instantiates a UserQuotaLimiter initialized with the provided initial quota and increment.
+    
+    Parameters:
+        name (str): Identifier for the limiter configuration.
+        initial_quota (int): Starting available tokens assigned to each user instance.
+        quota_limit (int): Configured limiter initial_quota value stored in the limiter configuration.
+    
+    Returns:
+        UserQuotaLimiter: A limiter instance configured to use an in-memory SQLite backend and the specified limiter settings.
+    """
     configuration = QuotaHandlersConfiguration()  # pyright: ignore[reportCallIssue]
     configuration.sqlite = SQLiteDatabaseConfiguration(
         db_path=":memory:",
@@ -136,7 +148,11 @@ def test_ensure_available_quota() -> None:
 
 
 def test_ensure_available_quota_no_quota() -> None:
-    """Test the ensure_available_quota operation."""
+    """
+    Verify that ensure_available_quota raises QuotaExceedError when the user's available quota is zero.
+    
+    Initializes a limiter with initial_quota set to 0, calls the limiter initialization routine, and asserts that calling ensure_available_quota("foo") raises QuotaExceedError with the message "User foo has no available tokens".
+    """
     initial_quota = 0
     quota_limit = 100
 

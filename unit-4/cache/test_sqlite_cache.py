@@ -45,10 +45,12 @@ class CursorMock:
         """Construct the mock cursor class."""
 
     def execute(self, command: Any) -> None:
-        """Execute any SQL command.
-
-        Execute the provided SQL command on this cursor.
-
+        """
+        Attempt to execute the given SQL command but always raises sqlite3.Error.
+        
+        Parameters:
+            command: The SQL command or statement to execute.
+        
         Raises:
             sqlite3.Error: Always raised with message "can not SELECT".
         """
@@ -69,31 +71,24 @@ class ConnectionMock:
         """
 
     def cursor(self) -> Any:
-        """Getter for mock cursor.
-
-        Provide a mock database cursor for testing.
-
+        """
+        Return a mock database cursor whose `execute` method raises `sqlite3.Error` to simulate database execution failures.
+        
         Returns:
-            CursorMock: A mock cursor instance that simulates a DB cursor; its
-            `execute` raises `sqlite3.Error` to emulate select-related errors.
+            CursorMock: A mock cursor instance whose `execute(command)` raises `sqlite3.Error`.
         """
         return CursorMock()
 
 
 def create_cache(path: Path) -> SQLiteCache:
-    """Create the cache instance.
-
-    Create a SQLiteCache configured to use a test.sqlite file
-    inside the given directory.
-
+    """
+    Create a SQLiteCache that uses a `test.sqlite` file in the provided directory.
+    
     Parameters:
-    ----------
         path (Path): Directory in which the `test.sqlite` database file will be created.
-
+    
     Returns:
-    -------
-        SQLiteCache: Cache instance configured to use the `test.sqlite`
-        database at the provided path.
+        SQLiteCache: Cache instance configured to use the `test.sqlite` database at the provided path.
     """
     db_path = str(path / "test.sqlite")
     cc = SQLiteDatabaseConfiguration(db_path=db_path)
@@ -101,7 +96,11 @@ def create_cache(path: Path) -> SQLiteCache:
 
 
 def test_cache_initialization(tmpdir: Path) -> None:
-    """Test the get operation when DB is not connected."""
+    """
+    Verify a SQLiteCache can be created and has an active connection.
+    
+    Asserts that creating a cache in the provided temporary directory returns a non-`None` cache object and that its `connection` attribute is not `None`.
+    """
     cache = create_cache(tmpdir)
     assert cache is not None
     assert cache.connection is not None
@@ -146,19 +145,22 @@ def test_connected_when_connection_error(tmpdir: Path) -> None:
 
 
 def test_initialize_cache_when_connected(tmpdir: Path) -> None:
-    """Test the initialize_cache()."""
+    """
+    Verify that initialize_cache completes successfully when the cache is connected.
+    
+    Asserts that calling initialize_cache on a newly created, connected cache does not raise an exception.
+    """
     cache = create_cache(tmpdir)
     # should not fail
     cache.initialize_cache()
 
 
 def test_initialize_cache_when_disconnected(tmpdir: Path) -> None:
-    """Test the initialize_cache().
-
-    Verify that initialize_cache raises a CacheError when the cache is disconnected.
-
+    """
+    Verify that initialize_cache raises CacheError when the cache connection is None.
+    
     Raises:
-        CacheError: If the cache connection is None with message "cache is disconnected".
+        CacheError: If the cache is disconnected with message "cache is disconnected".
     """
     cache = create_cache(tmpdir)
     cache.connection = None
@@ -195,7 +197,11 @@ def test_get_operation_when_connected(tmpdir: Path) -> None:
 
 
 def test_insert_or_append_when_disconnected(tmpdir: Path) -> None:
-    """Test the insert_or_append() method."""
+    """
+    Verifies that insert_or_append raises a CacheError when the cache is disconnected.
+    
+    Sets the cache connection to None and replaces the connect method with a no-op, then asserts that calling insert_or_append raises a CacheError with the message "cache is disconnected".
+    """
     cache = create_cache(tmpdir)
     cache.connection = None
     # no operation for @connection decorator
@@ -284,7 +290,9 @@ def test_get_operation_after_insert_or_append(tmpdir: Path) -> None:
 
 
 def test_get_operation_after_delete(tmpdir: Path) -> None:
-    """Test the get() method called after delete() one."""
+    """
+    Verify that deleting a conversation removes its entries so subsequent get() returns empty.
+    """
     cache = create_cache(tmpdir)
 
     cache.insert_or_append(USER_ID_1, CONVERSATION_ID_1, cache_entry_1, False)
@@ -330,7 +338,11 @@ def test_multiple_ids(tmpdir: Path) -> None:
 
 
 def test_list_with_conversations(tmpdir: Path) -> None:
-    """Test the list() method with actual conversations."""
+    """
+    Verify that conversation metadata for a user is returned and ordered by last message timestamp.
+    
+    Inserts two conversations for the same user, sets their topic summaries, calls `list(user_id, False)`, and asserts that the result contains exactly two `ConversationData` items, is ordered by `last_message_timestamp` descending, and includes both conversation IDs.
+    """
     cache = create_cache(tmpdir)
 
     # Add some conversations

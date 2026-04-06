@@ -31,12 +31,11 @@ cache_entry_2 = CacheEntry(
 
 @pytest.fixture(name="cache_fixture")
 def cache() -> NoopCache:
-    """Fixture with constructed and initialized in memory cache object.
-
-    Create and initialize an in-memory NoopCache for use as a test fixture.
-
+    """
+    Create and initialize an in-memory NoopCache for use in tests.
+    
     Returns:
-        NoopCache: An initialized NoopCache instance ready for tests.
+        An initialized NoopCache instance ready for use in test fixtures.
     """
     c = NoopCache()
     c.initialize_cache()
@@ -49,7 +48,11 @@ def test_connect(cache_fixture: NoopCache) -> None:
 
 
 def test_insert_or_append(cache_fixture: NoopCache) -> None:
-    """Test the behavior of insert_or_append method."""
+    """
+    Verify that inserting a CacheEntry for a user and conversation via `insert_or_append` completes without raising an exception.
+    
+    This confirms the cache accepts the provided `cache_entry_1` for `USER_ID` and `CONVERSATION_ID`.
+    """
     cache_fixture.insert_or_append(
         USER_ID,
         CONVERSATION_ID,
@@ -111,20 +114,22 @@ def test_delete_nonexistent_conversation(cache_fixture: NoopCache) -> None:
 
 
 def test_delete_improper_conversation_id(cache_fixture: NoopCache) -> None:
-    """Test delete with invalid conversation ID.
-
-    Verify that deleting with an invalid conversation ID raises a ValueError.
-
+    """
+    Check that deleting with an invalid conversation ID raises a ValueError.
+    
     Raises:
-        ValueError: If the conversation ID is not a valid UUID (message
-        contains "Invalid conversation ID").
+        ValueError: If the conversation ID is not a valid UUID; the exception message contains "Invalid conversation ID".
     """
     with pytest.raises(ValueError, match="Invalid conversation ID"):
         cache_fixture.delete(USER_ID, "invalid-id")
 
 
 def test_delete_skip_user_id_check(cache_fixture: NoopCache) -> None:
-    """Test deleting an existing conversation."""
+    """
+    Verify that deleting a conversation created with skip_user_id_check=True succeeds.
+    
+    Inserts a cache entry for a non-UUID user ID using skip_user_id_check, deletes it with the same flag, and asserts the deletion returns True.
+    """
     skip_user_id_check = True
     cache_fixture.insert_or_append(
         USER_PROVIDED_USER_ID, CONVERSATION_ID, cache_entry_1, skip_user_id_check
@@ -201,7 +206,12 @@ improper_user_uuids = [
 
 @pytest.mark.parametrize("uuid", improper_user_uuids)
 def test_list_improper_user_id(cache_fixture: NoopCache, uuid: Optional[str]) -> None:
-    """Test list with invalid user ID."""
+    """
+    Verify that listing conversations raises a ValueError for invalid user IDs.
+    
+    Parameters:
+        uuid (Optional[str]): The invalid user-id value to test; the test asserts a ValueError with message "Invalid user ID {uuid}".
+    """
     with pytest.raises(ValueError, match=f"Invalid user ID {uuid}"):
         cache_fixture.list(uuid)
 
@@ -221,12 +231,8 @@ def test_get_improper_user_id(cache_fixture: NoopCache, uuid: Optional[str]) -> 
 
 
 def test_get_improper_conversation_id(cache_fixture: NoopCache) -> None:
-    """Test how improper conversation ID is handled.
-
-    Validate that get() raises a ValueError when the conversation ID is not a valid UUID.
-
-    Calls get() with an invalid conversation ID and expects a ValueError
-    containing "Invalid conversation ID".
+    """
+    Verifies that get() raises a ValueError when the conversation ID is not a valid UUID.
     """
     with pytest.raises(ValueError, match="Invalid conversation ID"):
         cache_fixture.get(USER_ID, "this-is-not-valid-uuid")

@@ -27,13 +27,11 @@ from models.config import (
 
 @pytest.fixture(scope="module", name="noop_cache_config_fixture")
 def noop_cache_config() -> ConversationHistoryConfiguration:
-    """Fixture containing initialized instance of ConversationHistoryConfiguration.
-
-    Provide a ConversationHistoryConfiguration configured for the
-    NOOP cache type.
-
+    """
+    Fixture that produces a conversation cache configuration for the NOOP cache type.
+    
     Returns:
-        ConversationHistoryConfiguration: configuration instance with `type` set to CACHE_TYPE_NOOP
+        ConversationHistoryConfiguration: Configuration instance with `type` set to CACHE_TYPE_NOOP.
     """
     return ConversationHistoryConfiguration(
         type=CACHE_TYPE_NOOP
@@ -42,14 +40,12 @@ def noop_cache_config() -> ConversationHistoryConfiguration:
 
 @pytest.fixture(scope="module", name="memory_cache_config_fixture")
 def memory_cache_config() -> ConversationHistoryConfiguration:
-    """Fixture containing initialized instance of InMemory cache.
-
-    Provide a ConversationHistoryConfiguration configured for an
-    in-memory conversation cache.
-
+    """
+    Provide a ConversationHistoryConfiguration for an in-memory conversation cache.
+    
     Returns:
-        ConversationHistoryConfiguration: Configuration with type set to
-        in-memory and an InMemoryCacheConfig(max_entries=10).
+        ConversationHistoryConfiguration: Configuration with `type` set to `CACHE_TYPE_MEMORY`
+        and `memory` set to `InMemoryCacheConfig(max_entries=10)`.
     """
     return ConversationHistoryConfiguration(
         type=CACHE_TYPE_MEMORY, memory=InMemoryCacheConfig(max_entries=10)
@@ -58,15 +54,12 @@ def memory_cache_config() -> ConversationHistoryConfiguration:
 
 @pytest.fixture(scope="module", name="postgres_cache_config_fixture")
 def postgres_cache_config() -> ConversationHistoryConfiguration:
-    """Fixture containing initialized instance of PostgreSQL cache.
-
-    Create a ConversationHistoryConfiguration configured for a
-    PostgreSQL cache.
-
+    """
+    Create a ConversationHistoryConfiguration for a PostgreSQL cache.
+    
     Returns:
-        ConversationHistoryConfiguration: Configuration with type set to
-        POSTGRES and `postgres` populated with db="database", user="user", and
-        password=SecretStr("password").
+        ConversationHistoryConfiguration: Configuration with `type` set to `CACHE_TYPE_POSTGRES`
+        and `postgres` populated with db="database", user="user", and password=SecretStr("password").
     """
     return ConversationHistoryConfiguration(
         type=CACHE_TYPE_POSTGRES,
@@ -102,11 +95,11 @@ def sqlite_cache_config(tmpdir: Path) -> ConversationHistoryConfiguration:
 
 @pytest.fixture(scope="module", name="invalid_cache_type_config_fixture")
 def invalid_cache_type_config() -> ConversationHistoryConfiguration:
-    """Fixture containing instance of ConversationHistoryConfiguration with improper settings.
-
-    Create a ConversationHistoryConfiguration whose type is set to
-    an invalid string to test factory validation.
-
+    """
+    Create a ConversationHistoryConfiguration with an invalid cache type string.
+    
+    This fixture sets the configuration's `type` attribute to "foo bar baz" to simulate an unsupported/invalid cache type for validation tests.
+    
     Returns:
         ConversationHistoryConfiguration: configuration with `type` set to "foo bar baz".
     """
@@ -129,7 +122,12 @@ def test_conversation_cache_noop(
 def test_conversation_cache_in_memory(
     memory_cache_config_fixture: ConversationHistoryConfiguration,
 ) -> None:
-    """Check if InMemoryCache is returned by factory with proper configuration."""
+    """
+    Verify CacheFactory returns an InMemoryCache when given an in-memory ConversationHistoryConfiguration.
+    
+    Parameters:
+        memory_cache_config_fixture (ConversationHistoryConfiguration): a configuration with `type` set to the in-memory cache and a valid `memory` configuration.
+    """
     cache = CacheFactory.conversation_cache(memory_cache_config_fixture)
     assert cache is not None
     # check if the object has the right type
@@ -137,7 +135,11 @@ def test_conversation_cache_in_memory(
 
 
 def test_conversation_cache_in_memory_improper_config() -> None:
-    """Check if memory cache configuration is checked in cache factory."""
+    """
+    Verify that CacheFactory.conversation_cache raises a ValueError when an in-memory cache configuration is missing.
+    
+    Simulates an otherwise-valid in-memory configuration with its `memory` field set to None and asserts the factory raises ValueError with message containing "Expecting configuration for in-memory cache".
+    """
     cc = ConversationHistoryConfiguration(
         type=CACHE_TYPE_MEMORY, memory=InMemoryCacheConfig(max_entries=10)
     )  # pyright: ignore[reportCallIssue]
@@ -158,14 +160,10 @@ def test_conversation_cache_sqlite(
 
 
 def test_conversation_cache_sqlite_improper_config(tmpdir: Path) -> None:
-    """Check if memory cache configuration is checked in cache factory.
-
-    Verifies that a nil SQLite configuration causes
-    CacheFactory.conversation_cache to raise a ValueError.
-
-    Expects a ValueError with message containing "Expecting configuration for
-    SQLite cache" when the ConversationHistoryConfiguration has type SQLITE but
-    its sqlite field is None.
+    """
+    Ensure CacheFactory raises when the SQLite configuration is missing.
+    
+    Verifies that when a ConversationHistoryConfiguration has type set to SQLITE but its `sqlite` field is None, calling CacheFactory.conversation_cache raises a ValueError with a message containing "Expecting configuration for SQLite cache".
     """
     db_path = str(tmpdir / "test.sqlite")
     cc = ConversationHistoryConfiguration(
@@ -181,7 +179,9 @@ def test_conversation_cache_postgres(
     postgres_cache_config_fixture: ConversationHistoryConfiguration,
     mocker: MockerFixture,
 ) -> None:
-    """Check if PostgreSQL is returned by factory with proper configuration."""
+    """
+    Verify that CacheFactory.conversation_cache returns a PostgresCache when provided a valid PostgreSQL conversation history configuration.
+    """
     mocker.patch("psycopg2.connect")
     cache = CacheFactory.conversation_cache(postgres_cache_config_fixture)
     assert cache is not None
