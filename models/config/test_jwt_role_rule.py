@@ -40,12 +40,10 @@ def test_jwt_role_rule_correct_attributes() -> None:
 
 
 def test_jwt_role_rule_invalid_json_path() -> None:
-    """Check the JwtRoleRule config class.
-
-    Verifies that constructing JwtRoleRule with an invalid JSONPath expression
-    raises a ValidationError.
-
-    Asserts the raised ValidationError contains the message "Invalid JSONPath expression".
+    """
+    Validate that JwtRoleRule rejects invalid JSONPath expressions.
+    
+    Asserts that constructing a JwtRoleRule with an invalid `jsonpath` raises a `ValidationError` containing the text "Invalid JSONPath expression".
     """
     with pytest.raises(ValidationError, match="Invalid JSONPath expression"):
         _ = JwtRoleRule(
@@ -72,7 +70,11 @@ def test_jwt_role_rule_no_roles_specified() -> None:
 
 
 def test_jwt_role_rule_star_role_specified() -> None:
-    """Check the JwtRoleRule config class."""
+    """
+    Asserts that specifying the wildcard '*' role in JwtRoleRule raises a ValidationError.
+    
+    Instantiates JwtRoleRule with roles=['*'] and expects a ValidationError whose message contains "The wildcard '\*' role is not allowed in role rules".
+    """
     with pytest.raises(
         ValidationError, match="The wildcard '\\*' role is not allowed in role rules"
     ):
@@ -124,19 +126,13 @@ def test_jwt_role_rule_valid_regexp() -> None:
 
 
 def test_jwt_role_rule_invalid_regexp() -> None:
-    """Check the JwtRoleRule config class.
-
-    Ensure creating a JwtRoleRule with an invalid regex pattern for the MATCH
-    operator raises a ValidationError.
-
-    Attempts to construct JwtRoleRule with operator set to
-    JsonPathOperator.MATCH and a malformed regex value; the constructor must
-    raise a ValidationError with message "Invalid regex pattern for MATCH
-    operator".
-
+    """
+    Asserts that constructing JwtRoleRule with operator MATCH and an invalid regex pattern raises a ValidationError.
+    
+    Attempts to instantiate JwtRoleRule with a malformed regex value (e.g., '[[[') while operator is JsonPathOperator.MATCH and expects a ValidationError whose message contains "Invalid regex pattern for MATCH operator".
+    
     Raises:
-        ValidationError: if the provided regex pattern for MATCH is invalid
-        (message contains "Invalid regex pattern for MATCH operator").
+        ValidationError: if the provided regex pattern for MATCH is invalid.
     """
     with pytest.raises(
         ValidationError, match="Invalid regex pattern for MATCH operator"

@@ -32,7 +32,11 @@ def test_postgresql_database_configuration() -> None:
 
 
 def test_postgresql_database_configuration_namespace_specification() -> None:
-    """Test the PostgreSQLDatabaseConfiguration model."""
+    """
+    Verify that an explicit `namespace` is preserved and other fields use their defaults.
+    
+    Asserts that providing `namespace="foo"` results in `namespace` set to "foo", `host` defaulting to "localhost", `port` defaulting to 5432, `db` and `user` preserved, `password` stored as a secret whose `get_secret_value()` returns the original, `ssl_mode` and `gss_encmode` matching their PostgreSQL defaults, and `ca_cert_path` being `None`.
+    """
     # pylint: disable=no-member
     c = PostgreSQLDatabaseConfiguration(
         db="db", user="user", password="password", namespace="foo"
@@ -80,17 +84,14 @@ def test_postgresql_database_configuration_port_setting(subtests: SubTests) -> N
 
 
 def test_postgresql_database_configuration_ca_cert_path(subtests: SubTests) -> None:
-    """Test the PostgreSQLDatabaseConfiguration model.
-
-    Validate ca_cert_path handling in PostgreSQLDatabaseConfiguration.
-
-    Verifies two behaviors using subtests:
-    - When `ca_cert_path` points to an existing file, the value is preserved on the model.
-    - When `ca_cert_path` points to a non-existent path, a ValidationError is
-      raised with the message "Path does not point to a file".
-
+    """
+    Validate handling of `ca_cert_path` in PostgreSQLDatabaseConfiguration using subtests.
+    
+    Checks two cases:
+    - When `ca_cert_path` points to an existing file, the path is preserved on the model.
+    - When `ca_cert_path` does not point to a file, a `pydantic.ValidationError` is raised with message "Path does not point to a file".
+    
     Parameters:
-    ----------
         subtests (SubTests): Test helper providing subtest contexts.
     """
     with subtests.test(msg="Path exists"):

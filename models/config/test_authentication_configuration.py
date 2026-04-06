@@ -115,7 +115,11 @@ def test_authentication_configuration_rh_identity_one_entitlement() -> None:
 
 
 def test_authentication_configuration_rh_identity_more_entitlements() -> None:
-    """Test the AuthenticationConfiguration with RH identity token."""
+    """
+    Verify AuthenticationConfiguration accepts an RH Identity configuration with multiple required entitlements.
+    
+    Asserts that the configuration's module is set to RH Identity, the provided RHIdentityConfiguration is attached and returned by the rh_identity_configuration property, the required_entitlements list is preserved as ["foo", "bar", "baz"], and TLS/Kubernetes-related fields and the skip_for_health_probes flag match the inputs.
+    """
     auth_config = AuthenticationConfiguration(
         module=AUTH_MOD_RH_IDENTITY,
         skip_tls_verification=False,
@@ -369,7 +373,11 @@ def test_authentication_configuration_skip_readiness_probe() -> None:
 
 
 def test_authentication_configuration_in_config_k8s() -> None:
-    """Test the authentication configuration in main config."""
+    """
+    Verify K8S authentication settings are preserved when embedded in the main Configuration.
+    
+    Asserts that the configuration's authentication section uses the K8S module and that the following fields match the provided values: `skip_tls_verification` is True, `k8s_ca_cert_path` equals Path("tests/configuration/server.crt"), and `k8s_cluster_api` is None.
+    """
     # pylint: disable=no-member
     cfg = Configuration(
         name="test_name",
@@ -416,17 +424,10 @@ def test_authentication_configuration_in_config_k8s() -> None:
 
 
 def test_authentication_configuration_in_config_rh_identity() -> None:
-    """Test the authentication configuration in main config.
-
-    Verify that a Configuration with RH Identity authentication is constructed
-    with the expected authentication fields.
-
-    Asserts that:
-    - authentication.module is set to RH Identity,
-    - skip_tls_verification is True,
-    - k8s_ca_cert_path is converted to a Path for the provided certificate file,
-    - k8s_cluster_api is None,
-    - an RHIdentityConfiguration is attached to the authentication.
+    """
+    Validate that a Configuration using RH Identity authentication sets authentication fields and attaches an RHIdentityConfiguration.
+    
+    Asserts that authentication.module is RH Identity, skip_tls_verification is True, k8s_ca_cert_path is the provided Path, k8s_cluster_api is None, and an RHIdentityConfiguration is attached.
     """
     # pylint: disable=no-member
     cfg = Configuration(
@@ -580,10 +581,14 @@ def test_rh_identity_max_header_size_validation(
     max_header_size: int,
     expectation: AbstractContextManager,
 ) -> None:
-    """Test that RHIdentityConfiguration validates max_header_size correctly.
-
-    Verify that PositiveInt accepts valid custom values and rejects zero and
-    negative values.
+    """
+    Validate that RHIdentityConfiguration enforces allowed `max_header_size` values.
+    
+    Constructs an RHIdentityConfiguration with the given `max_header_size` inside the provided context manager; valid positive values must be accepted and zero or negative values must raise a ValidationError.
+    
+    Parameters:
+        max_header_size (int): The max header size to validate.
+        expectation (AbstractContextManager): A context manager that asserts either successful construction or that a ValidationError is raised for invalid values.
     """
     with expectation:
         config = RHIdentityConfiguration(max_header_size=max_header_size)

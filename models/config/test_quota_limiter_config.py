@@ -23,11 +23,10 @@ def test_quota_limiter_configuration() -> None:
 
 
 def test_quota_limiter_configuration_improper_value_1() -> None:
-    """Test the default configuration.
-
-    Verify that constructing a QuotaLimiterConfiguration with a negative
-    `initial_quota` raises a ValueError with message "Input should be greater
-    than or equal to 0".
+    """
+    Verify that constructing a QuotaLimiterConfiguration with a negative initial_quota raises a ValueError.
+    
+    The raised ValueError's message must match "Input should be greater than or equal to 0".
     """
     with pytest.raises(ValueError, match="Input should be greater than or equal to 0"):
         _ = QuotaLimiterConfiguration(
@@ -40,13 +39,10 @@ def test_quota_limiter_configuration_improper_value_1() -> None:
 
 
 def test_quota_limiter_configuration_improper_value_2() -> None:
-    """Test the default configuration.
-
-    Verify that providing a negative `quota_increase` raises a ValueError.
-
-    Asserts that constructing a QuotaLimiterConfiguration with `quota_increase`
-    less than zero raises a ValueError with the message "Input should be
-    greater than or equal to 0".
+    """
+    Verify that constructing a QuotaLimiterConfiguration with a negative quota_increase raises a ValueError.
+    
+    Asserts the constructor raises a ValueError with message "Input should be greater than or equal to 0" when `quota_increase` is less than zero.
     """
     with pytest.raises(ValueError, match="Input should be greater than or equal to 0"):
         _ = QuotaLimiterConfiguration(

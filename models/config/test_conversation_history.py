@@ -16,24 +16,19 @@ from models.config import (
 
 
 def test_conversation_cache_no_type_specified() -> None:
-    """Check the test for type as optional attribute.
-
-    Verify that a ConversationHistoryConfiguration created with no arguments
-    has its type set to None.
+    """
+    Verify that constructing a ConversationHistoryConfiguration with no arguments leaves its `type` as None.
     """
     c = ConversationHistoryConfiguration()  # pyright: ignore[reportCallIssue]
     assert c.type is None
 
 
 def test_conversation_cache_unknown_type() -> None:
-    """Check the test for cache type.
-
-    Verify that providing an invalid conversation cache type raises a
-    ValidationError with the expected message.
-
-    The test constructs a ConversationHistoryConfiguration with an unsupported
-    type value and asserts that validation fails with the message: "Input
-    should be 'noop', 'memory', 'sqlite' or 'postgres'".
+    """
+    Validate that an unknown conversation cache type triggers a ValidationError.
+    
+    Asserts that constructing ConversationHistoryConfiguration with an unsupported
+    type raises ValidationError with the message "Input should be 'noop', 'memory', 'sqlite' or 'postgres'".
     """
     with pytest.raises(
         ValidationError,
@@ -45,15 +40,11 @@ def test_conversation_cache_unknown_type() -> None:
 
 
 def test_conversation_cache_correct_type_but_not_configured(subtests: SubTests) -> None:
-    """Check the test for cache type.
-
-    Verify that specifying a cache type without providing its corresponding
-    backend configuration raises a ValidationError with the expected message.
-
+    """
+    Assert that selecting a cache type without its corresponding backend configuration raises a ValidationError for memory, SQLite, and PostgreSQL.
+    
     Parameters:
-    ----------
-        subtests (SubTests): pytest_subtests SubTests object used to create
-        subtests for memory, sqlite, and postgres cases.
+        subtests (SubTests): pytest_subtests SubTests object used to create grouped subtests for the memory, SQLite, and PostgreSQL cases.
     """
     with subtests.test(msg="Memory cache"):
         with pytest.raises(
@@ -81,15 +72,10 @@ def test_conversation_cache_correct_type_but_not_configured(subtests: SubTests) 
 
 
 def test_conversation_cache_no_type_but_configured(subtests: SubTests) -> None:
-    """Check the test for cache type.
-
-    Verify that providing a backend configuration without specifying a
-    conversation cache type raises a ValidationError.
-
-    This test asserts that constructing ConversationHistoryConfiguration with a
-    memory, sqlite, or postgres backend (but without setting the `type` field)
-    fails with a ValidationError whose message is "Conversation cache type must
-    be set when backend configuration is provided".
+    """
+    Verify that providing any backend configuration without setting the conversation cache type raises a ValidationError with the message "Conversation cache type must be set when backend configuration is provided".
+    
+    Tests the memory, sqlite, and postgres backends using subtests.
     """
     m = "Conversation cache type must be set when backend configuration is provided"
 
@@ -120,7 +106,14 @@ def test_conversation_cache_no_type_but_configured(subtests: SubTests) -> None:
 
 
 def test_conversation_cache_multiple_configurations(subtests: SubTests) -> None:
-    """Test how multiple configurations are handled."""
+    """
+    Verify that selecting a cache type while providing multiple backend configurations raises validation errors.
+    
+    Asserts that constructing ConversationHistoryConfiguration with more than one backend config fails and produces the specific validation messages:
+    - For memory type: "Only memory cache config must be provided"
+    - For SQLite type: "Only SQLite cache config must be provided"
+    - For PostgreSQL type: "Only PostgreSQL cache config must be provided"
+    """
     d = PostgreSQLDatabaseConfiguration(
         db="db",
         user="user",

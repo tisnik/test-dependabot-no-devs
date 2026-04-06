@@ -15,13 +15,10 @@ class TestRAGChunk:
         assert chunk.score is None
 
     def test_constructor_with_all_fields(self) -> None:
-        """Test RAGChunk constructor with all fields.
-
-        Verify that providing content, source, and score assigns those values
-        to the RAGChunk instance.
-
-        Asserts that the chunk's `content`, `source`, and `score` fields equal
-        the values passed to the constructor.
+        """
+        Verify that RAGChunk stores the provided content, source, and score.
+        
+        Asserts that the created RAGChunk instance's `content`, `source`, and `score` fields match the values passed to the constructor.
         """
         chunk = RAGChunk(
             content="Kubernetes is an open-source container orchestration system",

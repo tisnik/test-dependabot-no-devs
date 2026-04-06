@@ -18,7 +18,14 @@ def test_user_data_collection_feedback_enabled() -> None:
 
 
 def test_user_data_collection_feedback_disabled() -> None:
-    """Test the UserDataCollection constructor for feedback."""
+    """
+    Verify the constructor raises a ValueError when feedback is enabled but no storage is provided.
+    
+    This test constructs UserDataCollection with feedback_enabled=True and feedback_storage=None
+    and asserts that a ValueError is raised with the message "feedback_storage is required when feedback is enabled".
+    Raises:
+        ValueError: if feedback is enabled while feedback_storage is None.
+    """
     # incorrect configuration
     with pytest.raises(
         ValueError,
@@ -41,14 +48,10 @@ def test_user_data_collection_transcripts_enabled() -> None:
 
 
 def test_user_data_collection_transcripts_disabled() -> None:
-    """Test the UserDataCollection constructor for transcripts.
-
-    Verify the UserDataCollection constructor raises when transcripts are
-    enabled but no storage is provided.
-
-    Asserts that constructing with transcripts_enabled=True and
-    transcripts_storage=None raises a ValueError with the message
-    "transcripts_storage is required when transcripts is enabled".
+    """
+    Verify the constructor raises when transcripts are enabled but no storage is provided.
+    
+    Expects a ValueError with the message "transcripts_storage is required when transcripts is enabled".
     """
     # incorrect configuration
     with pytest.raises(
