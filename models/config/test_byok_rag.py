@@ -1,0 +1,179 @@
+"""Unit tests for ByokRag model."""
+
+from pathlib import Path
+
+import pytest
+from pydantic import ValidationError
+
+from constants import (
+    DEFAULT_EMBEDDING_DIMENSION,
+    DEFAULT_EMBEDDING_MODEL,
+    DEFAULT_RAG_TYPE,
+    DEFAULT_SCORE_MULTIPLIER,
+)
+from models.config import ByokRag
+
+
+def test_byok_rag_configuration_default_values() -> None:
+    """
+    Verify that ByokRag initializes correctly when only required fields are provided.
+    
+    Asserts that the instance stores the given `rag_id`, `vector_db_id`, and `db_path`, and that unspecified fields use the module's default values for `rag_type`, `embedding_model`, `embedding_dimension`, and `score_multiplier`.
+    """
+    byok_rag = ByokRag(  # pyright: ignore[reportCallIssue]
+        rag_id="rag_id",
+        vector_db_id="vector_db_id",
+        db_path="tests/configuration/rag.txt",
+    )
+    assert byok_rag is not None
+    assert byok_rag.rag_id == "rag_id"
+    assert byok_rag.rag_type == DEFAULT_RAG_TYPE
+    assert byok_rag.embedding_model == DEFAULT_EMBEDDING_MODEL
+    assert byok_rag.embedding_dimension == DEFAULT_EMBEDDING_DIMENSION
+    assert byok_rag.vector_db_id == "vector_db_id"
+    assert byok_rag.db_path == "tests/configuration/rag.txt"
+    assert byok_rag.score_multiplier == DEFAULT_SCORE_MULTIPLIER
+
+
+def test_byok_rag_configuration_nondefault_values() -> None:
+    """Test the ByokRag constructor.
+
+    Verify that ByokRag class accepts and stores non-default configuration values.
+
+    Asserts that rag_id, rag_type, embedding_model, embedding_dimension, and
+    vector_db_id match the provided inputs and that db_path is converted to a
+    Path.
+    """
+    byok_rag = ByokRag(
+        rag_id="rag_id",
+        rag_type="rag_type",
+        embedding_model="embedding_model",
+        embedding_dimension=1024,
+        vector_db_id="vector_db_id",
+        db_path="tests/configuration/rag.txt",
+    )
+    assert byok_rag is not None
+    assert byok_rag.rag_id == "rag_id"
+    assert byok_rag.rag_type == "rag_type"
+    assert byok_rag.embedding_model == "embedding_model"
+    assert byok_rag.embedding_dimension == 1024
+    assert byok_rag.vector_db_id == "vector_db_id"
+    assert byok_rag.db_path == "tests/configuration/rag.txt"
+
+
+def test_byok_rag_configuration_wrong_dimension() -> None:
+    """
+    Verify constructing ByokRag with embedding_dimension less than or equal to zero raises a ValidationError.
+    
+    The raised ValidationError's message must contain "should be greater than 0".
+    """
+    with pytest.raises(ValidationError, match="should be greater than 0"):
+        _ = ByokRag(
+            rag_id="rag_id",
+            rag_type="rag_type",
+            embedding_model="embedding_model",
+            embedding_dimension=-1024,
+            vector_db_id="vector_db_id",
+            db_path=Path("tests/configuration/rag.txt"),
+        )
+
+
+def test_byok_rag_configuration_empty_rag_id() -> None:
+    """
+    Validate that constructing a ByokRag with an empty `rag_id` raises a validation error.
+    
+    Expects a `pydantic.ValidationError` whose message contains "String should have at least 1 character".
+    """
+    with pytest.raises(
+        ValidationError, match="String should have at least 1 character"
+    ):
+        _ = ByokRag(
+            rag_id="",
+            rag_type="rag_type",
+            embedding_model="embedding_model",
+            embedding_dimension=1024,
+            vector_db_id="vector_db_id",
+            db_path=Path("tests/configuration/rag.txt"),
+        )
+
+
+def test_byok_rag_configuration_empty_rag_type() -> None:
+    """Test the ByokRag constructor.
+
+    Verify that constructing a ByokRag with an empty `rag_type` raises a validation error.
+
+    Raises:
+        ValidationError: if `rag_type` is an empty string; error message
+        includes "String should have at least 1 character".
+    """
+    with pytest.raises(
+        ValidationError, match="String should have at least 1 character"
+    ):
+        _ = ByokRag(
+            rag_id="rag_id",
+            rag_type="",
+            embedding_model="embedding_model",
+            embedding_dimension=1024,
+            vector_db_id="vector_db_id",
+            db_path=Path("tests/configuration/rag.txt"),
+        )
+
+
+def test_byok_rag_configuration_empty_embedding_model() -> None:
+    """
+    Verify that constructing a ByokRag with an empty `embedding_model` raises a validation error.
+    
+    Expects a pydantic.ValidationError whose message contains "String should have at least 1 character".
+    """
+    with pytest.raises(
+        ValidationError, match="String should have at least 1 character"
+    ):
+        _ = ByokRag(
+            rag_id="rag_id",
+            rag_type="rag_type",
+            embedding_model="",
+            embedding_dimension=1024,
+            vector_db_id="vector_db_id",
+            db_path=Path("tests/configuration/rag.txt"),
+        )
+
+
+def test_byok_rag_configuration_empty_vector_db_id() -> None:
+    """
+    Ensure constructing a ByokRag with an empty `vector_db_id` raises a ValidationError.
+    
+    Asserts that Pydantic validation fails with a message containing "String should have at least 1 character".
+    """
+    with pytest.raises(
+        ValidationError, match="String should have at least 1 character"
+    ):
+        _ = ByokRag(
+            rag_id="rag_id",
+            rag_type="rag_type",
+            embedding_model="embedding_model",
+            embedding_dimension=1024,
+            vector_db_id="",
+            db_path=Path("tests/configuration/rag.txt"),
+        )
+
+
+def test_byok_rag_configuration_custom_score_multiplier() -> None:
+    """Test ByokRag with custom score_multiplier."""
+    byok_rag = ByokRag(
+        rag_id="rag_id",
+        vector_db_id="vector_db_id",
+        db_path="tests/configuration/rag.txt",
+        score_multiplier=2.5,
+    )
+    assert byok_rag.score_multiplier == 2.5
+
+
+def test_byok_rag_configuration_score_multiplier_must_be_positive() -> None:
+    """Test that score_multiplier must be greater than 0."""
+    with pytest.raises(ValidationError, match="greater than 0"):
+        _ = ByokRag(
+            rag_id="rag_id",
+            vector_db_id="vector_db_id",
+            db_path="tests/configuration/rag.txt",
+            score_multiplier=0.0,
+        )
