@@ -13,20 +13,17 @@ async def get_provider_impl(
 ):
     """
     Create and initialize a LightspeedAgentsImpl.
-
-    Configure litellm to drop unsupported params for models that reject them (e.g., top_p).
-    This is safe to set globally since it only affects models that don't support these params.
-
+    
+    Sets litellm.drop_params = True so unsupported model parameters are removed globally.
     Parameters:
         config (LightspeedAgentsImplConfig): Configuration for the LightspeedAgentsImpl.
-        deps (dict[Api, Any]): Mapping from Api enum keys to required service
-        implementations; must contain keys for inference, vector_io,
-        tool_runtime, tool_groups, conversations, prompts, files, and
-        connectors. The safety service may be omitted.
+        deps (dict[Api, Any]): Mapping of Api enum keys to service implementations. Must include keys
+            Api.inference, Api.vector_io, Api.tool_runtime, Api.tool_groups, Api.conversations,
+            Api.prompts, Api.files, and Api.connectors. The Api.safety entry may be omitted.
         policy (list[AccessRule]): Access rules to apply to the created implementation.
-
+    
     Returns:
-        LightspeedAgentsImpl: An initialized LightspeedAgentsImpl instance ready for use.
+        LightspeedAgentsImpl: The initialized LightspeedAgentsImpl instance ready for use.
     """
     import litellm
 

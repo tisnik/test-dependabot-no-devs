@@ -8,17 +8,17 @@ async def get_provider_impl(
     deps: dict[str, Any],
 ):
     """
-    Create and initialize a RedactionShield provider implementation from the given config and deps.
-
+    Constructs and initializes a RedactionShield provider implementation from the given configuration and dependencies.
+    
     Parameters:
         config (RedactionShieldConfig): Configuration for the RedactionShield provider.
         deps (dict[str, Any]): Runtime dependencies required by the implementation.
-
+    
     Returns:
-        RedactionShieldImpl: An initialized provider implementation.
-
+        RedactionShieldImpl: The initialized provider implementation.
+    
     Raises:
-        AssertionError: If `config` is not a `RedactionShieldConfig`.
+        AssertionError: If `config` is not a `RedactionShieldConfig` (error message includes the actual type).
     """
     from .redaction import (
         RedactionShieldImpl,

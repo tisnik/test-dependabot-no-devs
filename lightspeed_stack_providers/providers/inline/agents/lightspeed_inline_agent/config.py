@@ -77,21 +77,15 @@ class ToolsFilter(BaseModel):
 
     def model_post_init(self, context: Any, /) -> None:
         """
-        Finalize ToolsFilter after model initialization.
-
-        If `system_prompt_path` is set, verifies the path exists, is a file,
-        and is readable; reads its UTF-8 contents into `self.system_prompt`. If
-        `system_prompt` remains empty after that, sets `self.system_prompt` to
-        the module `DEFAULT_SYSTEM_PROMPT`. Logs the final `system_prompt`
-        value.
-
+        Finalize ToolsFilter after Pydantic model initialization.
+        
+        If `system_prompt_path` is provided, validate that it exists, is a file, and is readable, then load its UTF-8 contents into `self.system_prompt`. If `self.system_prompt` is empty after that, set it to `DEFAULT_SYSTEM_PROMPT`. The method logs the chosen `system_prompt`.
+        
         Parameters:
-            context (Any): Post-initialization context provided by Pydantic
-            (unused by this method).
-
+            context (Any): Post-initialization context passed by Pydantic (unused).
+        
         Raises:
-            ValueError: If `system_prompt_path` is set but does not exist, is
-            not a file, or is not readable.
+            ValueError: If `system_prompt_path` is set but does not exist, is not a file, or is not readable.
         """
         if self.system_prompt_path:
             if not os.path.exists(self.system_prompt_path):

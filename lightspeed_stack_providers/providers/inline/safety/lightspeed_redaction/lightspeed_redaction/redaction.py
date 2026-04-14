@@ -102,35 +102,27 @@ class RedactionShieldImpl(Safety, ShieldsProtocolPrivate):
         """Shutdown the shield."""
 
     async def register_shield(self, shield: Shield) -> None:
-        """Register a shield.
-
-        Register a shield instance with this redaction implementation.
-
+        """
+        Register a shield with this redaction implementation; this implementation performs no action.
+        
         Parameters:
-            shield (Shield): Shield instance to register. Current
-            implementation is a no-op and does not persist or modify the
-            shield.
+            shield (Shield): The shield instance to register. This method does not store, modify, or persist the shield.
         """
 
     async def run_shield(
         self,
         request: RunShieldRequest,
     ) -> RunShieldResponse:
-        """Run the redaction shield - mutates messages directly.
-
-        Apply configured redaction rules to each message in-place.
-
-        Each message in `messages` that has a string `content` will be
-        processed; if redaction modifies the text, the message's `content` is
-        replaced with the redacted string.
-
+        """
+        Apply configured redaction rules to each message in `request.messages`, mutating any message.content string that changes.
+        
+        Only messages with a string `content` are processed; if a message's content is altered by redaction, the message's `content` is replaced in place.
+        
         Parameters:
-            - request (RunShieldRequest): Request containing shield_id and
-              messages; any message with a string `content` may be mutated
-              in place.
-
+            request (RunShieldRequest): Shield request containing the messages to process.
+        
         Returns:
-            RunShieldResponse: A response object; `violation` is `None` for this implementation.
+            RunShieldResponse: Response object with `violation` set to `None`.
         """
         messages = request.messages
         for message in messages:
@@ -144,19 +136,13 @@ class RedactionShieldImpl(Safety, ShieldsProtocolPrivate):
         return RunShieldResponse(violation=None)
 
     async def run_moderation(self, request: RunModerationRequest) -> ModerationObject:
-        """Run moderation on input text, checking for sensitive data.
-
-        When sensitive data is detected, the content is flagged and blocked.
-        This serves as a safety net for flows that don't use run_shield.
-        For flows using lightspeed_inline_agent, redaction happens in the agent.
-
+        """
+        Generate moderation results that flag inputs which would be altered by the configured redaction rules.
+        
+        Each entry in the returned results corresponds to an input (the request's input is normalized to a list). If applying the redaction rules changes an input, that result is marked as flagged with metadata {"contains_sensitive_data": True} and includes a user-facing message; otherwise the result is unflagged with metadata {"contains_sensitive_data": False}.
+        
         Returns:
-            ModerationObject: Contains a generated `id`, `model` (uses
-            `request.model` or "lightspeed-redaction" if unspecified), and a
-            `results` list where each ModerationObjectResults includes
-            `flagged` status and metadata with `{"contains_sensitive_data":
-                                                 True}` for altered inputs and
-            `{"contains_sensitive_data": False}` for unchanged inputs.
+            ModerationObject: Moderation payload with an `id` prefixed by "modr-", `model` set to `request.model` or "lightspeed-redaction", and `results` containing per-input ModerationObjectResults reflecting whether each input was altered by redaction.
         """
         inputs = request.input if isinstance(request.input, list) else [request.input]
         results = []
@@ -197,19 +183,13 @@ class RedactionShieldImpl(Safety, ShieldsProtocolPrivate):
         )
 
     def _apply_redaction_rules(self, content: str) -> str:
-        """Apply all redaction rules to content.
-
-        Apply configured regex redaction rules to the provided text and return
-        the resulting string.
-
-        If `content` is empty or there are no compiled rules, the original
-        `content` is returned unchanged. When one or more rules match, their
-        substitutions are applied sequentially and the transformed string is
-        returned.
-
+        """
+        Apply configured regex redaction rules to the given text.
+        
+        If `content` is empty or no rules are compiled, returns `content` unchanged. If one or more rules match, their substitutions are applied and the transformed string is returned.
+        
         Returns:
-            str: The text after applying redaction substitutions; the original
-            text if no changes were made.
+            The text after applying redaction substitutions; the original text if no changes were made.
         """
         if not content or not self.compiled_rules:
             return content

@@ -65,22 +65,16 @@ class QuestionValidityShieldConfig(BaseModel):
         **kwargs: Any,
     ) -> dict[str, Any]:
         """
-        Build a sample configuration dictionary for a shield run.
-
+        Build a sample configuration dictionary for a question-validity shield run.
+        
         Parameters:
-            - model_id (str): Identifier of the model to use; defaults to the
-              environment placeholder "${env.INFERENCE_MODEL}".
-            - model_prompt (str): Prompt template used to validate questions;
-              defaults to the module's DEFAULT_MODEL_PROMPT.
-            - invalid_question_response (str): Response to return when a
-              question is deemed invalid; defaults to
-              DEFAULT_INVALID_QUESTION_RESPONSE.
-            - **kwargs: Additional keyword arguments are accepted for compatibility but ignored.
-
+            model_id (str): Model identifier to use for validation; defaults to the "${env.INFERENCE_MODEL}" placeholder.
+            model_prompt (str): Prompt template used by the guard model to classify questions; defaults to DEFAULT_MODEL_PROMPT.
+            invalid_question_response (str): Assistant response returned when a question is classified as invalid; defaults to DEFAULT_INVALID_QUESTION_RESPONSE.
+            **kwargs: Ignored additional keyword arguments accepted for compatibility.
+        
         Returns:
-            config (dict[str, Any]): Dictionary with keys "model_id",
-            "model_prompt", and "invalid_question_response" containing the
-            provided values.
+            dict[str, Any]: A dictionary with keys "model_id", "model_prompt", and "invalid_question_response" populated from the provided arguments.
         """
         return {
             "model_id": model_id,

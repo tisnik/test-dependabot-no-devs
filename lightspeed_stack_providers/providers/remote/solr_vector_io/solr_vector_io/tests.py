@@ -48,15 +48,12 @@ EMBEDDING_MODEL = "ibm-granite/granite-embedding-30m-english"
 
 @pytest.fixture
 def config_basic():
-    """Provide basic configuration without chunk window schema.
-
-    Create a SolrVectorIOConfig using the module's test constants with no
-    chunk-window or persistence enabled.
-
+    """
+    Create a SolrVectorIOConfig for tests using the module's constants with no chunk-window or persistence enabled.
+    
     Returns:
-        SolrVectorIOConfig: Configuration with SOLR_URL, COLLECTION_NAME,
-        VECTOR_FIELD, CONTENT_FIELD, EMBEDDING_DIM, and persistence set to
-        None.
+        SolrVectorIOConfig: Configuration populated with SOLR_URL, COLLECTION_NAME, VECTOR_FIELD,
+        CONTENT_FIELD, and EMBEDDING_DIM, and with persistence set to None.
     """
     return SolrVectorIOConfig(
         solr_url=SOLR_URL,
@@ -70,14 +67,13 @@ def config_basic():
 
 @pytest.fixture
 def config_with_chunk_window():
-    """Configure the provider with chunk window expansion enabled.
-
-    Builds a SolrVectorIOConfig with chunk-window expansion enabled.
-
+    """
+    Create a SolrVectorIOConfig with chunk-window expansion enabled for tests.
+    
     Returns:
-        SolrVectorIOConfig: Configuration for connecting to the test Solr
-        instance with chunk_window_config populated (field mappings and a
-        chunk_filter_query) and no persistence.
+        SolrVectorIOConfig: Configuration for the test Solr collection with
+        chunk_window_config populated (field mappings and chunk_filter_query)
+        and persistence disabled.
     """
     return SolrVectorIOConfig(
         solr_url=SOLR_URL,
@@ -103,13 +99,11 @@ def config_with_chunk_window():
 
 @pytest.fixture
 async def adapter_basic(config_basic):
-    """Adapter instance with basic configuration.
-
+    """
     Provide an initialized SolrVectorIOAdapter configured without chunk-window or persistence.
-
+    
     Yields:
-        SolrVectorIOAdapter: an adapter initialized and ready for use; the
-        adapter is shut down after the fixture consumer finishes.
+        SolrVectorIOAdapter: An adapter initialized and ready for use. The adapter is shut down after the fixture consumer finishes.
     """
     adapter = SolrVectorIOAdapter(config=config_basic, inference_api=None)
     await adapter.initialize()
@@ -166,14 +160,12 @@ async def vector_store_basic(adapter_basic):
 
 @pytest.fixture
 async def vector_store_chunk_window(adapter_with_chunk_window):
-    """Register vector store with chunk window config.
-
-    Pytest fixture that registers a VectorDB configured for chunk-window tests and yields it.
-
+    """
+    Register a VectorDB configured for chunk-window tests and yield it for use in a test.
+    
     Yields:
-        vector_store (VectorDB): The registered vector store (identifier
-        "test-chunk-window-store"). The fixture unregisters this store from the
-        adapter during teardown.
+        vector_store (VectorDB): Registered VectorDB with identifier "test-chunk-window-store".
+        The fixture will unregister this vector store from the adapter during teardown.
     """
     # adapter_with_chunk_window is already awaited by pytest-asyncio
     vector_store = VectorDB(
@@ -189,33 +181,31 @@ async def vector_store_chunk_window(adapter_with_chunk_window):
 
 @pytest.fixture
 def random_embedding():
-    """Generate random 384-dimensional embedding.
-
-    Create a random embedding vector of length EMBEDDING_DIM for testing.
-
+    """
+    Generate a random embedding vector for tests.
+    
     Returns:
-        np.ndarray: A float32 NumPy array of shape (EMBEDDING_DIM,) with values
-        in the range [0, 1).
+        np.ndarray: A float32 array of shape (EMBEDDING_DIM,) with values in the range [0, 1).
     """
     return np.random.rand(EMBEDDING_DIM).astype(np.float32)
 
 
 @pytest.fixture
 def config_with_persistence(tmp_path):
-    """Configure with persistence enabled using SQLite KV store.
-
-    Builds a SolrVectorIOConfig with SQLite-backed persistence enabled.
-
-    Includes a SqliteKVStoreConfig using the namespace "test_vector_io" so the adapter
-    initializes with persistent KV storage for tests.
-
+    """
+    Create a SolrVectorIOConfig with SQLite-backed KV persistence enabled.
+    
+    This factory returns a configuration that points at the test Solr collection and sets the `persistence`
+    field to a `SqliteKVStoreConfig(namespace="test_vector_io")`, so adapters initialized with it will use
+    a persistent SQLite-backed KV store for tests.
+    
     Parameters:
-        tmp_path (pathlib.Path): pytest tmp_path fixture; unused by this factory but
-            included to scope a temporary filesystem for tests.
-
+        tmp_path (pathlib.Path): pytest tmp_path fixture used to scope a temporary filesystem for tests;
+            not otherwise used by this factory.
+    
     Returns:
-        SolrVectorIOConfig: Configuration pointing at the test Solr collection with
-        persistence set to a SqliteKVStoreConfig(namespace="test_vector_io").
+        SolrVectorIOConfig: Configuration configured to use SQLite KV persistence with namespace
+        "test_vector_io".
     """
     return SolrVectorIOConfig(
         solr_url=SOLR_URL,
@@ -231,17 +221,14 @@ def config_with_persistence(tmp_path):
 
 @pytest.fixture
 async def adapter_with_persistence(config_with_persistence):
-    """Adapter instance with persistence enabled.
-
-    Provide an initialized SolrVectorIOAdapter configured with persistence enabled.
-
+    """
+    Provide an initialized SolrVectorIOAdapter configured with KV persistence.
+    
     Parameters:
-        - config_with_persistence: SolrVectorIOConfig configured to enable KV
-          persistence (e.g., SqliteKVStoreConfig).
-
+        config_with_persistence: SolrVectorIOConfig with KV persistence enabled (e.g., SqliteKVStoreConfig).
+    
     Returns:
-        An initialized SolrVectorIOAdapter instance with persistence active;
-        the adapter is shut down after use.
+        SolrVectorIOAdapter: The initialized adapter with persistence active; the fixture yields this adapter and shuts it down after use.
     """
     adapter = SolrVectorIOAdapter(config=config_with_persistence, inference_api=None)
     await adapter.initialize()
@@ -268,15 +255,10 @@ class TestBasicFunctionality:
 
     @pytest.mark.asyncio
     async def test_vector_store_registration(self, adapter_basic):
-        """Test vector store registration and unregistration.
-
-        Verifies that registering a VectorDB adds it to the adapter's cache and
-        that unregistering it removes it.
-
-        Creates a VectorDB with identifier "test-registration", registers it
-        with the provided adapter, asserts the identifier appears in
-        adapter.cache, then unregisters it and asserts the identifier is
-        absent.
+        """
+        Ensure a VectorDB can be registered to and unregistered from the adapter's cache.
+        
+        Registers a VectorDB with identifier "test-registration", asserts the identifier appears in adapter.cache, then unregisters it and asserts the identifier is removed.
         """
         vector_store = VectorDB(
             identifier="test-registration",
@@ -341,7 +323,13 @@ class TestPersistence:
 
     @pytest.mark.asyncio
     async def test_vector_store_persistence(self, adapter_with_persistence):
-        """Test that vector stores are persisted to KV store."""
+        """
+        Verify that registering a vector store persists its metadata into the adapter's KV store.
+        
+        Registers a VectorDB with identifier "test-persisted-store", asserts the identifier appears in the adapter cache,
+        and asserts the KV store contains an entry under the key formed by concatenating the provider's VECTOR_DBS_PREFIX
+        and the vector store identifier. Unregisters the vector store as cleanup.
+        """
         from src.solr_vector_io.solr import VECTOR_DBS_PREFIX
 
         # Register a vector store
@@ -445,15 +433,10 @@ class TestOpenAIAPI:
     @pytest.mark.asyncio
     @pytest.mark.persistence
     async def test_openai_api_list_vector_stores(self, adapter_with_persistence):
-        """Test that OpenAI API list_vector_stores works with persistence.
-
-        Verify the OpenAI-compatible list_vector_stores API returns a list and
-        remains callable after persisting a vector store.
-
-        Asserts the response includes a `data` attribute of type `list`,
-        registers a VectorDB into the adapter's persistence, calls
-        `openai_list_vector_stores()` again to confirm it still returns a list,
-        and then unregisters the test store.
+        """
+        Verify OpenAI-compatible vector store listing returns a list and remains functional after persisting a store.
+        
+        Calls the adapter's openai_list_vector_stores(), asserts the response has a `data` attribute that is a list, registers a test VectorDB into the adapter's persistence, calls openai_list_vector_stores() again to confirm it still returns a list, and then unregisters the test store.
         """
         # Call the OpenAI API method
         response = await adapter_with_persistence.openai_list_vector_stores()
@@ -795,16 +778,13 @@ class TestRealEmbeddings:
 
     @pytest.fixture(scope="class")
     def embedding_model(self):
-        """Load granite embedding model (cached at class scope).
-
-        Load and return the Hugging Face tokenizer and model for generating embeddings.
-
-        If the `transformers` library is not available, the test is skipped.
-
+        """
+        Load the Hugging Face tokenizer and model for generating embeddings.
+        
+        The model is set to evaluation mode before being returned. If the `transformers` package is not installed, the test is skipped. This fixture is intended to be cached at class scope.
+        
         Returns:
-            (tokenizer, model): A tuple where `tokenizer` is the pretrained
-            tokenizer and `model` is the pretrained model set to evaluation
-            mode.
+            (tokenizer, model): A tuple containing the pretrained tokenizer and the pretrained model (model.eval() has been called).
         """
         try:
             from transformers import AutoModel, AutoTokenizer
@@ -819,20 +799,14 @@ class TestRealEmbeddings:
 
     @pytest.fixture
     def get_embedding(self, embedding_model):
-        """Generate embeddings from text.
-
-        Create a callable that converts input text to a dense embedding vector.
-
+        """
+        Create a callable that converts input text into a fixed-size dense embedding vector.
+        
         Parameters:
-            - embedding_model (tuple): A (tokenizer, model) pair where
-              `tokenizer` produces PyTorch tensors and `model` is a PyTorch
-              model returning a `last_hidden_state`.
-
+            embedding_model (tuple): `(tokenizer, model)` where `tokenizer` returns PyTorch tensors suitable for the `model`, and `model` is a PyTorch model whose output includes `last_hidden_state`.
+        
         Returns:
-            callable: A function that accepts a single `text` (str) and returns
-            a 1-D NumPy array representing the embedding produced by tokenizing
-            the text (with padding, truncation, and max_length=512) and
-            averaging the model's token-level hidden states.
+            callable: A function that accepts a single `text` (str) and returns a 1-D float32 NumPy array representing the text embedding computed with padding, truncation, and max_length=512 (token-level hidden states averaged).
         """
         import torch
 
@@ -841,10 +815,10 @@ class TestRealEmbeddings:
         def _get_embedding(text):
             """
             Compute a fixed-size embedding vector for the given text.
-
+            
             Parameters:
                 text (str): Input text to convert into an embedding.
-
+            
             Returns:
                 embedding (numpy.ndarray): 1-D float32 NumPy array representing the text embedding.
             """

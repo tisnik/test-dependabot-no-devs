@@ -47,15 +47,11 @@ SUBJECT_ALLOWED = "ALLOWED"
 class QuestionValidityShieldImpl(Safety, ShieldsProtocolPrivate):
     def __init__(self, config: QuestionValidityShieldConfig, deps) -> None:
         """
-        Initialize the shield implementation with its configuration and runtime dependencies.
-
+        Create a QuestionValidityShieldImpl configured to evaluate question validity using a prompt and an inference client.
+        
         Parameters:
-            - config (QuestionValidityShieldConfig): Configuration containing
-              `model_prompt`, `model_id`, and `invalid_question_response`;
-              `model_prompt` is compiled into a Template for prompt generation.
-            - deps (Mapping): Dependency container; the inference client is
-              retrieved from deps[Api.inference] and stored as
-              `self.inference_api`.
+            config (QuestionValidityShieldConfig): Configuration containing `model_prompt`, `model_id`, and `invalid_question_response`. The provided `model_prompt` will be compiled into a Template for prompt generation.
+            deps (Mapping): Dependency container; the inference client is obtained from deps[Api.inference] and stored as `self.inference_api`.
         """
         self.config = config
         self.model_prompt_template = Template(f"{self.config.model_prompt}")
@@ -78,18 +74,14 @@ class QuestionValidityShieldImpl(Safety, ShieldsProtocolPrivate):
         pass
 
     async def run_moderation(self, request: RunModerationRequest) -> ModerationObject:
-        """Run moderation on input text to check if it's a valid question.
-
-        Check whether one or more input texts are valid questions and produce a moderation result.
-
+        """
+        Run question-validity checks over one or more input texts and produce a moderation object.
+        
         Parameters:
-            - request (RunModerationRequest): Contains `input` (a string or
-              list of strings to check) and an optional `model` override.
-
+            request (RunModerationRequest): Contains `input` (a string or list of strings to check) and an optional `model` to override the configured model.
+        
         Returns:
-            ModerationObject: Moderation result with a generated `id`, the
-            selected `model`, and `results` entries for each input indicating
-            question validity and related metadata.
+            ModerationObject: Moderation result with a generated `id`, the selected `model` (request.model or configured model), and `results` containing one entry per input indicating question validity, category scores, and any violation metadata.
         """
         inputs = request.input if isinstance(request.input, list) else [request.input]
         results = []
@@ -242,17 +234,13 @@ class QuestionValidityRunner:
 
     def build_prompt(self, message: OpenAIUserMessageParam) -> str:
         """
-        Build the shield prompt.
-
-        Build the shield prompt by substituting the template variables with
-        the message content and subject tokens.
-
+        Construct the shield prompt by substituting the template's placeholders with decision tokens and the user message.
+        
         Parameters:
-            - message (OpenAIUserMessageParam): The user message whose content
-              will be inserted into the template as `message`.
-
+            message (OpenAIUserMessageParam): User message whose `content` is substituted into the template as `message`.
+        
         Returns:
-            str: The prompt string with `allowed`, `rejected`, and `message` values substituted.
+            prompt (str): Prompt string with `allowed`, `rejected`, and `message` values substituted.
         """
         prompt = self.model_prompt_template.substitute(
             allowed=SUBJECT_ALLOWED,
@@ -264,19 +252,13 @@ class QuestionValidityRunner:
 
     def get_shield_response(self, response: str) -> RunShieldResponse:
         """
-        Retrieve the shield response.
-
-        Interpret the model's raw response and map it to a RunShieldResponse
-        indicating acceptance or a violation.
-
+        Interpret the model's raw response and produce a corresponding RunShieldResponse for the shield.
+        
         Parameters:
-            - response (str): Raw text returned by the model to interpret.
-
+            response (str): Raw text returned by the model to interpret.
+        
         Returns:
-            RunShieldResponse: `violation=None` if `response` equals
-            `SUBJECT_ALLOWED`; otherwise a `RunShieldResponse` containing a
-            `SafetyViolation` with `violation_level=ViolationLevel.ERROR` and
-            `user_message` set to the configured invalid-question response.
+            RunShieldResponse: `violation=None` if the stripped `response` is exactly "ALLOWED"; otherwise a RunShieldResponse containing a SafetyViolation with `violation_level=ViolationLevel.ERROR` and `user_message` set to the configured invalid-question response.
         """
         response = response.strip()
         log.debug(f"Shield response: {response}")
@@ -293,20 +275,12 @@ class QuestionValidityRunner:
 
     async def run(self, message: OpenAIUserMessageParam) -> RunShieldResponse:
         """
-        Run the question-validity shield.
-
-        Run the question-validity shield for a single user message by sending
-        the built prompt to the configured inference API and interpreting the
-        model's response.
-
-        The model's stripped output is interpreted literally: if it equals
-        "ALLOWED", a `RunShieldResponse` with `violation=None` is returned; for
-        any other value a `RunShieldResponse` containing a `SafetyViolation`
-        (with `ViolationLevel.ERROR` and the configured invalid-question user
-        message) is returned.
-
+        Evaluate a single user message with the question-validity shield and return the shield decision.
+        
+        The message is evaluated by the configured shield model; if the model's stripped text equals "ALLOWED", the response has `violation=None`. For any other model output the response contains a `SafetyViolation` with `ViolationLevel.ERROR` and the configured invalid-question user message.
+        
         Returns:
-            RunShieldResponse: Shield decision derived from the model output.
+            RunShieldResponse: The shield decision for the provided message.
         """
         shield_input_message = self.build_text_shield_input(message)
         log.debug(f"Shield input message: {shield_input_message}")

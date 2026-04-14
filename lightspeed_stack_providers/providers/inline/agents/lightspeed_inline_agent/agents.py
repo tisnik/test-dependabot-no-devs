@@ -51,17 +51,12 @@ class LightspeedAgentsImpl(MetaReferenceAgentsImpl):
         policy: list[AccessRule],
     ):
         """
-        Initialize the LightspeedAgentsImpl instance.
-
-        Initialize the LightspeedAgentsImpl instance with required APIs,
-        clients, and access policy, and retain the provided configuration.
-
+        Initialize a LightspeedAgentsImpl with the provided configuration, APIs, and access policy.
+        
         Parameters:
-            config (LightspeedAgentsImplConfig): Configuration for the agent
-            implementation; stored on the instance and used to control behavior
-            such as tool filtering and temperature overrides.
-            policy (list[AccessRule]): Access rules that govern agent behavior and permissions.
-
+            config (LightspeedAgentsImplConfig): Agent configuration stored on the instance and used to control behavior such as tool filtering and temperature overrides.
+            policy (list[AccessRule]): Access rules that govern agent permissions and runtime behavior.
+        
         """
         super().__init__(
             config,
@@ -83,13 +78,12 @@ class LightspeedAgentsImpl(MetaReferenceAgentsImpl):
         request: CreateResponseRequest,
     ) -> OpenAIResponseObject:
         """
-        Create an OpenAI response with optional tool filtering.
-
-        This overrides the parent implementation to add tool filtering functionality
-        before passing to the base agent implementation.
-
+        Create an OpenAI-style response applying an optional temperature override and tool filtering.
+        
+        When the request has no explicit temperature and a chatbot temperature override is configured, that override will be used. If tools are present and tool filtering is enabled in configuration, the request's tools are filtered before the response is generated. The modified request (with any temperature and tools changes) is then used to produce the final response.
+        
         Returns:
-            OpenAIResponseObject: The generated OpenAI-style response object.
+            An OpenAI-style response object representing the generated reply.
         """
         # Apply temperature override if configured
         temperature = request.temperature
@@ -143,24 +137,18 @@ class LightspeedAgentsImpl(MetaReferenceAgentsImpl):
         conversation: Optional[str],
     ) -> list[OpenAIResponseInputTool]:
         """
-        Filter tools using LLM based on user input.
-
+        Selects tools relevant to the user's prompt using an LLM and returns a filtered tool list.
+        
+        Uses an LLM to score and select relevant tool names based on the provided user input, merges configured always-included tools and previously invoked tools from conversation history, and then applies the selection to the original tool configurations. For MCP tool entries, the returned entries are scoped per MCP endpoint by setting `allowed_tools` (on dicts) or assigning an `allowed_tools` attribute (on objects). Filtering is skipped and the original `tools` list is returned when no tool definitions exist or the number of tools is at or below the configured minimum; if filtering runs but no tools match, an empty list is returned.
+        
         Parameters:
-            input (str | list[OpenAIResponseInput]): The user prompt or a list
-            of message-like objects used to derive the user prompt.
-            tools (list[OpenAIResponseInputTool]): The original list of tool
-            configurations from the Responses API.
-            model (str): Model identifier to fall back to when no explicit
-            filtering model is configured.
-            conversation (Optional[str]): Conversation ID used to include
-            previously invoked tools; may be None.
-
+            input (str | list[OpenAIResponseInput]): User prompt text or a list of message-like objects used to derive the user prompt.
+            tools (list[OpenAIResponseInputTool]): Original list of tool configurations from the Responses API.
+            model (str): Model identifier to use as a fallback when the tools-filtering model is not configured.
+            conversation (Optional[str]): Conversation ID used to include previously invoked tools; may be None.
+        
         Returns:
-            list[OpenAIResponseInputTool]: A filtered list of tools. For MCP
-            tool entries, `allowed_tools` will be set (on dicts) or assigned as
-            an attribute (on objects) to list the permitted tool names for that
-            MCP endpoint. Returns the original `tools` list when filtering is
-            skipped; returns an empty list when filtering produced no matches.
+            list[OpenAIResponseInputTool]: Filtered list of tool entries. MCP entries will include an `allowed_tools` list scoped to their endpoint. Returns the original `tools` when filtering is skipped; returns an empty list when filtering ran but produced no matches.
         """
         always_included_tools = set(self.config.tools_filter.always_include_tools)
 
@@ -328,13 +316,15 @@ class LightspeedAgentsImpl(MetaReferenceAgentsImpl):
 
     async def _get_previously_called_tools(self, conversation_id: str) -> set[str]:
         """
-        Extract tool names that were called in previous conversation turns.
-
+        Collects tool names invoked earlier in a conversation.
+        
+        Queries the conversations API for items in the given conversation and extracts tool names from items with types `function_call`, `mcp_call`, `mcp_approval_request`, and any nested `tool_calls`. If the history cannot be retrieved or parsed, returns an empty set.
+        
         Parameters:
             conversation_id (str): Identifier of the conversation to inspect.
-
+        
         Returns:
-            set[str]: Tool names observed in the conversation history.
+            set[str]: Tool names observed in the conversation history; an empty set if none were found or on error.
         """
         tool_names: set[str] = set()
         try:
@@ -368,21 +358,14 @@ class LightspeedAgentsImpl(MetaReferenceAgentsImpl):
         self, tools: list[OpenAIResponseInputTool]
     ) -> tuple[list[dict[str, str]], dict[str, str]]:
         """
-        Extract tool names and descriptions from tool configurations.
-
-        For MCP tools, we call the MCP server to list available tools.
-        For other tool types, we extract what we can from the config.
-
+        Build a deduplicated list of tool descriptors and a mapping of MCP tool names to provider endpoints.
+        
         Parameters:
-            tools (list[OpenAIResponseInputTool]): Original tool
-            configurations; each entry may be a dict or a model object with
-            `model_dump()`.
-
+            tools (list[OpenAIResponseInputTool]): Original tool configurations; each entry may be a dict or a model with `model_dump()`.
+        
         Returns:
             tuple[list[dict[str, str]], dict[str, str]]:
-                - First element: list of unique tool descriptor dicts (each
-                  contains at least `tool_name` and `description`, may include
-                  `parameters` and `endpoint`).
+                - First element: list of unique tool descriptor dicts. Each descriptor contains at least `tool_name` and `description` and may include `parameters` and `endpoint`.
                 - Second element: mapping from MCP `tool_name` to its provider `endpoint`.
         """
         tool_defs = []
