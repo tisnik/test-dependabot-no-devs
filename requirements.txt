@@ -358,7 +358,7 @@ jupyterlab==4.5.1
 jupyterlab==4.6.0a0
 jupyterlab==4.6.0a1
 jupyterlab==4.5.2
-jupyterlab_git==0.51.4
+jupyterlab_git==0.54.0a1
 jupyterlab_lsp==5.2.0
 jupyterlab_lsp==5.1.1
 jupyterlab_pygments==0.3.0
