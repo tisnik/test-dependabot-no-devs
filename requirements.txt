@@ -1307,7 +1307,7 @@ jupyterlab_commands_toolkit==0.1.4
 jupyterlab_commands_toolkit==0.1.5
 jupyterlab_commands_toolkit==0.1.6
 jupyterlab_eventlistener==0.4.0
-jupyterlab_git==0.51.4
+jupyterlab_git==0.54.0
 jupyterlab_git==0.52.0
 jupyterlab_git==0.53.0
 jupyterlab_git_core==0.53.0
