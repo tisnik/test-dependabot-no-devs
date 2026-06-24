@@ -1292,7 +1292,7 @@ jupyter_core==5.9.1
 jupyter_docprovider==2.3.0
 jupyter_events==0.12.0
 jupyter_events==0.12.1
-jupyterlab==4.5.4
+jupyterlab==4.5.9
 jupyterlab==4.6.0a3
 jupyterlab==4.5.5
 jupyterlab==4.6.0a4

@@ -354,7 +354,7 @@ jupyter_client==8.7.0
 jupyter_client==8.8.0
 jupyter_core==5.9.1
 jupyter_events==0.12.0
-jupyterlab==4.5.1
+jupyterlab==4.5.9
 jupyterlab==4.6.0a0
 jupyterlab==4.6.0a1
 jupyterlab==4.5.2
