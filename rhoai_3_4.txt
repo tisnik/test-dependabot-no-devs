@@ -3041,7 +3041,7 @@ tomlkit==0.13.3
 tomlkit==0.15.0
 toolz==1.1.0
 toolz==0.12.1
-torch==2.10.0
+torch==2.12.1
 torchao==0.16.0+git
 torchao==0.17.0+git
 torchaudio==2.10.0
