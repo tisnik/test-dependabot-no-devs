@@ -417,7 +417,7 @@ langgraph_prebuilt==1.0.6
 langgraph_sdk==0.3.1
 langgraph_sdk==0.3.2
 langgraph_sdk==0.3.3
-langsmith==0.6.1
+langsmith==0.8.18
 langsmith==0.6.2
 langsmith==0.6.3
 langsmith==0.6.4
