@@ -2504,7 +2504,7 @@ pyopenssl==26.0.0
 pyopenssl==26.2.0
 pyotp==2.9.0
 pyparsing==3.3.2
-pypdf==6.7.2
+pypdf==6.13.3
 pypdf==6.7.3
 pypdf==6.7.4
 pypdf==6.7.5
