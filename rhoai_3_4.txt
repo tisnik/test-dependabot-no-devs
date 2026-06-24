@@ -3381,7 +3381,7 @@ zalgolib==0.2.2
 zarr==3.1.5
 zarr==3.1.6
 zarr==3.2.1
-zeep==4.3.2
+zeep==4.3.3
 zentorch==5.2
 zentorch==5.2.1
 zict==3.0.0
