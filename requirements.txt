@@ -628,7 +628,7 @@ pillow==12.1.0
 pillow==11.3.0
 pillow==12.1.0
 pillow==12.1.1
-pip==25.3
+pip==26.1.2
 pkgconfig==1.5.5
 pkginfo==1.12.1.2
 platformdirs==4.5.1
