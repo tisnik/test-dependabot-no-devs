@@ -1641,7 +1641,7 @@ llama_stack==0.6.0+rhai0
 llama_stack==0.6.0.1+rhai0
 llama_stack==0.7.0+rhaiv.0
 llama_stack==0.7.1+rhaiv.1
-llama_stack_api==0.5.1
+llama_stack_api==0.7.2
 llama_stack_api==0.5.2
 llama_stack_api==0.6.0
 llama_stack_api==0.6.1

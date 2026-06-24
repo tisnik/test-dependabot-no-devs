@@ -440,7 +440,7 @@ litellm==1.74.15
 llama_stack==0.3.0rc1+rhai0
 llama_stack==0.4.1+rhai0
 llama_stack==0.4.2+rhai0
-llama_stack_api==0.4.1
+llama_stack_api==0.7.2
 llama_stack_api==0.4.2
 llama_stack_client==0.4.0
 llama_stack_client==0.4.1
