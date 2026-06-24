@@ -1634,7 +1634,7 @@ llama_index_workflows==2.19.0
 llama_index_workflows==2.20.0
 llama_parse==0.6.94
 llama_parse==0.6.54
-llama_stack==0.4.2+rhai0
+llama_stack==0.7.2
 llama_stack==0.5.0+rhai0
 llama_stack==0.5.0.1+rhai0
 llama_stack==0.6.0+rhai0

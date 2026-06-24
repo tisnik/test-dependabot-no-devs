@@ -437,7 +437,7 @@ lightning==2.6.0
 lightning_utilities==0.15.2
 litellm==1.75.8
 litellm==1.74.15
-llama_stack==0.3.0rc1+rhai0
+llama_stack==0.7.2
 llama_stack==0.4.1+rhai0
 llama_stack==0.4.2+rhai0
 llama_stack_api==0.4.1
