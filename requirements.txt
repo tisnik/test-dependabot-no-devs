@@ -435,7 +435,7 @@ lightly==1.5.22
 lightly_utils==0.0.2
 lightning==2.6.0
 lightning_utilities==0.15.2
-litellm==1.75.8
+litellm==1.83.7
 litellm==1.74.15
 llama_stack==0.3.0rc1+rhai0
 llama_stack==0.4.1+rhai0
