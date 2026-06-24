@@ -2298,7 +2298,7 @@ prometheus_fastapi_instrumentator==7.1.0
 prometheus_fastapi_instrumentator==8.0.0
 promise==2.3
 prompt_toolkit==3.0.52
-propcache==0.4.1
+propcache==0.5.2
 protobuf==6.33.5
 protobuf==7.34.0
 protobuf==5.29.6
