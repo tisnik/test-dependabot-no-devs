@@ -1310,7 +1310,7 @@ jupyterlab_eventlistener==0.4.0
 jupyterlab_git==0.51.4
 jupyterlab_git==0.52.0
 jupyterlab_git==0.53.0
-jupyterlab_git_core==0.53.0
+jupyterlab_git_core==0.54.0a1
 jupyterlab_lsp==5.1.1
 jupyterlab_lsp==5.2.0
 jupyterlab_lsp==5.3.0
