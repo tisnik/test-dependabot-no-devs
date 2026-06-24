@@ -631,7 +631,7 @@ dm_tree==0.1.9
 dm_tree==0.1.10
 dnspython==2.8.0
 docker==7.1.0
-docling==2.73.1
+docling==2.106.0
 docling==2.85.0
 docling==2.86.0
 docling==2.87.0
