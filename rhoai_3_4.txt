@@ -3374,7 +3374,7 @@ yarl==1.22.0
 yarl==1.23.0
 yarl==1.24.2
 yaspin==3.4.0
-yt_dlp==2026.3.17
+yt_dlp==2026.6.9
 yt_dlp==2026.6.9
 z3_solver==4.15.1.0
 zalgolib==0.2.2
