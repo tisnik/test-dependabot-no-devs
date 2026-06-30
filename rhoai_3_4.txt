@@ -1498,7 +1498,7 @@ langgraph_prebuilt==1.0.8
 langgraph_prebuilt==1.0.9
 langgraph_prebuilt==1.0.13
 langgraph_prebuilt==1.1.0
-langgraph_sdk==0.3.8
+langgraph_sdk==0.3.15
 langgraph_sdk==0.3.9
 langgraph_sdk==0.3.10
 langgraph_sdk==0.3.11
