@@ -1237,7 +1237,7 @@ jiter==0.14.0
 jiter==0.15.0
 jmespath==1.1.0
 joblib==1.5.3
-joserfc==1.6.4
+joserfc==1.6.7
 joserfc==1.7.1
 jpype1==1.5.0
 json5==0.13.0
