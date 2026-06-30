@@ -503,7 +503,7 @@ mistral_common==1.8.8
 mistral_common==1.8.5
 mistune==3.2.0
 ml_dtypes==0.5.4
-mlflow==3.8.1
+mlflow==3.11.1
 mlflow_skinny==3.8.1
 mlflow_tracing==3.8.1
 mlserver==1.7.1+rhai5
