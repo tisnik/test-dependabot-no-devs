@@ -2382,7 +2382,7 @@ pydantic_ai==1.81.0
 pydantic_ai==1.82.0
 pydantic_ai==1.90.0
 pydantic_ai==1.107.0
-pydantic_ai_slim==1.71.0
+pydantic_ai_slim==1.102.0
 pydantic_ai_slim==1.72.0
 pydantic_ai_slim==1.73.0
 pydantic_ai_slim==1.74.0
