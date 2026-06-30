@@ -2611,7 +2611,7 @@ python_oxmsg==0.0.2
 python_pptx==1.0.2
 python_rapidjson==1.23
 python_slugify==8.0.4
-python_socketio==5.16.1
+python_socketio==5.16.2
 python_socketio==5.16.2
 python_ulid==3.1.0
 python_utils==3.9.1
