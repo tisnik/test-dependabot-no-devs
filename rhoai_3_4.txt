@@ -2369,7 +2369,7 @@ pydantic==2.13.0
 pydantic==2.13.1
 pydantic==2.13.3
 pydantic==2.13.4
-pydantic_ai==1.71.0
+pydantic_ai==1.102.0
 pydantic_ai==1.72.0
 pydantic_ai==1.73.0
 pydantic_ai==1.74.0
