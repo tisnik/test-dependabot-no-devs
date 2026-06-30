@@ -410,7 +410,7 @@ langchain_text_splitters==1.1.0
 langchain_text_splitters==0.3.11
 langgraph==1.0.5
 langgraph==1.0.6
-langgraph_checkpoint==3.0.1
+langgraph_checkpoint==4.1.1
 langgraph_checkpoint==4.0.0
 langgraph_prebuilt==1.0.5
 langgraph_prebuilt==1.0.6
