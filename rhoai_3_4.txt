@@ -2584,7 +2584,7 @@ python_docx==1.2.0
 python_dotenv==1.2.1
 python_dotenv==1.2.2
 python_dotenv==1.1.1
-python_engineio==4.13.1
+python_engineio==4.13.2
 python_engineio==4.13.2
 python_fasthtml==0.12.50
 python_fasthtml==0.13.1
