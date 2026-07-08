@@ -106,7 +106,7 @@ apache_airflow==3.1.8
 apache_airflow==3.2.0
 apache_airflow==3.2.1
 apache_airflow==3.2.2
-apache_airflow_core==3.1.7
+apache_airflow_core==3.2.2
 apache_airflow_core==3.1.8
 apache_airflow_core==3.2.0
 apache_airflow_core==3.2.1
