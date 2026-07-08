@@ -55,7 +55,7 @@ aiokafka==0.13.0
 aiokafka==0.14.0
 aiologic==0.16.0
 aiosignal==1.4.0
-aiosmtplib==5.1.0
+aiosmtplib==5.1.1
 aiosmtplib==5.1.1
 aiosqlite==0.22.1
 aiosqlite==0.21.0
