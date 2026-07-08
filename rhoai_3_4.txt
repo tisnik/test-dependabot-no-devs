@@ -101,7 +101,7 @@ antlr4_python3_runtime==4.13.1
 anyio==4.12.1
 anyio==4.13.0
 anytree==2.13.0
-apache_airflow==3.1.7
+apache_airflow==3.2.2
 apache_airflow==3.1.8
 apache_airflow==3.2.0
 apache_airflow==3.2.1
