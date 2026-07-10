@@ -2878,7 +2878,7 @@ snowflake_connector_python==4.6.0
 sortedcontainers==2.4.0
 soundfile==0.13.1
 soundfile==0.14.0
-soupsieve==2.8.3
+soupsieve==2.8.4
 soupsieve==2.8.4
 sox==1.5.0
 soxr==1.0.0
