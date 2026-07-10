@@ -1781,7 +1781,7 @@ mistral_common==1.10.0
 mistral_common==1.11.0
 mistral_common==1.11.2
 mistral_common==1.11.3
-mistune==3.2.0
+mistune==3.3.0
 mistune==3.2.1
 ml_dtypes==0.5.4
 mlflow==3.10.0+rhai1
