@@ -501,7 +501,7 @@ milvus_lite==2.5.1
 minio==7.2.20
 mistral_common==1.8.8
 mistral_common==1.8.5
-mistune==3.2.0
+mistune==3.3.0
 ml_dtypes==0.5.4
 mlflow==3.8.1
 mlflow_skinny==3.8.1
