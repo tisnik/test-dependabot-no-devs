@@ -6,6 +6,15 @@ import fileinput
 
 
 def align_markdown_table(md: str) -> str:
+    """
+    Align the columns of a Markdown table using consistent cell widths.
+    
+    Parameters:
+        md (str): Markdown table content to format.
+    
+    Returns:
+        str: The table with padded cells and uniformly formatted row separators.
+    """
     lines = [line.strip() for line in md.strip().splitlines() if line.strip()]
     rows = [[cell.strip() for cell in line.strip("|").split("|")] for line in lines]
 
@@ -19,15 +28,35 @@ def align_markdown_table(md: str) -> str:
 
 
 def print_formatted_table(table_content: str) -> None:
+    """
+    Print an aligned Markdown table followed by a blank line.
+    
+    Parameters:
+    	table_content (str): Markdown table content to align and print.
+    """
     print(align_markdown_table(table_content))
     print()
 
 
 def is_table_row(current_line: str) -> bool:
+    """Determine whether a line represents a Markdown table row.
+    
+    Parameters:
+        current_line (str): The line to inspect.
+    
+    Returns:
+        bool: `true` if the line is non-empty and starts with `|`, `false` otherwise.
+    """
     return len(current_line) > 0 and current_line[0] == "|"
 
 
 def process_documentation(lines: list[str]) -> None:
+    """
+    Filter documentation lines and print the transformed output.
+    
+    Parameters:
+        lines (list[str]): Documentation lines to process. Table blocks are aligned, API and base URL sections are removed, and the components heading is renamed.
+    """
     in_table = False
     table_content = ""
     base_url_count = 0
