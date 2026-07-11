@@ -2232,7 +2232,7 @@ pinecone==8.1.2
 pinecone_plugin_assistant==3.0.2
 pinecone_plugin_assistant==3.0.3
 pinecone_plugin_interface==0.0.7
-pip==26.0.1
+pip==26.1.2
 pip==26.1.1
 pip==26.1.2
 pkgconfig==1.5.5
