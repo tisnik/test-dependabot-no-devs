@@ -482,7 +482,7 @@ maturin==1.11.5
 maturin==1.12.6
 mbstrdecoder==1.1.4
 mccabe==0.7.0
-mcp==1.25.0
+mcp==1.28.1
 mcp==1.26.0
 mdurl==0.1.2
 mercantile==1.2.1
