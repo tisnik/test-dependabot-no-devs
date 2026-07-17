@@ -3295,7 +3295,7 @@ virtualenv==21.2.3
 virtualenv==21.2.4
 virtualenv==21.3.1
 virtualenv==21.4.3
-vllm==0.16.0+rhaiv.0
+vllm==0.24.0
 vllm==0.16.0+rhaiv.1
 vllm==0.16.0+rhaiv.3
 vllm==0.18.0+rhaiv.0

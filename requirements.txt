@@ -979,7 +979,7 @@ versioneer==0.29
 virtualenv==20.35.4
 virtualenv==20.36.0
 virtualenv==20.36.1
-vllm==0.13.0+rhai11
+vllm==0.24.0
 wandb==0.21.1
 wasabi==1.1.3
 watchdog==6.0.0
