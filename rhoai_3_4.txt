@@ -2223,7 +2223,7 @@ phonenumbers==9.0.29
 phonenumbers==9.0.32
 pillow==12.1.1
 pillow==11.0.0
-pillow==11.3.0
+pillow==12.3.0
 pillow==12.1.0
 pillow==12.2.0
 pinecone==8.1.0
