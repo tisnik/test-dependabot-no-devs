@@ -19,6 +19,7 @@ type Storage interface {
 type MemoryStorage struct {
 }
 
+// NewStorage creates and returns an in-memory storage implementation.
 func NewStorage() Storage {
 	return MemoryStorage{}
 }
@@ -32,6 +33,7 @@ type ServerImpl struct {
 	storage Storage
 }
 
+// NewServer creates a server backed by the provided storage.
 func NewServer(storage Storage) Server {
 	return ServerImpl{
 		storage: storage,
