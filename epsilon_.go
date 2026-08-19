@@ -227,6 +227,7 @@ func (s ServerImpl) Serve(port uint) {
 	}
 }
 
+// main initializes the server with in-memory storage and starts it on the configured port.
 func main() {
 	storage := NewStorage()
 	server := NewServer(storage)
