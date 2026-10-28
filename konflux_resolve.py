@@ -57,13 +57,16 @@ _VERSION_RE = re.compile(
 def parse_version(
     version_str: str,
 ) -> tuple[int, int, int, tuple[int, int], tuple[int, int]]:
-    """Parse a PEP 440 version string into a comparable tuple.
+    """Parse a supported version string into a comparable tuple.
 
-    Returns ``(major, minor, micro, (pre_label, pre_num), (post_label, post_num))``.
-    *pre_label* is one of ``"dev"``, ``"a"``, ``"b"``, ``"rc"``, ``"final"``
-    (where ``"final"`` means no pre-release suffix); *post_label* is ``"post"``
-    or ``"final"``.  The labels are ordered so that tuple comparison gives the
-    correct PEP 440 ordering.
+    Returns ``(major, minor, micro, (pre_rank, pre_num), (post_rank, post_num))``.
+    Pre-release ranks are 0 through 4 for dev, alpha, beta, rc, and final;
+    post-release ranks are 0 without a post suffix and 1 with one.
+    Missing minor, micro, and suffix numbers default to zero. Local suffixes,
+    trailing ``.*``, and numeric release segments after the third are ignored.
+
+    Raises:
+        ValueError: If the remaining string does not match the supported format.
     """
     version_str = version_str.strip()
     if "+" in version_str:
@@ -143,7 +146,16 @@ def _check_single_specifier(
 
 
 def version_satisfies(version: str, constraint: str) -> bool:
-    """Check whether *version* satisfies a comma-separated PEP 440 constraint."""
+    """Check whether *version* satisfies every nonempty comma-separated specifier.
+
+    An empty constraint accepts any version without parsing it. Supports
+    comparison operators, ``~=`` bounds, bare versions as equality constraints,
+    and ``==`` wildcards matched against dot-separated version components.
+
+    Raises:
+        ValueError: If an evaluated version or operator cannot be parsed.
+        IndexError: If an evaluated ``~=`` bound has no dot-separated minor part.
+    """
     constraint = constraint.strip()
     if not constraint:
         return True
@@ -203,7 +215,13 @@ def _parse_dep_string(dep: str) -> tuple[str, str, str]:
 def parse_direct_deps(pyproject_path: str) -> list[tuple[str, str]]:
     """Parse ``[project].dependencies`` from a TOML file.
 
-    Returns ``[(normalized_name, version_spec), ...]``.
+    Returns ``[(normalized_name, version_spec), ...]``, or an empty list if
+    dependencies are absent. Extras are discarded and markers are ignored,
+    so dependencies with nonmatching markers are still included.
+
+    Raises:
+        OSError: If the file cannot be read.
+        ValueError: If TOML decoding or dependency-name parsing fails.
     """
     with open(pyproject_path, "rb") as f:
         data = tomllib.load(f)
@@ -225,6 +243,7 @@ class _LinkCollector(HTMLParser):
     """Collect ``href`` attributes from ``<a>`` tags."""
 
     def __init__(self) -> None:
+        """Initialize empty lists for link targets and anchor text."""
         super().__init__()
         self.hrefs: list[str] = []
         self._texts: list[str] = []
@@ -232,6 +251,7 @@ class _LinkCollector(HTMLParser):
         self.link_texts: list[str] = []
 
     def handle_starttag(self, tag: str, attrs: list[tuple[str, Optional[str]]]) -> None:
+        """Record non-null anchor hrefs and begin collecting anchor text."""
         if tag == "a":
             for attr_name, attr_val in attrs:
                 if attr_name == "href" and attr_val is not None:
@@ -240,10 +260,12 @@ class _LinkCollector(HTMLParser):
             self._texts = []
 
     def handle_data(self, data: str) -> None:
+        """Collect text only while an anchor is open."""
         if self._in_a:
             self._texts.append(data)
 
     def handle_endtag(self, tag: str) -> None:
+        """Append stripped text when closing an open anchor."""
         if tag == "a" and self._in_a:
             self.link_texts.append("".join(self._texts).strip())
             self._in_a = False
@@ -355,7 +377,13 @@ def is_wheel_compatible(
     """Check if a wheel's tags match the target environment.
 
     *target_python* is e.g. ``"3.12"``; *target_platforms* is e.g.
-    ``["linux_x86_64", "linux_aarch64"]``.
+    ``["linux_x86_64", "linux_aarch64"]``. An ``abi3`` tag also permits
+    older CPython tags. Platforms match by exact tag or architecture suffix;
+    ``any`` and ``none`` bypass platform matching after Python compatibility.
+    This does not validate OS or manylinux policy compatibility.
+
+    Raises:
+        ValueError: If *target_python* is not two dot-separated integers.
     """
     major, minor = target_python.split(".")
     target_ver = (int(major), int(minor))
@@ -414,7 +442,11 @@ class RhoaiIndex:
         self._packages: dict[str, dict[str, dict[str, tuple[str, str]]]] = {}
 
     def _fetch_url(self, url: str) -> str:
-        """Fetch *url* with retry (3 attempts, exponential backoff)."""
+        """Return UTF-8 text from *url*, trying up to three times.
+
+        Each request has a 30-second timeout; failures wait 1, 2, then 4 seconds.
+        Raises RuntimeError chained from the last error if all attempts fail.
+        """
         last_exc: Optional[Exception] = None
         for attempt in range(3):
             try:
@@ -430,14 +462,22 @@ class RhoaiIndex:
         raise RuntimeError(msg) from last_exc
 
     def load(self) -> None:
-        """Download root page to learn which packages exist on RHOAI."""
+        """Download the root page and replace the set of known package names.
+
+        Raises RuntimeError if fetching fails after three attempts.
+        """
         root_html = self._fetch_url(self.index_url)
         package_names = self._parser.parse_root(root_html)
         self._known_packages = {normalize_name(n) for n in package_names}
         logger.info("RHOAI index: %d packages available", len(self._known_packages))
 
     def _ensure_loaded(self, name: str) -> None:
-        """Fetch and cache a package page if not already loaded."""
+        """Fetch and cache compatible wheels for a known, uncached package.
+
+        Fetch failures are caught and leave the package uncached for a later retry.
+        Unknown packages are ignored. Invalid target Python versions can raise
+        ValueError during wheel compatibility checks.
+        """
         norm = normalize_name(name)
         if norm in self._packages or norm not in self._known_packages:
             return
@@ -481,7 +521,11 @@ class RhoaiIndex:
     def _match_arch(
         self, platform_tag: str, target_platforms: list[str]
     ) -> Optional[str]:
-        """Determine which target arch a platform tag matches."""
+        """Return the first matching target platform, ``"any"``, or None.
+
+        Matches exact tags or architecture suffixes; ``any`` and ``none`` tags
+        return ``"any"`` even when no target platforms are supplied.
+        """
         if platform_tag.lower() in ("any", "none"):
             return "any"
         sub_tags = platform_tag.split(".")
@@ -542,7 +586,12 @@ _MARKER_COMPARE_RE = re.compile(
 
 
 def _eval_marker(marker: str, python_version: str) -> bool:
-    """Simplified PEP 508 marker evaluation for a Linux CPython target."""
+    """Evaluate simplified markers for a Linux CPython target.
+
+    Comparisons use strings, including Python versions. Supports ``and`` and
+    ``or`` without grouping; empty markers are true. Unsupported expressions,
+    operators, and comparisons with no known environment key are treated as true.
+    """
     env = {
         "sys_platform": "linux",
         "os_name": "posix",
@@ -581,7 +630,11 @@ _MARKER_CMP_OPS: dict[str, Any] = {
 
 
 def _eval_single_marker(expr: str, env: dict[str, str]) -> bool:
-    """Evaluate a single marker comparison like ``sys_platform == 'linux'``."""
+    """Evaluate a comparison like ``sys_platform == 'linux'`` using *env*.
+
+    Return True for unrecognized syntax, unsupported operators, or comparisons
+    with no operand in *env*.
+    """
     m = _MARKER_COMPARE_RE.match(expr)
     if m is None:
         return True
@@ -613,7 +666,11 @@ class PypiClient:
         self._requires_cache: dict[str, list[tuple[str, str]]] = {}
 
     def _fetch_url(self, url: str) -> str:
-        """Fetch *url* with retry (3 attempts, exponential backoff)."""
+        """Return UTF-8 text from *url*, trying up to three times.
+
+        Each request has a 30-second timeout; failures wait 1, 2, then 4 seconds.
+        Raises RuntimeError chained from the last error if all attempts fail.
+        """
         last_exc: Optional[Exception] = None
         for attempt in range(3):
             try:
@@ -665,10 +722,15 @@ class PypiClient:
         return info
 
     def get_requires_dist(self, name: str, version: str) -> list[tuple[str, str]]:
-        """Fetch ``Requires-Dist`` from PyPI JSON API.
+        """Fetch and cache ``Requires-Dist`` from the PyPI JSON API.
 
-        Returns ``[(dep_name, spec), ...]``, filtering out extras and markers
-        that don't match the target environment.
+        Returns ``[(normalized_name, spec), ...]``. Extras in dependency names
+        are discarded. Dependencies whose markers contain ``extra ==`` or fail
+        the simplified Linux CPython marker evaluation are skipped.
+
+        Raises:
+            RuntimeError: If fetching fails after three attempts.
+            ValueError: If JSON decoding or dependency-name parsing fails.
         """
         cache_key = f"{normalize_name(name)}=={version}"
         if cache_key in self._requires_cache:
@@ -733,9 +795,19 @@ class Resolver:
         self.fallback_reasons: dict[str, str] = {}
 
     def resolve(self, direct_deps: list[tuple[str, str]]) -> dict[str, dict[str, Any]]:
-        """Resolve all transitive dependencies via BFS.
+        """Resolve direct dependencies and discover transitive dependencies via BFS.
 
-        Returns ``{name: {"version": str, "source": "rhoai"|"pypi", ...}}``.
+        Returns ``{normalized_name: {"version": str, "source": "rhoai"|"pypi", ...}}``.
+        RHOAI versions take priority over PyPI. Updates ``fallback_reasons`` for
+        PyPI fallbacks. Failures to retrieve transitive metadata are caught and
+        leave the package resolved without discovering its dependencies.
+
+        Raises:
+            RuntimeError: If no candidate exists, an already resolved PyPI
+                version conflicts with accumulated constraints, or an uncaught
+                index fetch fails after retries.
+            ValueError: If candidate versions or constraints cannot be parsed.
+            IndexError: If an evaluated ``~=`` bound has no minor part.
         """
         resolved: dict[str, dict[str, Any]] = {}
         constraints: dict[str, str] = {}
@@ -896,6 +968,12 @@ def write_hashed_requirements(
     *packages* maps ``{name: info}`` where *info* has the fields produced by
     the resolver (``version``, and either ``platforms`` for RHOAI or
     ``sdist_hashes`` / ``wheel_hashes`` / ``wheel_files`` for PyPI).
+    All available sdist and wheel hashes are combined and deduplicated.
+    Overwrites *output_path* only after collecting hashes for every package.
+
+    Raises:
+        RuntimeError: If any package has no nonempty hashes.
+        OSError: If the output file cannot be written.
     """
     lines: list[str] = [f"--index-url {index_url}\n"]
 
@@ -962,9 +1040,13 @@ KONFLUX_DIR = ".konflux"
 def load_config(profiles_path: str, profile_name: str) -> dict[str, Any]:
     """Load and merge ``[common]`` + ``[profiles.<name>]`` from a TOML file.
 
-    Returns a dict with keys: ``python_version``, ``platforms``,
-    ``bootstrap_packages``, ``rhoai_index_url``, ``output_suffix``,
-    ``tekton_files``.
+    Profile values replace common values without recursively merging tables.
+    Missing configuration keys are not filled in or validated.
+
+    Raises:
+        KeyError: If *profile_name* is absent.
+        OSError: If the file cannot be read.
+        ValueError: If TOML decoding fails.
     """
     with open(profiles_path, "rb") as f:
         data = tomllib.load(f)
@@ -1013,10 +1095,18 @@ def uv_resolve(
     rhoai_index_url: str,
     suffix: str,
 ) -> dict[str, dict[str, Any]]:
-    """Run ``uv pip compile --index-strategy prefer-index`` to resolve deps.
+    """Run containerized ``uv pip compile`` with the prefer-index strategy.
 
-    Returns ``{normalized_name: {"version": str, "index": str}}``
-    where *index* is the URL of the index the package was resolved from.
+    Resolves ``pyproject.toml`` and its ``ogxlibdev`` group for *python_version*
+    on x86_64 manylinux 2.28. *suffix* selects the optional overrides file
+    ``.konflux/requirements.overrides{suffix}.txt``.
+
+    Returns ``{normalized_name: {"version": str, "index": str}}``, with an
+    empty index string when no index annotation was found.
+
+    Raises:
+        SystemExit: With code 1 if the container command exits unsuccessfully.
+        OSError: If the container runtime cannot be started.
     """
     overrides_file = os.path.join(
         KONFLUX_DIR,
@@ -1143,7 +1233,11 @@ def _fetch_hashes_for_pypi_packages(
     resolved: dict[str, dict[str, Any]],
     pypi: PypiClient,
 ) -> None:
-    """Populate sdist/wheel hashes for PyPI-sourced packages in-place."""
+    """Populate sdist/wheel metadata for PyPI-sourced packages in place.
+
+    Fetch failures leave that package unchanged. A missing version clears its
+    hash and filename lists and sets ``has_sdist`` to False.
+    """
     for name, info in resolved.items():
         if info["source"] != "pypi":
             continue
