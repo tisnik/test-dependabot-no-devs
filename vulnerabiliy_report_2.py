@@ -715,7 +715,7 @@ def is_valid_github_org_repo(name: str) -> bool:
 
 def retrieve_issues(organization: str, repository: str, dependabot_file: str) -> int:
     """
-    Retrieve all Dependabot alerts for a GitHub repository and save them to a JSON file.
+    Retrieve open Dependabot alerts for a GitHub repository and save them to a JSON file.
 
     The function validates the organization and repository names, checks that the
     GITHUB_TOKEN environment variable is set, then calls the GitHub Dependabot alerts
@@ -814,6 +814,11 @@ def process_issues_for_repository(
     generate_graphs_operation: bool,
     generate_page_operation: bool,
 ) -> int:
+    """Retrieve alerts or process the local file and generate selected outputs.
+
+    Retrieval takes precedence over report generation and returns its status.
+    Otherwise return 0 after processing; file, data, and plotting errors propagate.
+    """
     prefix = repository
     if retrieve_issues_operation:
         # just retrieve issues, no other operation will be performed
@@ -836,11 +841,8 @@ def main() -> int:
 
     Retrieve Dependabot alerts or generate reports from the local alerts file.
 
-    Parses command-line arguments, retrieves Dependabot issues, analyses issues, generates
-    graphs, and generates HTML page with Vulnerability report. Is is also possible to
-    compare two repositories.
-
-    Error diagnostics are printed to stderr.
+    Retrieve alerts or process the local alerts file and optionally generate
+    graphs and an HTML page. The comparison argument is parsed but not used.
 
     Raises:
         ValueError: If graph generation lacks an output format, or data
@@ -850,12 +852,9 @@ def main() -> int:
 
     Other processing and plotting errors propagate to the caller.
 
-    Usage:
-
     Returns:
-        int: Exit code where
-            `0` indicates success,
-            `1` indicates any failure
+        0 on success, 1 if the GitHub token is missing, or 2 for an invalid
+        organization or repository name. Processing errors propagate.
 
     """
     cli_parser = create_argument_parser()

@@ -57,13 +57,15 @@ _VERSION_RE = re.compile(
 def parse_version(
     version_str: str,
 ) -> tuple[int, int, int, tuple[int, int], tuple[int, int]]:
-    """Parse a PEP 440 version string into a comparable tuple.
+    """Parse a limited version format into a comparable tuple.
 
-    Returns ``(major, minor, micro, (pre_label, pre_num), (post_label, post_num))``.
-    *pre_label* is one of ``"dev"``, ``"a"``, ``"b"``, ``"rc"``, ``"final"``
-    (where ``"final"`` means no pre-release suffix); *post_label* is ``"post"``
-    or ``"final"``.  The labels are ordered so that tuple comparison gives the
-    correct PEP 440 ordering.
+    Return ``(major, minor, micro, (pre_rank, pre_num), (post_rank, post_num))``.
+    Pre-release ranks are dev=0, a=1, b=2, rc=3, and final=4; post_rank
+    is 1 for a post release and 0 otherwise. Numeric release segments after
+    the third, local versions, and a trailing ``.*`` are ignored.
+
+    Raises:
+        ValueError: If the remaining version cannot be parsed.
     """
     version_str = version_str.strip()
     if "+" in version_str:
@@ -143,7 +145,12 @@ def _check_single_specifier(
 
 
 def version_satisfies(version: str, constraint: str) -> bool:
-    """Check whether *version* satisfies a comma-separated PEP 440 constraint."""
+    """Check a comma-separated constraint against a version.
+
+    An empty constraint matches without parsing the version. Unsupported or
+    malformed versions and operators can raise ValueError; a compatible-release
+    specifier with fewer than two release segments can raise IndexError.
+    """
     constraint = constraint.strip()
     if not constraint:
         return True
@@ -225,6 +232,7 @@ class _LinkCollector(HTMLParser):
     """Collect ``href`` attributes from ``<a>`` tags."""
 
     def __init__(self) -> None:
+        """Initialize the collected links and anchor text."""
         super().__init__()
         self.hrefs: list[str] = []
         self._texts: list[str] = []
@@ -232,6 +240,7 @@ class _LinkCollector(HTMLParser):
         self.link_texts: list[str] = []
 
     def handle_starttag(self, tag: str, attrs: list[tuple[str, Optional[str]]]) -> None:
+        """Collect anchor hrefs and begin collecting their text."""
         if tag == "a":
             for attr_name, attr_val in attrs:
                 if attr_name == "href" and attr_val is not None:
@@ -240,10 +249,12 @@ class _LinkCollector(HTMLParser):
             self._texts = []
 
     def handle_data(self, data: str) -> None:
+        """Collect text inside an anchor."""
         if self._in_a:
             self._texts.append(data)
 
     def handle_endtag(self, tag: str) -> None:
+        """Save stripped anchor text when the anchor closes."""
         if tag == "a" and self._in_a:
             self.link_texts.append("".join(self._texts).strip())
             self._in_a = False
@@ -414,7 +425,10 @@ class RhoaiIndex:
         self._packages: dict[str, dict[str, dict[str, tuple[str, str]]]] = {}
 
     def _fetch_url(self, url: str) -> str:
-        """Fetch *url* with retry (3 attempts, exponential backoff)."""
+        """Fetch *url* with retry (3 attempts, exponential backoff).
+
+        Raise RuntimeError chained from the last error if all attempts fail.
+        """
         last_exc: Optional[Exception] = None
         for attempt in range(3):
             try:
@@ -437,7 +451,10 @@ class RhoaiIndex:
         logger.info("RHOAI index: %d packages available", len(self._known_packages))
 
     def _ensure_loaded(self, name: str) -> None:
-        """Fetch and cache a package page if not already loaded."""
+        """Fetch and cache a package page if not already loaded.
+
+        Fetch failures are caught; a later call may retry the page.
+        """
         norm = normalize_name(name)
         if norm in self._packages or norm not in self._known_packages:
             return
@@ -613,7 +630,10 @@ class PypiClient:
         self._requires_cache: dict[str, list[tuple[str, str]]] = {}
 
     def _fetch_url(self, url: str) -> str:
-        """Fetch *url* with retry (3 attempts, exponential backoff)."""
+        """Fetch *url* with retry (3 attempts, exponential backoff).
+
+        Raise RuntimeError chained from the last error if all attempts fail.
+        """
         last_exc: Optional[Exception] = None
         for attempt in range(3):
             try:
@@ -736,6 +756,10 @@ class Resolver:
         """Resolve all transitive dependencies via BFS.
 
         Returns ``{name: {"version": str, "source": "rhoai"|"pypi", ...}}``.
+        Failure to fetch dependency metadata is caught, leaving that package's
+        transitive dependencies unresolved. An unavailable package or a PyPI
+        constraint conflict raises RuntimeError; index and parsing errors can
+        also propagate.
         """
         resolved: dict[str, dict[str, Any]] = {}
         constraints: dict[str, str] = {}
@@ -896,6 +920,8 @@ def write_hashed_requirements(
     *packages* maps ``{name: info}`` where *info* has the fields produced by
     the resolver (``version``, and either ``platforms`` for RHOAI or
     ``sdist_hashes`` / ``wheel_hashes`` / ``wheel_files`` for PyPI).
+    Raises RuntimeError before writing if any package has no hash; file errors
+    propagate to the caller.
     """
     lines: list[str] = [f"--index-url {index_url}\n"]
 
@@ -962,9 +988,8 @@ KONFLUX_DIR = ".konflux"
 def load_config(profiles_path: str, profile_name: str) -> dict[str, Any]:
     """Load and merge ``[common]`` + ``[profiles.<name>]`` from a TOML file.
 
-    Returns a dict with keys: ``python_version``, ``platforms``,
-    ``bootstrap_packages``, ``rhoai_index_url``, ``output_suffix``,
-    ``tekton_files``.
+    Profile values override common values. Raises KeyError if the profile is
+    absent; file and TOML parsing errors propagate.
     """
     with open(profiles_path, "rb") as f:
         data = tomllib.load(f)
@@ -1016,7 +1041,9 @@ def uv_resolve(
     """Run ``uv pip compile --index-strategy prefer-index`` to resolve deps.
 
     Returns ``{normalized_name: {"version": str, "index": str}}``
-    where *index* is the URL of the index the package was resolved from.
+    where *index* is the annotated index URL, or an empty string if absent.
+    A failed compile prints its stderr and raises SystemExit(1); errors starting
+    the container runtime propagate.
     """
     overrides_file = os.path.join(
         KONFLUX_DIR,
@@ -1143,7 +1170,11 @@ def _fetch_hashes_for_pypi_packages(
     resolved: dict[str, dict[str, Any]],
     pypi: PypiClient,
 ) -> None:
-    """Populate sdist/wheel hashes for PyPI-sourced packages in-place."""
+    """Populate sdist/wheel hashes for PyPI-sourced packages in-place.
+
+    If a package lookup fails, leave its existing fields unchanged. A missing
+    version instead sets empty hash and wheel lists and clears ``has_sdist``.
+    """
     for name, info in resolved.items():
         if info["source"] != "pypi":
             continue
