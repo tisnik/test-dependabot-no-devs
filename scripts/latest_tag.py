@@ -8,7 +8,7 @@ from typing import Optional
 
 
 def version_split(value: str) -> tuple[int, ...]:
-    """Split string into a tuple of ints."""
+    """Split a dotted numeric string into integers, or return ``(-1,)`` if invalid."""
     try:
         return tuple(int(n) for n in value.split("."))
     except ValueError:
@@ -16,14 +16,18 @@ def version_split(value: str) -> tuple[int, ...]:
 
 
 def is_prerelease(tag: str) -> bool:
-    """Determine if a tag is a pre-release version."""
+    """Return whether the tag contains ``rc``, ``alpha``, ``beta``, or ``dev``."""
     omit = {"rc", "alpha", "beta", "dev"}
 
     return any(n in tag for n in omit)
 
 
 def get_latest_stable() -> Optional[str]:
-    """Return the latest stable tag."""
+    """Return the highest locally listed non-prerelease tag, or None if absent.
+
+    Tags are sorted by dotted integer components; unparseable tags sort as
+    ``(-1,)``. Errors from ``git tag`` propagate.
+    """
     stdout = subprocess.check_output(["git", "tag"], text=True)
     tags = [tag for tag in stdout.splitlines() if not is_prerelease(tag)]
     tags.sort(key=version_split)
@@ -32,7 +36,7 @@ def get_latest_stable() -> Optional[str]:
 
 
 def main() -> None:
-    """Entry point to this script, retrieves latest tag defined on GitHub."""
+    """Compare GIT_TAG with local tags and optionally append apply_latest to GITHUB_OUTPUT."""
     if not (current_tag := os.environ.get("GIT_TAG")):
         reason = "GIT_TAG environment variable not set, skipping latest tag"
         apply_latest = "false"
