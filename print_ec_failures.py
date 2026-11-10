@@ -15,6 +15,19 @@ PREFIX = "[report-json]"
 
 
 def main() -> int:
+    """Print component check counts and violation messages from an EC log.
+
+    Read the file named by the first command-line argument, joining the
+    stripped text after ``[report-json]`` on lines starting with that prefix
+    into a JSON report. Write the parsed report to ``logs.json`` in the current
+    directory, overwriting it even when the report has no components key.
+
+    Return 0 after printing the summary, including when violations exist.
+    Return 1 for a missing argument, missing or inaccessible input file, absent
+    report data, invalid JSON, or a missing components key. Other file I/O
+    errors and input text decoding errors propagate, as can errors from
+    unexpected report structures.
+    """
     json_raw_data = ""
 
     if len(sys.argv) < 2:
