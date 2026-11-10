@@ -3,9 +3,10 @@
 """Display all Enterprise Contract failures found in EC job logs.
 
 Usage:
-print_ec_failures.py log_file_name.log
+print_ec_failures.py log_file_name.log [--json]
 """
 
+import argparse
 import json
 import sys
 from pathlib import Path
@@ -17,15 +18,21 @@ def main() -> int:
     json_raw_data = ""
 
     if len(sys.argv) < 2:
-        print("Usage: print_ec_failures.py log_file_name.log")
+        print("Usage: print_ec_failures.py log_file_name.log [--json]")
         return 1
 
-    log_file_name = sys.argv[1]
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("log_file_name")
+    parser.add_argument(
+        "--json", action="store_true", help="export to logs.json (must not exist)"
+    )
+    args = parser.parse_args()
+    log_file_name = args.log_file_name
 
     # read the log file that contains several sections
     # and where each line has some prefix
     try:
-        with Path(log_file_name).open("r") as log_file:
+        with Path(log_file_name).open("r", encoding="utf-8") as log_file:
             for line in log_file:
                 # retrieve just those lines with JSON data
                 # and append them
@@ -49,11 +56,9 @@ def main() -> int:
         print("Unable to deserialize JSON data:", e)
         return 1
 
-    # serialize into pretty-printed format
-    with Path("logs.json").open("w") as json_file:
-        json.dump(json_data, json_file, indent=4)
-
-    if "components" not in json_data:
+    if not isinstance(json_data, dict) or not isinstance(
+        json_data.get("components"), list
+    ):
         print("Unable to find components attribute in EC data")
         return 1
 
@@ -74,6 +79,14 @@ def main() -> int:
         print(f"    violations:   {num_violations}")
         for i, violation in enumerate(violations):
             print(f"        #{i+1}: {violation.get('msg', 'NO VIOLATION MSG!')}")
+    if args.json:
+        try:
+            # Exclusive creation also protects files created after validation.
+            with Path("logs.json").open("x", encoding="utf-8") as json_file:
+                json.dump(json_data, json_file, indent=4)
+        except OSError as e:
+            print("Unable to write JSON report:", e, file=sys.stderr)
+            return 1
     return 0
 
 
